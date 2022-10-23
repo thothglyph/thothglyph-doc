@@ -1,0 +1,31 @@
+%%%
+title = 'Sub1 Document'
+%%%
+
+▮ Sub1 Doc Section 1
+
+hogehoge
+
+▮▮ Section 1-1
+
+hogehoge
+
+▮▮ Section 1-2
+
+hogehoge
+
+▮ Sub1 Doc Section 2
+
+hogehoge
+
+▮▮ Section 2-1
+
+hogehoge
+
+▮▮ Section 2-2
+
+hogehoge
+
+▮▮ Recursive include
+
+⌗include⸨./sub1.tglyph⸩

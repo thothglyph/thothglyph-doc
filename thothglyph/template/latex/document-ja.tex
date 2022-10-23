@@ -1,0 +1,186 @@
+\documentclass[11pt,titlepage]{ltjsreport}
+\usepackage{luatexja}
+\pdfvariable imageresolution 150
+\usepackage[margin=20truemm]{geometry}
+\usepackage{luatexja-otf}
+\renewcommand\familydefault{\sfdefault}
+\renewcommand\kanjifamilydefault{\gtdefault}
+\renewcommand{\thesection}{\thechapter.\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\usepackage{fancyhdr}
+\usepackage{nameref}
+\usepackage[unicode,bookmarksnumbered]{hyperref}
+\hypersetup{
+  colorlinks=true,
+  citecolor=black,
+  linkcolor=blue,
+  filecolor=black,
+  urlcolor=black,
+}
+\usepackage{listings}
+\usepackage{ulem}
+\usepackage{fancybox}
+\usepackage{enumitem,amssymb}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{threeparttable}
+\usepackage{multirow}
+\usepackage{varwidth}
+\usepackage{cellspace}
+\setlength\cellspacetoplimit{5pt}
+\setlength\cellspacebottomlimit{5pt}
+\usepackage{colortbl}
+\newcolumntype{L}{Sl}
+\newcolumntype{C}{Sc}
+\newcolumntype{R}{Sr}
+\counterwithout{figure}{chapter}
+\counterwithout{table}{chapter}
+\counterwithout{equation}{chapter}
+\usepackage{xcolor, soul}
+\usepackage[T1]{fontenc}
+\usepackage[scaled=0.9]{beramono}
+%%%%
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\makeatletter
+\newcommand{\currentsidemargin}{%
+  \ifodd\value{page}%
+    \oddsidemargin%
+  \else%
+    \evensidemargin%
+  \fi%
+}
+\newlength{\whatsleft}
+\newcommand{\measureremainder}[1]{%
+\begin{tikzpicture}[overlay,remember picture]
+    % Helper nodes
+    \path (current page.north west) ++(\hoffset, -\voffset)
+        node[anchor=north west, shape=rectangle, inner sep=0, minimum width=\paperwidth, minimum height=\paperheight]
+        (pagearea) {};
+    \path (pagearea.north west) ++(1in+\currentsidemargin,-1in-\topmargin-\headheight-\headsep)
+        node[anchor=north west, shape=rectangle, inner sep=0, minimum width=\textwidth, minimum height=\textheight]
+        (textarea) {};
+        % Measure distance to right text border
+    \path let \p0 = (0,0), \p1 = (textarea.east) in
+        [/utils/exec={\pgfmathsetlength#1{\x1-\x0}\global#1=#1}];
+\end{tikzpicture}%
+}
+\newcommand{\tgthrowcolor}{\rowcolor[rgb]{0.9, 0.9, 0.9}}
+\newcommand{\tgtdrowcolor}{}
+\makeatother
+%%%%
+\makeatletter
+\renewcommand{\chapter}{
+  \if@openleft\cleardoublepage\else
+  \if@openright\cleardoublepage\else\clearpage\fi\fi
+  \global\@topnum\z@
+  \if@english \@afterindentfalse \else \@afterindenttrue \fi
+  \secdef
+  {\@omit@numberfalse\@chapter}
+  {\@omit@numbertrue\@schapter}}
+\def\@makechapterhead#1{%
+  \vspace*{2\Cvs}
+  {\parindent \z@ \raggedright \normalfont
+  \ifnum \c@secnumdepth >\m@ne
+  \huge\headfont \@chapapp\thechapter\@chappos
+  \fi
+  \interlinepenalty\@M
+  \Huge \headfont #1\par\nobreak
+  \vskip 3\Cvs}}
+\renewcommand{\paragraph}{\@startsection{paragraph}{4}{0ex}%
+   {-3.25ex plus -1ex minus -0.2ex}%
+   {1.5ex plus 0.2ex}%
+   {\normalfont\normalsize\bfseries}}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+\setlength{\floatsep}{1em}
+\renewcommand{\tableofcontents}{%
+  \vspace{-20pt}
+  \settowidth\jsc@tocl@width{\headfont\presectionname\postsectionname}%
+  \settowidth\@tempdima{\headfont\appendixname}%
+  \ifdim\jsc@tocl@width<\@tempdima\relax\setlength\jsc@tocl@width{\@tempdima}\fi
+  {\hypersetup{linkcolor=black}
+  \@starttoc{toc}%
+  }
+}
+\renewenvironment{thebibliography}[1]
+{
+   \list{\@biblabel{\@arabic\c@enumiv}}%
+        {\settowidth\labelwidth{\@biblabel{#1}}%
+         \leftmargin\labelwidth
+         \advance\leftmargin\labelsep
+         \@openbib@code
+         \usecounter{enumiv}%
+         \let\p@enumiv\@empty
+         \renewcommand\theenumiv{\@arabic\c@enumiv}}%
+   \sloppy
+   \clubpenalty4000
+   \@clubpenalty\clubpenalty
+   \widowpenalty4000%
+   \sfcode`\.\@m}
+  {\def\@noitemerr
+    {\@latex@warning{Empty `thebibliography' environment}}%
+   \endlist}
+\let\@openbib@code\@empty
+\newcommand{\tgincludegraphics}[2][100bp]{%
+  \measureremainder{\whatsleft}
+  % \ifdim #1<\linewidth
+  \ifdim #1<\whatsleft
+    \includegraphics[keepaspectratio,width=#1]{#2}
+  \else{
+    % \includegraphics[keepaspectratio,width=\linewidth]{#2}
+    \includegraphics[keepaspectratio,width=\whatsleft]{#2}
+  }\fi
+}
+\newcommand{\tgcaption}[1][l]{%
+  \captionsetup{%
+    % font=small,
+    % labelfont=bf,
+    singlelinecheck=false,
+    % tableposition=top,
+    justification=#1,
+  }
+}
+\newenvironment{tgchecklist}{
+  \begin{itemize}
+}{
+  \end{itemize}
+}
+\newcommand{\tgcheck}[1][dis]{
+  \tgincludegraphics[10bp]{${doc.template_dir}/common/check_#1.pdf}
+}
+\newcommand{\colortext}[3][RGB]{%
+  \begingroup
+  \definecolor{hlcolor}{#1}{#2}\sethlcolor{hlcolor}%
+  \hl{#3}%
+  \endgroup
+}
+\newcommand{\varbox}[1]{\colortext[gray]{0.95}{\small \texttt{\textbf{#1}}}}
+\newcommand{\codebox}[1]{\colortext[gray]{0.95}{\small \texttt{#1}}}
+\newcommand{\kbdbox}[1]{\ovalbox{\footnotesize \texttt{#1}}}
+\newcommand{\btnbox}[1]{\ovalbox{\footnotesize \textsf{#1}}}
+\newcommand{\menubox}[1]{\colortext[gray]{0.9}{\footnotesize \textsf{#1}}}
+\makeatother
+\title{${doc.title}}
+\author{${doc.author}}
+\date{doc.date}
+\pagestyle{fancy}
+\fancyhead[LE,LO]{${doc.title}}
+\fancyhead[RE,RO]{!confidencial!}
+\fancyfoot[CE,CO]{\thepage}
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+\lstset{%
+  numbers=none,
+  basicstyle={\footnotesize \ttfamily},
+  stringstyle={\footnotesize \ttfamily},
+  frame=single,
+  breaklines=true,
+}
+
+${doc.data}
+
+\end{document}
