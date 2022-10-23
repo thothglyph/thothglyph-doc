@@ -1,0 +1,416 @@
+%%%
+title = 'Syntax Test'
+version = '1.2.3'
+author = cmd("git config user.name")
+attrs = {'author': 'Foo Bar'}
+%%%
+
+▮* Prologue
+
+▮* Table of contents
+
+⌗toc⟦level="1"⟧⸨⸩
+
+▮ Section
+
+Section Lv.1 ATX-style
+======================
+
+Section Lv.2 ATX-style
+----------------------
+
+Section Lv.1?2? invalid
+----====----====----===
+
+▮ Section Lv.1
+▮▮ Section Lv.2
+▮▮▮ Section Lv.3
+▮▮▮▮ Section Lv.4
+▮▮▮▮▮ Section Lv.5
+▮▮▮▮▮▮ Section Lv.6
+▮▮▮▮▮▮▮ Section Lv.7
+▮▮▮▮▮▮▮▮ Section Lv.8
+▯▯▯▯ Section Lv.4
+▯▯▯▯▯ Section Lv.5
+▯▯▯▯▯▯ Section Lv.6
+▯▯▯▯▯▯▯ Section Lv.7
+▯▯▯▯▯▯▯▯ Section Lv.8
+
+▮ Block-markup
+
+▮▮ Paragraph
+
+Paragraph text text text.
+New line but ignoreed breakline code.
+
+Next paragraph text text text.
+paragraph separated by empty line.
+
+▮▮ BulletList ⟦blist⟧
+• List item 1
+•• List item 1-1
+••• List item 1-1-1
+••• List item 1-1-2
+•• List item 1-2
+••• List item 1-2-1
+••• List item 1-2-2
+• List item 2
+◃
+• List item new 1
+
+▮▮ OrderedList ⟦olist⟧
+
+꓾ List item 1
+꓾꓾ List item 1-1
+꓾꓾꓾ List item 1-1-1
+꓾꓾꓾ List item 1-1-2
+꓾꓾ List item 1-2
+꓾꓾꓾ List item 1-2-1
+꓾꓾꓾ List item 1-2-2
+꓾ List item 2
+◃
+꓾ List item new 1
+
+▮▮▮ Multi Paragraph
+
+꓾ List item 1 text text.
+  new line text text.
+
+  new paragraph text text 1.
+  ꓾꓾ List item 1-1
+
+    new paragraph text text 2.
+
+    new paragraph text text 3.
+
+  ꓾꓾ List item 1-2
+
+    new paragraph text text 4.
+
+    new paragraph text text 5.
+  ◃◃
+  ꓾꓾ List item new 1-1
+
+    new paragraph text text 6.
+  ◃◃
+  new paragraph text text 7.
+
+  new paragraph text text 8.
+
+꓾ List item 2
+
+  new paragraph text text 9.
+
+  new paragraph text text 10.
+
+◃
+new paragraph text text new 1.
+
+▮▮ DescriptionList
+
+ᛝTerm 1ᛝ List item 1
+ᛝᛝTerm 1-1ᛝ List item 1-1
+ᛝᛝᛝTerm 1-1-1ᛝ List item 1-1-1
+ᛝᛝᛝTerm 1-1-2ᛝ List item 1-1-2
+ᛝᛝTerm 1-2ᛝ List item 1-2
+ᛝᛝᛝTerm 1-2-1ᛝ List item 1-2-1
+ᛝᛝᛝTerm 1-2-2ᛝ List item 1-2-2
+ᛝTerm 2ᛝ Listᛝ item 2
+◃
+ᛝListᛝ item new 1
+
+▮▮ CheckList
+
+•[ ] List item 1
+••[-] List item 1-1
+•••[x] List item 1-1-1
+•••[ ] List item 1-1-2
+••[x] List item 1-2
+•••[x] List item 1-2-1
+•••[x] List item 1-2-2
+•[ ] List item 2
+◃
+•[x] List item new 1
+◃
+[ ] unchecked, [x] checked, [-] indeterminate
+
+▮▮ Mixed List
+
+• List item 1
+꓾꓾ List item 1-1
+ᛝᛝᛝAᛝ List item 1-1-1
+ᛝᛝᛝBᛝ List item 1-1-2
+꓾꓾ List item 1-2
+•••[x] List item 1-2-1
+•••[ ] List item 1-2-2
+• List item 2
+
+▮▮ Table
+
+▮▮▮ BasicTable
+
+| data11 | data12 | data13 |
+| data21 | data22 | data23 |
+
+| head11 | head12 | head13 |
+| head21 | head22 | head23 |
+|:-------|:------:|-------:|
+| data11 | data12 | data13 |
+| data⸌21⸌ | data22 | data23 |
+| a | b | c |
+
+| head11 | head12 | <      | <      |
+|--------|--------|--------|--------|
+| data11 | data12 | data13 | data14 |
+| data21 | data22 | <      | data24 |
+| data31 | ^      | <      | ^      |
+| data41 | data42 | <      | data44 |
+
+▮▮▮ ListTable
+
+|===⟦align="lcr"⟧
+• •• head1
+  •• head2
+  •• head3
+◃
+• •• data11
+  •• data12
+  •• ⌗image⟦alt="Alt Text"⟧⸨./tglyph_64.png⸩
+
+• •• ••• item1
+     ••• item2
+     ••• item3
+  •• ⸌data22⸌
+  •• data23
+
+• •• A
+  •• B
+  •• C
+===|
+
+▮▮ Figure
+
+⌗figure⸨caption⸩
+⌗image⟦alt="Alt Text"⟧⸨./tglyph_64.png⸩
+
+⌗figure⸨caption⸩
+[Not Image.]
+
+⌗figure⸨caption⸩
+| head11 | head12 | head13 |
+| head21 | head22 | head23 |
+|--------|--------|--------|
+| data11 | data12 | data13 |
+| data21 | data22 | data23 |
+| data31 | data32 | data33 |
+
+▮▮ QuoteBlock
+
+> Quote text text text.
+> new line text.
+> > Nested quote text.
+> return first quote.
+
+> New quote text.
+
+▮▮ LiteralBlock
+
+▮▮ AdmonitionBlock
+
+!NOTE! This is a note.
+  new line text.
+
+  admonition can include blocks.
+
+  • ATTENTION
+  • HINT
+  • NOTE
+  • TIP
+  • WARNNING
+
+▮▮ CodeBlock
+
+⸌⸌⸌
+#include <stdio.h>
+# include <stdlib.h>
+int main()
+{
+  int x           = 1;
+  long long int y = 2;
+  printf("Hello World!!\n");
+  exit(0);
+}
+⸌⸌⸌
+
+  ⸌⸌⸌shell
+  pushd ~
+  cat .bashrc
+  popd
+  ⸌⸌⸌
+
+⸌⸌⸌
+80 characters
+12345678901234567890123456789012345678901234567890123456789012345678901234567890
+⸌⸌⸌
+
+⸌⸌⸌c
+⌗include⸨./example.c⸩
+⸌⸌⸌
+
+▮▮ CustomBlock
+
+⌗⌗⌗graphviz
+digraph graph_name {
+  alpha;
+  beta;
+  alpha -> beta;
+}
+⌗⌗⌗
+
+▮▮ HorizonBlock
+
+paragraph
+
+====
+
+paragraph
+
+▮ Inline-markup
+
+▮▮ Text Decoration
+
+The ⁒emphasis⁒ ⋄strong⋄ ‗inserted‗ ¬deleted¬ ⋄⁒strong & emphasis⁒⋄ text.
+
+The x⌃sup⌃x x⌄sub⌄x text.
+
+The ⫶var⫶ and ⸌code⸌ text.
+
+▮▮ Image
+
+Image in paragraph like ⌗image⸨./tglyph_64.png⸩.
+
+Image in paragraph like ⌗image⟦alt="Alt Text" w="150px"⟧⸨./tglyph_64.png⸩.
+
+Image in paragraph like ⌗image⟦alt="Alt Text" w="20%"⟧⸨./tglyph_64.png⸩.
+
+Image in paragraph like ⌗image⸨./tglyph.svg⸩.
+
+▮▮ Include
+
+==Start of include==
+
+⌗include⸨./sub1.tglyph⸩
+
+⌗include⸨./sub1.tglyph⸩
+
+==End of include==
+
+▮▮ Keyboard / Button / Menu
+
+Type ⌗kbd⸨Ctrl A⸩ right now.
+
+Click ⌗btn⸨OK⸩ or ⌗btn⸨Cancel⸩.
+
+Select ⌗menu⸨File > Quit⸩ to exit application.
+
+▮▮ HyperLink
+
+Search ⸨https://www.yahoo.com/⸩ !
+
+For more information, check ⟦here⟧⸨https://www.google.com/⸩ !
+
+▮▮ CrossReference
+
+Block markup section: ⸨Block-markup⸩!
+
+⟦Here⟧⸨Block-markup⸩ is the same!
+
+⸨blist⸩ is referenced by id.
+
+⟦Orderd List Section⟧⸨olist⸩ is referenced by id too.
+
+「⟦⟧⸨セクション1-1⸩」のようにIDには多言語文字が使えます。
+
+▮▮ Footnote
+
+The important text. [^1] And the important text too. [^2]
+•[x] List item 1
+•[x] List item 2
+
+•[^1] This is footnote.
+•[^2] This is footnote too.
+
+• List item 3
+• List item 4
+
+▮▮ Refenrence / Bibliography
+
+The important text. [#1] And the important text too. [#2]
+•[x] List item 1
+•[x] List item 2
+
+•[#1] The Awesome Document, 1990, Anonymous.
+•[#2] The theory of theory, 2000-01-01, Anonymous.
+•[#3] Unreferenced bibliograpy I, 2XXX-XX-XX, Anonymous.
+•[#4] Unreferenced bibliograpy II, 2XXX-XX-XX, Anonymous.
+
+• List item 3
+• List item 4
+
+▮ Multibyte Support
+
+▮▮ セクション1-1
+
+▮▮ セクション1-2
+
+▮ Config
+
+▮▮ Replace
+
+Hello, I am ⁅author⁆.
+
+▮ Torture
+
+▮▮ Long inline code
+
+The ⸌|code|⸌ ⸌|@#$%{^&*(})\!⸌ text. And ⸌long_long_long_long code⸌ and ⸌longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong code⸌ text.
+
+▮▮ Section Lv.4
+▮▮▮ dummy
+▮▮▮▮ This!
+Body text.
+
+▮▮ Footnote
+
+The important text. [^1] And the important text too. [^2]
+
+The important text. [^a] And the important text too. [^b]
+
+•[^1] This is New footnote.
+•[^2] This is New footnote too.
+•[^a] This is New footnote three.
+•[^b] This is ⸌|@#$%{^&*(})\!⸌.
+
+▮▮ Figure numbering
+
+⌗figure⸨caption⸩
+⌗image⟦alt="Alt Text"⟧⸨./tglyph_64.png⸩
+
+⌗figure⸨caption⸩
+[Not Image.]
+
+⌗figure⸨caption⸩
+| head11 | head12 | head13 |
+| head21 | head22 | head23 |
+|--------|--------|--------|
+| data11 | data12 | data13 |
+| data21 | data22 | data23 |
+| data31 | data32 | data33 |
+
+▮▮ Wide Table
+
+|===
+• •• 128456789012345678901234567890
+  •• abcdefg
+  •• The ⸌long_long_long_long code⸌ and ⸌longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong code⸌ text.
+===|

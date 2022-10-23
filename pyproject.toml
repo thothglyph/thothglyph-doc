@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "thothglyph-doc"
+version = "0.0.1"
+description = "A Documentation converter and language for Engineers"
+authors = ["nakandev <nakandev.s@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "thothglyph" },
+]
+
+[tool.poetry.scripts]
+thothglyph = "thothglyph.app.converter:main"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+pillow = "^9.2.0"
+cairosvg = "^2.5.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
