@@ -42,7 +42,7 @@ pip install wavedrom
 ## Usage
 
 ```sh
-tglyph -t html document.tglyph
+thothglyph -t html document.tglyph
 ```
 
 ## Thothglyph Language
