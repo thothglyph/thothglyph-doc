@@ -1,12 +1,16 @@
-# Thothglyph 言語リファレンスマニュアル
+# Thothglyph Language リファレンスマニュアル
 
 ## はじめに
 
 この文書は Thothglyph Language (トトグリフ言語) のリファレンスマニュアルです。
 
+### 経緯
+
+* 文中のソースコードにマークアップを適用したい
+
 ### 言語の特徴
 
-Thothglyph 言語の最大の特徴は、マークアップシンボルの多くに Unicode 文字を使っていることです。
+Thothglyph Language の最大の特徴は、マークアップシンボルの多くに Unicode 文字を使っていることです。
 シンボルに使用可能な文字が増えたことで、視認のしやすさと構文の単純化を両立できます。
 また、既存のマークアップ言語やプログラミング言語の構文との衝突を避けられます。
 これにより、様々なソースコードを文書に含みながらマークアップを適用できます。
@@ -89,7 +93,7 @@ Paragraph は空行が出現するまで継続します。
 • grape
 ```
 
-`•`の文字数がリストの深さに相当します。
+`•`の文字数がリストのレベルに相当します。
 
 ```
 • List item 1
@@ -117,7 +121,7 @@ new line.
 paragraph 2.
 ```
 
-リストを終了して別のリストや段落を開始するには、その深さと同数の`◃`から成る行を記入します。
+リストを終了して別のリストや段落を開始するには、そのレベルと同数の`◃`から成る行を記入します。
 ```
 • My favorite food
 •• apple
@@ -133,7 +137,7 @@ New Paragraph.
 ### Ordered List
 
 1文字以上の`꓾`と空白から始まるブロックは Ordered List (順序付きリスト) となります。
-`꓾`の文字数がリストの深さに相当します。
+`꓾`の文字数がリストのレベルに相当します。
 
 ```
 ꓾ List item 1
@@ -148,10 +152,10 @@ New Paragraph.
 ꓾ List item new 1
 ```
 
-### Ordered List
+### Description List
 
 1文字以上の`ᛝ`から始まり途中`ᛝ`と空白が含まれるブロックは Description List (説明リスト) となります。
-最初の`ᛝ`の文字数がリストの深さに相当します。
+最初の`ᛝ`の文字数がリストのレベルに相当します。
 `ᛝ`で囲まれた文字列は用語、`ᛝ`以降は本文です。
 
 ```
@@ -162,15 +166,15 @@ New Paragraph.
 ᛝᛝTerm 1-2ᛝ List item 1-2
 ᛝᛝᛝTerm 1-2-1ᛝ List item 1-2-1
 ᛝᛝᛝTerm 1-2-2ᛝ List item 1-2-2
-ᛝTerm 2ᛝ Listᛝ item 2
+ᛝTerm 2ᛝ List item 2
 ◃
-ᛝListᛝ item new 1
+ᛝTerm 1ᛝ List item new 1
 ```
 
 ### Check List
 
-1文字以上の`•`と`[ ]`、空白から始まるブロックは Check List (チェックリスト) となります。
-`•`の文字数がリストの深さに相当します。
+1文字以上の`•`と`[ ]`と空白から始まるブロックは Check List (チェックリスト) となります。
+`•`の文字数がリストのレベルに相当します。
 チェックボックスの状態は`[ ]`, `[x]`, `[-]`の3つを選択できます。
 
 ```
@@ -189,7 +193,7 @@ New Paragraph.
 ### 複合リスト
 
 これまで説明したリストは別種のリストを入れ子にできます。
-ただしリストの深さは種類に関係なく設定する必要があります。
+ただしリストのレベルは種類に関係なく設定する必要があります。
 
 ```
 • List item 1
@@ -200,6 +204,28 @@ New Paragraph.
 •••[x] List item 1-2-1
 •••[ ] List item 1-2-2
 • List item 2
+```
+
+### Footnote List
+
+1文字だけの`•`と`[^ID]`と空白から始まるブロックは Footnote List (脚注リスト) となります。
+リストは入れ子にできません。
+文中の脚注の書き方は [Footnote](#Footnote) 参照。
+
+```
+•[^1] This is footnote.
+•[^2] This is footnote too.
+```
+
+### Reference List
+
+1文字だけの`•`と`[#ID]`と空白から始まるブロックは Reference List (参照リスト) となります。
+リストは入れ子にできません。
+文中の参照の書き方は [Reference](#Reference) 参照。
+
+```
+•[#1] The Awesome Document, 1990, Anonymous.
+•[#2] The theory of theory, 2000-01-01, Anonymous.
 ```
 
 ### Basic Table
@@ -234,9 +260,9 @@ New Paragraph.
 
 ### List Table
 `|===`という行から始まり`===|`という行で終わるブロックは List Table となります。
-List Table 内は深さ2以上の Bullet List で構成されます。
-深さ2のリストアイテムが各セルの内容になります。
-深さ1の文は無視されます。
+List Table 内はレベル2以上の Bullet List で構成されます。
+レベル1の文は無視され、レベル2のリストアイテムが各セルの内容になります。
+レベル3のリストは表内のレベル1のリストに置き換わります。
 
 ```
 |===
@@ -324,7 +350,7 @@ int main()
 ⸌⸌⸌
 ```
 
-後述の include ロールで外部ファイルをインクルードできます。
+後述の Include ロールで外部ファイルをインクルードできます。
 
 ```
 ⸌⸌⸌c
@@ -433,9 +459,9 @@ Hyper Link と同じ構文でURLの代わりに文書中のラベル名を指定
 テキストを指定しない場合、ラベルの参照先から取得します。
 
 ```
-Block markup section: ⸨Block-markup⸩!
+First section: ⸨sect1⸩!
 
-⟦Here⟧⸨Block-markup⸩ is the same!
+⟦Here⟧⸨sect1⸩ is the same!
 ```
 
 ### Footnote
