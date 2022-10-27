@@ -104,6 +104,7 @@ class ConfigNode(ASTNode):
         self.title = 'Document Title'
         self.version = str()
         self.author = str()
+        self.attrs = dict()
 
     def parse(self, text):
         exec(text)
@@ -118,7 +119,10 @@ class ConfigNode(ASTNode):
                 params.pop(key)
         for key in params:
             value = params[key]
-            setattr(self, key, value)
+            if key == 'attrs':
+                self.attrs.update(value)
+            else:
+                setattr(self, key, value)
 
 
 class SectionNode(ASTNode):

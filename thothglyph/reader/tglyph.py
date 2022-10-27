@@ -143,26 +143,54 @@ class Parser():
         tokens = self.p_ignore_emptylines(tokens)
 
     def p_configblock(self, tokens):
-        prev = begintoken = tokens.pop(0)
         document = self.nodes[-1]
         if not isinstance(document, nd.DocumentNode):
-            msg = 'config must be under document. {}'.format(begintoken)
+            msg = 'config must be under document. {}'.format(tokens[0])
             raise Exception(msg)
         config = nd.ConfigNode()
+        if self.reader.parent:
+            pconfig = self.reader.parent.parser.nodes[0].config
+            pattrs = dict(pconfig.__dict__)
+            for key in ('parent', 'children', 'id'):
+                pattrs.pop(key)
+            for key in pattrs:
+                setattr(config, key, pattrs[key])
         document.config = config
-        text = str()
+        begintoken = tokens[0]
+        tokens.pop(0)
+        subtokens = list()
         while tokens:
             if tokens[0].key == 'CONFIG_LINE':
                 break
-            text += tokens[0].value
-            if tokens[0].line != prev.line:
-                text += '\n'
-            prev = tokens.pop(0)
+            subtokens.append(tokens.pop(0))
         else:
-            msg = 'configblock is not closed. {}'.format(begintoken)
-            raise Exception(msg)
+            raise Exception(begintoken)
         tokens.pop(0)
-        config.parse(text)
+        # config.parse(text)
+        m = re.match(Lexer.inline_tokens['ROLE'], subtokens[0].value) if subtokens else None
+        if m and m.group(1) == 'include':
+            role = nd.RoleNode()
+            role.role = m.group(1)
+            role.opts = m.group(2).split(',') if m.group(2) is not None else ['']
+            role.value = self.replace_text_attrs(m.group(3))
+            text = nd.TextNode()
+            self.nodes.append(text)
+            self.p_plaininclude(subtokens, role)
+            self.nodes.pop()
+            config.parse(text.text)
+        else:
+            prev = begintoken
+            text = str()
+            for token in subtokens:
+                if token.line != prev.line:
+                    if prev.key != 'CINFIG_LINE':
+                        text += '\n'
+                    text += token.value[0:]
+                else:
+                    text += token.value
+                prev = token
+            text = self.replace_text_attrs(text)
+            config.parse(text)
         return tokens
 
     @property
@@ -409,7 +437,6 @@ class Parser():
         code = nd.CodeBlockNode()
         code.lang = m.group(1)
         self.nodes[-1].add(code)
-        text = str()
         begintoken = tokens[0]
         tokens.pop(0)
         subtokens = list()
@@ -430,6 +457,7 @@ class Parser():
             self.p_plaininclude(subtokens, role)
             self.nodes.pop()
         else:
+            text = str()
             prev = begintoken
             for token in subtokens:
                 if token.line != prev.line:
@@ -449,7 +477,6 @@ class Parser():
         custom = nd.CustomBlockNode()
         custom.ext = m.group(2)
         self.nodes[-1].add(custom)
-        text = str()
         begintoken = tokens[0]
         tokens.pop(0)
         subtokens = list()
@@ -471,6 +498,7 @@ class Parser():
             self.nodes.pop()
         else:
             prev = begintoken
+            text = str()
             for token in subtokens:
                 if token.line != prev.line:
                     if prev.key != 'CUSTOM_LINE':
@@ -828,7 +856,7 @@ class Parser():
             attr = m.group(1)
             if hasattr(self.rootnode.config, 'attrs'):
                 attrs = self.rootnode.config.attrs
-                return str(attrs[attr])
+                return str(attrs.get(attr, m.group(0)))
             else:
                 return m.group(0)
 

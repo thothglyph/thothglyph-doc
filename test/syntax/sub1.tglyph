@@ -1,5 +1,5 @@
 %%%
-title = 'Sub1 Document'
+¤include⸨sub1.conf.py⸩
 %%%
 
 ▮ Sub1 Doc Section 1
@@ -29,3 +29,7 @@ hogehoge
 ▮▮ Recursive include
 
 ¤include⸨./sub1.tglyph⸩
+
+▮▮ Config Inheritance
+
+Hi, ⁅author⁆. I am ⁅subauthor⁆.
