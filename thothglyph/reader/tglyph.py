@@ -54,7 +54,7 @@ class Lexer():
     inline_tokens = {
         'ATTR': r'⁅([A-Za-z0-9_\-]+)⁆',
         'ROLE': r'¤([A-Za-z]+)(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩',
-        'LINK': r'(?:⟦(.*)⟧)?⸨(.+)⸩',
+        'LINK': r'(?:⟦([^⟧]*)⟧)?⸨([^⸩]+)⸩',
         'FOOTNOTE': r'\[\^([\w\-.]+)\]',
         'REFERENCE': r'\[\#([\w\-.]+)\]',
         'EMPHASIS': r'⁒',
