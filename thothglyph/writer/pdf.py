@@ -28,7 +28,7 @@ class PdfWriter(LatexWriter):
             if dirname == '':
                 dirname = '.'
             tex_fpath = os.path.join(tmpdirname, '{}.tex'.format(fbname))
-            with open(tex_fpath, 'w') as f:
+            with open(tex_fpath, 'w', encoding=self.encoding) as f:
                 f.write(self.data)
             latex_cmds = [
                 'lualatex',

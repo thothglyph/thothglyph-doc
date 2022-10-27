@@ -15,6 +15,7 @@ class Writer():
             pass
 
     def __init__(self):
+        self.encoding = 'utf-8'
         self.data = str()
         self.rootnode = None
         self.__continue = False
@@ -80,6 +81,6 @@ class Writer():
         logger.info('{} write start.'.format(self.__class__.__name__))
         self.rootnode = node
         self.parse(node)
-        with open(fpath, 'w') as f:
+        with open(fpath, 'w', encoding=self.encoding) as f:
             f.write(self.data)
         logger.info('{} write finish.'.format(self.__class__.__name__))

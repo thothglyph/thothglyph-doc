@@ -36,7 +36,7 @@ class HtmlWriter(Writer):
         template_path = os.path.join(template_dir, self.target, 'index.html')
         if not os.path.exists(template_path):
             raise Exception('template not found: {}'.format(template_path))
-        with open(template_path, 'r') as f:
+        with open(template_path, 'r', encoding=self.encoding) as f:
             template = f.read()
         t = template.replace('{', '{{').replace('}', '}}')
         t = re.sub(r'\$\{\{([^}]+)\}\}', r'{\1}', t)
@@ -47,7 +47,7 @@ class HtmlWriter(Writer):
         with tempfile.TemporaryDirectory() as tmpdirname:
             self.tmpdirname = tmpdirname
             self.parse(node)
-            with open(fpath, 'w') as f:
+            with open(fpath, 'w', encoding=self.encoding) as f:
                 f.write(self.data)
         self.tmpdirname = None
 

@@ -698,7 +698,7 @@ class Parser():
         block = self.nodes[-1]
         if os.path.exists(path) and hasattr(block, 'text'):
             text = nd.TextNode()
-            with open(path, 'r') as f:
+            with open(path, 'r', encoding=self.reader.encoding) as f:
                 text.text = f.read().rstrip()
             block.text = text.text
         else:

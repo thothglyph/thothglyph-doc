@@ -7,14 +7,17 @@ logger = logging.getLogger(__file__)
 
 class Reader():
     def __init__(self, parent=None):
+        self.encoding = 'utf-8'
         self.parent = parent
         self.parser = None
         self.path = None
 
-    def read(self, path):
+    def read(self, path, encoding=None):
+        if encoding:
+            self.encoding = encoding
         logger.info('{} read start.'.format(self.__class__.__name__))
         self.path = path
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding=self.encoding) as f:
             data = f.read()
         node = self.parser.parse(data)
         self.set_sectnums(node)
