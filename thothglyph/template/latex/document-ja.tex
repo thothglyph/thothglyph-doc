@@ -24,7 +24,7 @@
 \usepackage{float}
 \usepackage{graphicx}
 \usepackage{caption}
-\usepackage{threeparttable}
+\usepackage{ltablex}
 \usepackage{multirow}
 \usepackage{varwidth}
 \usepackage{cellspace}
@@ -129,8 +129,12 @@
   \ifdim #1<\whatsleft
     \includegraphics[keepaspectratio,width=#1]{#2}
   \else{
+  \ifdim 0bp<\whatsleft
     % \includegraphics[keepaspectratio,width=\linewidth]{#2}
     \includegraphics[keepaspectratio,width=\whatsleft]{#2}
+  \else{
+    \includegraphics[keepaspectratio,width=-\whatsleft]{#2}
+  }\fi
   }\fi
 }
 \newcommand{\tgcaption}[1][l]{%

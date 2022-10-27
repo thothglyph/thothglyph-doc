@@ -186,23 +186,21 @@ class LatexWriter(Writer):
             col_aligns = '|{}|'.format('|'.join(node.aligns))
         else:
             col_aligns = '{}'.format(' '.join(node.aligns))
-        self.data += '\\begin{table}[H]\n'
-        self.data += '\\{}\n'.format(table_align_cmd[align])
-        self.data += '\\begin{threeparttable}\n'
+        self.data += '\\setlongtables\n'
+        self.data += '\\begin{tabularx}'
+        self.data += '{\\whatsleft}'
+        self.data += '[{}]'.format(align)
+        self.data += '{{{}}}\n'.format(col_aligns.upper())
         if isinstance(node.parent, nd.FigureBlockNode):
             opts = 'singlelinecheck=false,justification={}'
             opts = opts.format(table_align_cmd[align])
             self.data += '\\captionsetup{{{}}}\n'.format(opts)
-            self.data += '\\caption{{{}}}\n'.format(node.parent.caption)
-        self.data += '\\begin{tabular}'
-        self.data += '{{{}}}\n'.format(col_aligns.upper())
+            self.data += '\\caption{{{}}} \\\\\n'.format(node.parent.caption)
         self.data += '\\hline\n'
 
     def leave_tableblock(self, node):
         self.data += '\\hline\n'
-        self.data += '\\end{tabular}\n'
-        self.data += '\\end{threeparttable}\n'
-        self.data += '\\end{table}\n'
+        self.data += '\\end{tabularx}\n'
 
     def visit_tablerow(self, node):
         if node.idx > 0:
