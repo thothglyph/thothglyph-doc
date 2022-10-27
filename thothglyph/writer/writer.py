@@ -22,14 +22,13 @@ class Writer():
         self.rootnode = None
         self.__continue = False
 
-    def template_dir(self, target=None):
+    def template_dir(self):
         config = self.rootnode.config
         if hasattr(config, 'templatedir'):
             template_dir = config.templatedir
         else:
             libdir = os.path.join(os.path.dirname(__file__), '..')
-            target = target or self.target
-            template_dir = os.path.join(libdir, 'template', target)
+            template_dir = os.path.join(libdir, 'template')
         return template_dir
 
     def theme(self, target=None):
