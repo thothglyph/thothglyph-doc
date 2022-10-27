@@ -301,12 +301,12 @@ List Table 内はレベル2以上の Bullet List で構成されます。
 実際にキャプションが表示される位置は出力形式やテンプレートに依存します。
 
 ```
-⌗figure⸨caption⸩
-⌗image⸨./tglyph_64.png⸩
+¤figure⸨caption⸩
+¤image⸨./tglyph_64.png⸩
 ```
 
 ```
-⌗figure⸨caption⸩
+¤figure⸨caption⸩
 | head11 | head12 | head13 |
 | head21 | head22 | head23 |
 |--------|--------|--------|
@@ -316,7 +316,7 @@ List Table 内はレベル2以上の Bullet List で構成されます。
 ```
 
 ```
-⌗figure⸨caption⸩
+¤figure⸨caption⸩
 [Not Image.]
 ```
 
@@ -354,23 +354,23 @@ int main()
 
 ```
 ⸌⸌⸌c
-⌗include⸨./example.c⸩
+¤include⸨./example.c⸩
 ⸌⸌⸌
 ```
 
 ### Custom Block
 
-`⌗⌗⌗`という行で囲まれたブロックは Custom Block となります。
-始めの`⌗⌗⌗`に続き拡張名を記入することで様々な拡張機能を実行します。
+`¤¤¤`という行で囲まれたブロックは Custom Block となります。
+始めの`¤¤¤`に続き拡張名を記入することで様々な拡張機能を実行します。
 
 ```
-⌗⌗⌗graphviz
+¤¤¤graphviz
 digraph graph_name {
   alpha;
   beta;
   alpha -> beta;
 }
-⌗⌗⌗
+¤¤¤
 ```
 
 ### Horizontal Line
@@ -402,7 +402,7 @@ paragraph
 
 ### Role
 
-`⌗ロール名⟦オプション⟧⸨本文⸩`という構文は Role となります。
+`¤ロール名⟦オプション⟧⸨本文⸩`という構文は Role となります。
 `⟦オプション⟧`は省略可能です。
 
 ### Image Role
@@ -410,15 +410,15 @@ paragraph
 画像を挿入します。
 
 ```
-Thothglyph のアイコンはこちら: ⌗image⸨./tglyph_64.png⸩
+Thothglyph のアイコンはこちら: ¤image⸨./tglyph_64.png⸩
 ```
 
 オプションで画像の幅を設定できます。縦横比は固定です。
 
 ```
-ピクセル数で指定: ⌗image⟦w="150px"⟧⸨./tglyph_64.png⸩
+ピクセル数で指定: ¤image⟦w="150px"⟧⸨./tglyph_64.png⸩
 
-ページ幅の割合で指定: ⌗image⟦w="20%"⟧⸨./tglyph_64.png⸩
+ページ幅の割合で指定: ¤image⟦w="20%"⟧⸨./tglyph_64.png⸩
 ```
 
 ### Include Role
@@ -426,7 +426,7 @@ Thothglyph のアイコンはこちら: ⌗image⸨./tglyph_64.png⸩
 外部のtglyphファイルを解釈して挿入します。
 
 ```
-⌗include⸨./sub1.tglyph⸩
+¤include⸨./sub1.tglyph⸩
 ```
 
 ### Keyboard / Button / Menu Role
@@ -434,11 +434,11 @@ Thothglyph のアイコンはこちら: ⌗image⸨./tglyph_64.png⸩
 テキストの装飾の一種です。
 
 ```
-Type ⌗kbd⸨Ctrl A⸩ right now.
+Type ¤kbd⸨Ctrl A⸩ right now.
 
-Click ⌗btn⸨OK⸩ or ⌗btn⸨Cancel⸩.
+Click ¤btn⸨OK⸩ or ¤btn⸨Cancel⸩.
 
-Select ⌗menu⸨File > Quit⸩ to exit application.
+Select ¤menu⸨File > Quit⸩ to exit application.
 ```
 
 ### Hyper Link

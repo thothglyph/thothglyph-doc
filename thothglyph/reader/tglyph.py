@@ -24,10 +24,10 @@ class Lexer():
     block_tokens = {
         'CONFIG_LINE': r'%%%+$',
         'SECTION_TITLE_LINE': r' *((?:▮+)|(?:▯+))(\*?) +([^⟦]+) *(?:⟦([^⟧]*)⟧)?',
-        'CUSTOM_LINE': r'( *)⌗⌗⌗(.*)',
+        'CUSTOM_LINE': r'( *)¤¤¤(.*)',
         'CODE_LINE': r'( *)⸌⸌⸌(.*)',
-        'TOC_LINE': r' *⌗toc(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
-        'FIGURE_LINE': r' *⌗figure(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
+        'TOC_LINE': r' *¤toc(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
+        'FIGURE_LINE': r' *¤figure(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
         'TABLE_LINE': r'^ *\|.+\| *$',
         'LISTTABLE_BEGIN_LINE': r'^ *\|===(?:⟦([^⟧]*)⟧)? *$',
         'LISTTABLE_END_LINE': r'^ *===\| *$',
@@ -53,7 +53,7 @@ class Lexer():
 
     inline_tokens = {
         'ATTR': r'⁅([A-Za-z0-9_\-]+)⁆',
-        'ROLE': r'⌗([A-Za-z]+)(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩',
+        'ROLE': r'¤([A-Za-z]+)(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩',
         'LINK': r'(?:⟦(.*)⟧)?⸨(.+)⸩',
         'FOOTNOTE': r'\[\^([\w\-.]+)\]',
         'REFERENCE': r'\[\#([\w\-.]+)\]',
@@ -66,7 +66,7 @@ class Lexer():
         'SUP': r'⌃',
         'SUB': r'⌄',
         'BRACKET': r'\[[^\]]+\]',
-        'TEXT': r'[^⌗⁒⋄‗¬⫶⸌⌃⌄⟦⸨⁅[]+',
+        'TEXT': r'[^¤⁒⋄‗¬⫶⸌⌃⌄⟦⸨⁅[]+',
     }
     deco_keys = (
         'EMPHASIS',
