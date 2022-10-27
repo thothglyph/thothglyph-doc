@@ -40,7 +40,8 @@ class LatexWriter(Writer):
     def parse(self, node):
         super().parse(node)
         template_dir = self.template_dir(target=LatexWriter.target)
-        template_path = os.path.join(template_dir, LatexWriter.target, 'document-ja.tex')
+        theme = self.theme()
+        template_path = os.path.join(template_dir, theme, 'document-ja.tex')
         if not os.path.exists(template_path):
             raise Exception('template not found: {}'.format(template_path))
         with open(template_path, 'r', encoding=self.encoding) as f:

@@ -10,6 +10,8 @@ class Writer():
     target = 'unknown'
     ext = 'unknown'
 
+    default_theme = 'default'
+
     class DocData():
         def __init__(self):
             pass
@@ -27,8 +29,19 @@ class Writer():
         else:
             libdir = os.path.join(os.path.dirname(__file__), '..')
             target = target or self.target
-            template_dir = os.path.join(libdir, 'template')
+            template_dir = os.path.join(libdir, 'template', target)
         return template_dir
+
+    def theme(self, target=None):
+        config = self.rootnode.config
+        if hasattr(config, 'theme'):
+            theme = config.theme
+        else:
+            theme = Writer.default_theme
+        if isinstance(theme, dict):
+            target = target or self.target
+            theme = theme.get(target, Writer.default_theme)
+        return theme
 
     @property
     def template_docdata(self):

@@ -105,7 +105,8 @@ class DocxWriter(Writer):
 
     def parse(self, node):
         template_dir = self.template_dir()
-        template_path = os.path.join(template_dir, self.target, 'style.docx')
+        theme = self.theme()
+        template_path = os.path.join(template_dir, theme, 'style.docx')
         if not os.path.exists(template_path):
             raise Exception('template not found: {}'.format(template_path))
         # t = template.replace('{', '{{').replace('}', '}}')
