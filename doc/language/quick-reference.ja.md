@@ -469,6 +469,8 @@ First section: ⸨sect1⸩!
 文中に`[^ID]`と記入すると Footnote となります。
 別の場所で Footnote List ブロックに脚注の内容を記入します。
 ID には数字も可能です。ただし本文中に出現した順に番号が割り振られるため数値に意味はありません。
+ID はセクションレベル1以下で一意のものにする必要があります。
+セクションレベル1が異なる Footnote List は参照できません。
 
 ```
 The important text. [^1] And the important text too. [^2]

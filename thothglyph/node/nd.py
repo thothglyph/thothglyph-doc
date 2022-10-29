@@ -80,6 +80,12 @@ class ASTNode():
             node = node.parent
         return node
 
+    def _parent_table(self):
+        node = self
+        while node and not isinstance(node, TableBlockNode):
+            node = node.parent
+        return node
+
     def treeindex(self):
         if self.parent is None:
             return [0]
@@ -469,17 +475,12 @@ class FootnoteNode(ASTNode):
     def __init__(self, value=None):
         super().__init__()
         self.value = str() if value is None else value
+        self._description = None
 
     @property
     def description(self):
-        fns = []
-        for n, gofoward in self.root.walk_depth():
-            if gofoward and isinstance(n, FootnoteListBlockNode):
-                fns.append(n)
-        for fn in fns:
-            for item in fn.children:
-                if item.term == self.value:
-                    return item
+        if self._description:
+            return self._description
         msg = 'Footnote not found: {}'.format(self.value)
         logger.error(msg)
         fn = FootnoteListBlockNode()

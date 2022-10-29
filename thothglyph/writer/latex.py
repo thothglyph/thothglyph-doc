@@ -128,6 +128,8 @@ class LatexWriter(Writer):
                 self.data += '\\item[{\\tgcheck[im]}] '
             else:
                 self.data += '\\item[{\\tgcheck[dis]}] '
+        elif isinstance(node.parent, nd.FootnoteListBlockNode):
+            pass  # unreach
         elif isinstance(node.parent, nd.ReferenceListBlockNode):
             url = 'ref.{}'.format(node.ref_num)
             self.data += '\\bibitem{{{}}} '.format(url)
@@ -136,7 +138,7 @@ class LatexWriter(Writer):
 
     def leave_listitem(self, node):
         if isinstance(node.parent, nd.FootnoteListBlockNode):
-            self.data += '\n'
+            pass  # unreach
         elif isinstance(node.parent, nd.ReferenceListBlockNode):
             self.data += '\n'
 
@@ -203,6 +205,18 @@ class LatexWriter(Writer):
     def leave_tableblock(self, node):
         self.data += '\\hline\n'
         self.data += '\\end{tabularx}\n'
+
+        fns = list()
+        for n, gofoward in node.walk_depth():
+            if not gofoward:
+                continue
+            if isinstance(n, nd.FootnoteNode):
+                fns.append(n)
+        for i, fn in enumerate(fns):
+            self.data += '\\footnotetext[{}]{{\n'.format(fn.fn_num)
+            for n in fn.description.children:
+                Writer.parse(self, n)
+            self.data += '}\n'
 
     def visit_tablerow(self, node):
         if node.idx > 0:
@@ -379,11 +393,15 @@ class LatexWriter(Writer):
         pass
 
     def visit_footnote(self, node):
-        url = node.fn_num
-        self.data += '\\footnote[{}]{{'.format(url)
-        for n in node.description.children:
-            Writer.parse(self, n)
-        self.data += '}'
+        table = node._parent_table()
+        if table:
+            self.data += ' \\footnotemark[{}] '.format(node.fn_num)
+        else:
+            url = node.fn_num
+            self.data += '\\footnote[{}]{{'.format(url)
+            for n in node.description.children:
+                Writer.parse(self, n)
+            self.data += '}'
 
     def leave_footnote(self, node):
         pass

@@ -416,3 +416,30 @@ The important text. [^a] And the important text too. [^b]
   •• abcdefg
   •• The ⸌long_long_long_long code⸌ and ⸌longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong code⸌ text.
 ===|
+
+▮▮ Footnote within Table
+
+The important text. [^_1] And the important text too. [^_2]
+
+| head11 | head12 | head13 |
+|--------|--------|--------|
+| data11 | data12 [^X] | data13 |
+| data21 | data22 | data23 [^Y] |
+
+The important text. [^A] And the important text too. [^B]
+
+▮▮▮ Repeat
+
+| head11 | head12 | head13 |
+|--------|--------|--------|
+| data11 | data12 [^s] | data13 |
+| data21 | data22 | data23 [^t] |
+
+•[^_1] This is New footnote.
+•[^_2] This is New footnote too.
+•[^X] Footnote 1-1 within Table
+•[^Y] Footnote 1-2 within Table
+•[^A] This is New footnote three.
+•[^B] This is ⸌|@#$%{^&*(})\!⸌.
+•[^s] Footnote 2-1 within Table
+•[^t] Footnote 2-2 within Table
