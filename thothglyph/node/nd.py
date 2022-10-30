@@ -285,6 +285,7 @@ class TableBlockNode(ASTNode):
 
     def __init__(self):
         super().__init__()
+        self.type = 'normal'  # 'normal', 'long'
         self.row = 0
         self.col = 0
         self.headers = 0

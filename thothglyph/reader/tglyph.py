@@ -29,7 +29,7 @@ class Lexer():
         'TOC_LINE': r' *¤toc(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
         'FIGURE_LINE': r' *¤figure(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
         'TABLE_LINE': r'^ *\|.+\| *$',
-        'LISTTABLE_BEGIN_LINE': r'^ *\|===(?:⟦([^⟧]*)⟧)? *$',
+        'LISTTABLE_BEGIN_LINE': r'^ *\|=== *(?:⟦([^⟧]*)⟧)? *$',
         'LISTTABLE_END_LINE': r'^ *===\| *$',
         'FOOTNOTE_LIST_SYMBOL': r' *•\[\^(.+)\] +',
         'REFERENCE_LIST_SYMBOL': r' *•\[\#(.+)\] +',
@@ -565,6 +565,7 @@ class Parser():
                 header_splitter = i
             else:
                 tabletexts.append(rowtexts)
+        # table.type = opts.get('type', 'normal')
         if len(aligns) == 0:
             aligns = ['c' for i in range(len(tabletexts[0]))]
         table.aligns = aligns
@@ -635,6 +636,7 @@ class Parser():
         rowitems = header_rowlist.children + data_rowlist.children
         for node in table.children[:]:
             table.remove(node)
+        table.type = opts.get('type', 'normal')
         table.aligns = ['l' for i in range(len(rowitems[0].children[0].children))]
         for i, align in enumerate(opts.get('align', '')):
             table.aligns[i] = align

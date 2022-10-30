@@ -322,6 +322,8 @@ class DocxWriter(Writer):
                 table.alignment = WD_TABLE_ALIGNMENT.CENTER
             elif align == 'r':
                 table.alignment = WD_TABLE_ALIGNMENT.RIGHT
+            else:
+                table.alignment = WD_TABLE_ALIGNMENT.LEFT
         for raw in table.rows:
             for c in raw._tr.tc_lst:
                 tcW = c.tcPr.tcW

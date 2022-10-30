@@ -197,18 +197,6 @@ new paragraph text text new 1.
     | c | d |
   •• C
 • •• D
-  •• E
-  •• F
-===|
-
-⸌⸌⸌
-|===
-• •• A
-  •• B
-    | a | b |
-    | c | d |
-  •• C
-• •• D
     |===
     • •• a
       •• b
@@ -224,7 +212,6 @@ new paragraph text text new 1.
   •• E
   •• F
 ===|
-⸌⸌⸌
 
 ▮▮ Figure
 
@@ -449,7 +436,7 @@ The important text. [^a] And the important text too. [^b]
 
 ▮▮ Wide Table
 
-|===
+|===⟦align="llx"⟧
 • •• 128456789012345678901234567890
   •• abcdefg
   •• The ⸌long_long_long_long code⸌ and ⸌longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong code⸌ text.
@@ -484,7 +471,7 @@ The important text. [^A] And the important text too. [^B]
 
 ▮▮ Long Table
 
-|===
+|===⟦type="long"⟧
 • •• 128456789012345678901234567890
   •• abcdefg
   •• abcdefg

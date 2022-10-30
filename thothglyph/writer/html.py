@@ -220,7 +220,7 @@ class HtmlWriter(Writer):
             tagname = 'th'
         if node.mergeto is None:
             s = node.size
-            align = {'l': 'left', 'c': 'center', 'r': 'right'}
+            align = {'l': 'left', 'c': 'center', 'r': 'right', 'x': 'left'}
             attrs = ['style="text-align:{}"'.format(align[node.align])]
             attrs += ['colspan="{}"'.format(s.x), 'rowspan="{}"'.format(s.y)]
             self.data += '<{} {}>'.format(tagname, ' '.join(attrs))
