@@ -24,12 +24,12 @@ class Lexer():
     block_tokens = {
         'CONFIG_LINE': r'%%%+$',
         'SECTION_TITLE_LINE': r' *((?:▮+)|(?:▯+))(\*?) +([^⟦]+) *(?:⟦([^⟧]*)⟧)?',
-        'CUSTOM_LINE': r'( *)⌗⌗⌗(.*)',
+        'CUSTOM_LINE': r'( *)¤¤¤(.*)',
         'CODE_LINE': r'( *)⸌⸌⸌(.*)',
-        'TOC_LINE': r' *⌗toc(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
-        'FIGURE_LINE': r' *⌗figure(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
+        'TOC_LINE': r' *¤toc(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
+        'FIGURE_LINE': r' *¤figure(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
         'TABLE_LINE': r'^ *\|.+\| *$',
-        'LISTTABLE_BEGIN_LINE': r'^ *\|===(?:⟦([^⟧]*)⟧)? *$',
+        'LISTTABLE_BEGIN_LINE': r'^ *\|=== *(?:⟦([^⟧]*)⟧)? *$',
         'LISTTABLE_END_LINE': r'^ *===\| *$',
         'FOOTNOTE_LIST_SYMBOL': r' *•\[\^(.+)\] +',
         'REFERENCE_LIST_SYMBOL': r' *•\[\#(.+)\] +',
@@ -53,8 +53,8 @@ class Lexer():
 
     inline_tokens = {
         'ATTR': r'⁅([A-Za-z0-9_\-]+)⁆',
-        'ROLE': r'⌗([A-Za-z]+)(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩',
-        'LINK': r'(?:⟦(.*)⟧)?⸨(.+)⸩',
+        'ROLE': r'¤([A-Za-z]+)(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩',
+        'LINK': r'(?:⟦([^⟧]*)⟧)?⸨([^⸩]+)⸩',
         'FOOTNOTE': r'\[\^([\w\-.]+)\]',
         'REFERENCE': r'\[\#([\w\-.]+)\]',
         'EMPHASIS': r'⁒',
@@ -66,7 +66,7 @@ class Lexer():
         'SUP': r'⌃',
         'SUB': r'⌄',
         'BRACKET': r'\[[^\]]+\]',
-        'TEXT': r'[^⌗⁒⋄‗¬⫶⸌⌃⌄⟦⸨⁅[]+',
+        'TEXT': r'[^¤⁒⋄‗¬⫶⸌⌃⌄⟦⸨⁅[]+',
     }
     deco_keys = (
         'EMPHASIS',
@@ -143,26 +143,54 @@ class Parser():
         tokens = self.p_ignore_emptylines(tokens)
 
     def p_configblock(self, tokens):
-        prev = begintoken = tokens.pop(0)
         document = self.nodes[-1]
         if not isinstance(document, nd.DocumentNode):
-            msg = 'config must be under document. {}'.format(begintoken)
+            msg = 'config must be under document. {}'.format(tokens[0])
             raise Exception(msg)
         config = nd.ConfigNode()
+        if self.reader.parent:
+            pconfig = self.reader.parent.parser.nodes[0].config
+            pattrs = dict(pconfig.__dict__)
+            for key in ('parent', 'children', 'id'):
+                pattrs.pop(key)
+            for key in pattrs:
+                setattr(config, key, pattrs[key])
         document.config = config
-        text = str()
+        begintoken = tokens[0]
+        tokens.pop(0)
+        subtokens = list()
         while tokens:
             if tokens[0].key == 'CONFIG_LINE':
                 break
-            text += tokens[0].value
-            if tokens[0].line != prev.line:
-                text += '\n'
-            prev = tokens.pop(0)
+            subtokens.append(tokens.pop(0))
         else:
-            msg = 'configblock is not closed. {}'.format(begintoken)
-            raise Exception(msg)
+            raise Exception(begintoken)
         tokens.pop(0)
-        config.parse(text)
+        # config.parse(text)
+        m = re.match(Lexer.inline_tokens['ROLE'], subtokens[0].value) if subtokens else None
+        if m and m.group(1) == 'include':
+            role = nd.RoleNode()
+            role.role = m.group(1)
+            role.opts = m.group(2).split(',') if m.group(2) is not None else ['']
+            role.value = self.replace_text_attrs(m.group(3))
+            text = nd.TextNode()
+            self.nodes.append(text)
+            self.p_plaininclude(subtokens, role)
+            self.nodes.pop()
+            config.parse(text.text)
+        else:
+            prev = begintoken
+            text = str()
+            for token in subtokens:
+                if token.line != prev.line:
+                    if prev.key != 'CINFIG_LINE':
+                        text += '\n'
+                    text += token.value[0:]
+                else:
+                    text += token.value
+                prev = token
+            text = self.replace_text_attrs(text)
+            config.parse(text)
         return tokens
 
     @property
@@ -409,7 +437,6 @@ class Parser():
         code = nd.CodeBlockNode()
         code.lang = m.group(1)
         self.nodes[-1].add(code)
-        text = str()
         begintoken = tokens[0]
         tokens.pop(0)
         subtokens = list()
@@ -430,6 +457,7 @@ class Parser():
             self.p_plaininclude(subtokens, role)
             self.nodes.pop()
         else:
+            text = str()
             prev = begintoken
             for token in subtokens:
                 if token.line != prev.line:
@@ -449,7 +477,6 @@ class Parser():
         custom = nd.CustomBlockNode()
         custom.ext = m.group(2)
         self.nodes[-1].add(custom)
-        text = str()
         begintoken = tokens[0]
         tokens.pop(0)
         subtokens = list()
@@ -471,6 +498,7 @@ class Parser():
             self.nodes.pop()
         else:
             prev = begintoken
+            text = str()
             for token in subtokens:
                 if token.line != prev.line:
                     if prev.key != 'CUSTOM_LINE':
@@ -537,6 +565,7 @@ class Parser():
                 header_splitter = i
             else:
                 tabletexts.append(rowtexts)
+        # table.type = opts.get('type', 'normal')
         if len(aligns) == 0:
             aligns = ['c' for i in range(len(tabletexts[0]))]
         table.aligns = aligns
@@ -582,10 +611,15 @@ class Parser():
         m = re.match(Lexer.block_tokens['LISTTABLE_BEGIN_LINE'], tokens[0].value)
         opts = nd.parse_optargs(m.group(1))
         tokens.pop(0)
+        nested = 1
         subtokens = list()
         while tokens:
+            if tokens[0].key == 'LISTTABLE_BEGIN_LINE':
+                nested += 1
             if tokens[0].key == 'LISTTABLE_END_LINE':
-                break
+                nested -= 1
+                if nested == 0:
+                    break
             subtokens.append(tokens.pop(0))
         tokens.pop(0)
         table = nd.TableBlockNode()
@@ -602,6 +636,7 @@ class Parser():
         rowitems = header_rowlist.children + data_rowlist.children
         for node in table.children[:]:
             table.remove(node)
+        table.type = opts.get('type', 'normal')
         table.aligns = ['l' for i in range(len(rowitems[0].children[0].children))]
         for i, align in enumerate(opts.get('align', '')):
             table.aligns[i] = align
@@ -698,7 +733,7 @@ class Parser():
         block = self.nodes[-1]
         if os.path.exists(path) and hasattr(block, 'text'):
             text = nd.TextNode()
-            with open(path, 'r') as f:
+            with open(path, 'r', encoding=self.reader.encoding) as f:
                 text.text = f.read().rstrip()
             block.text = text.text
         else:
@@ -828,7 +863,7 @@ class Parser():
             attr = m.group(1)
             if hasattr(self.rootnode.config, 'attrs'):
                 attrs = self.rootnode.config.attrs
-                return str(attrs[attr])
+                return str(attrs.get(attr, m.group(0)))
             else:
                 return m.group(0)
 

@@ -105,7 +105,9 @@ class DocxWriter(Writer):
 
     def parse(self, node):
         template_dir = self.template_dir()
-        template_path = os.path.join(template_dir, self.target, 'style.docx')
+        target = self.target
+        theme = self.theme()
+        template_path = os.path.join(template_dir, target, theme, 'style.docx')
         if not os.path.exists(template_path):
             raise Exception('template not found: {}'.format(template_path))
         # t = template.replace('{', '{{').replace('}', '}}')
@@ -320,6 +322,8 @@ class DocxWriter(Writer):
                 table.alignment = WD_TABLE_ALIGNMENT.CENTER
             elif align == 'r':
                 table.alignment = WD_TABLE_ALIGNMENT.RIGHT
+            else:
+                table.alignment = WD_TABLE_ALIGNMENT.LEFT
         for raw in table.rows:
             for c in raw._tr.tc_lst:
                 tcW = c.tcPr.tcW

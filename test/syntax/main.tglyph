@@ -9,7 +9,7 @@ attrs = {'author': 'Foo Bar'}
 
 ▮* Table of contents
 
-⌗toc⟦level="1"⟧⸨⸩
+¤toc⟦level="1"⟧⸨⸩
 
 ▮ Section
 
@@ -175,7 +175,7 @@ new paragraph text text new 1.
 ◃
 • •• data11
   •• data12
-  •• ⌗image⟦alt="Alt Text"⟧⸨./tglyph_64.png⸩
+  •• ¤image⟦alt="Alt Text"⟧⸨./tglyph_64.png⸩
 
 • •• ••• item1
      ••• item2
@@ -188,15 +188,40 @@ new paragraph text text new 1.
   •• C
 ===|
 
+▮▮▮ Nested Table
+
+|===
+• •• A
+  •• B
+    | a | b |
+    | c | d |
+  •• C
+• •• D
+    |===
+    • •• a
+      •• b
+    • •• c
+      •• 
+      |===
+      • •• a
+        •• b
+      • •• c
+        •• d
+      ===|
+    ===|
+  •• E
+  •• F
+===|
+
 ▮▮ Figure
 
-⌗figure⸨caption⸩
-⌗image⟦alt="Alt Text"⟧⸨./tglyph_64.png⸩
+¤figure⸨caption⸩
+¤image⟦alt="Alt Text"⟧⸨./tglyph_64.png⸩
 
-⌗figure⸨caption⸩
+¤figure⸨caption⸩
 [Not Image.]
 
-⌗figure⸨caption⸩
+¤figure⸨caption⸩
 | head11 | head12 | head13 |
 | head21 | head22 | head23 |
 |--------|--------|--------|
@@ -254,18 +279,18 @@ int main()
 ⸌⸌⸌
 
 ⸌⸌⸌c
-⌗include⸨./example.c⸩
+¤include⸨./example.c⸩
 ⸌⸌⸌
 
 ▮▮ CustomBlock
 
-⌗⌗⌗graphviz
+¤¤¤graphviz
 digraph graph_name {
   alpha;
   beta;
   alpha -> beta;
 }
-⌗⌗⌗
+¤¤¤
 
 ▮▮ HorizonBlock
 
@@ -287,37 +312,39 @@ The ⫶var⫶ and ⸌code⸌ text.
 
 ▮▮ Image
 
-Image in paragraph like ⌗image⸨./tglyph_64.png⸩.
+Image in paragraph like ¤image⸨./tglyph_64.png⸩.
 
-Image in paragraph like ⌗image⟦alt="Alt Text" w="150px"⟧⸨./tglyph_64.png⸩.
+Image in paragraph like ¤image⟦alt="Alt Text" w="150px"⟧⸨./tglyph_64.png⸩.
 
-Image in paragraph like ⌗image⟦alt="Alt Text" w="20%"⟧⸨./tglyph_64.png⸩.
+Image in paragraph like ¤image⟦alt="Alt Text" w="20%"⟧⸨./tglyph_64.png⸩.
 
-Image in paragraph like ⌗image⸨./tglyph.svg⸩.
+Image in paragraph like ¤image⸨./tglyph.svg⸩.
 
 ▮▮ Include
 
 ==Start of include==
 
-⌗include⸨./sub1.tglyph⸩
+¤include⸨./sub1.tglyph⸩
 
-⌗include⸨./sub1.tglyph⸩
+¤include⸨./sub1.tglyph⸩
 
 ==End of include==
 
 ▮▮ Keyboard / Button / Menu
 
-Type ⌗kbd⸨Ctrl A⸩ right now.
+Type ¤kbd⸨Ctrl A⸩ right now.
 
-Click ⌗btn⸨OK⸩ or ⌗btn⸨Cancel⸩.
+Click ¤btn⸨OK⸩ or ¤btn⸨Cancel⸩.
 
-Select ⌗menu⸨File > Quit⸩ to exit application.
+Select ¤menu⸨File > Quit⸩ to exit application.
 
 ▮▮ HyperLink
 
 Search ⸨https://www.yahoo.com/⸩ !
 
 For more information, check ⟦here⟧⸨https://www.google.com/⸩ !
+
+⸨https://www.yahoo.com/⸩ and ⸨https://www.google.com/⸩
 
 ▮▮ CrossReference
 
@@ -393,13 +420,13 @@ The important text. [^a] And the important text too. [^b]
 
 ▮▮ Figure numbering
 
-⌗figure⸨caption⸩
-⌗image⟦alt="Alt Text"⟧⸨./tglyph_64.png⸩
+¤figure⸨caption⸩
+¤image⟦alt="Alt Text"⟧⸨./tglyph_64.png⸩
 
-⌗figure⸨caption⸩
+¤figure⸨caption⸩
 [Not Image.]
 
-⌗figure⸨caption⸩
+¤figure⸨caption⸩
 | head11 | head12 | head13 |
 | head21 | head22 | head23 |
 |--------|--------|--------|
@@ -409,8 +436,182 @@ The important text. [^a] And the important text too. [^b]
 
 ▮▮ Wide Table
 
-|===
+|===⟦align="llx"⟧
 • •• 128456789012345678901234567890
   •• abcdefg
   •• The ⸌long_long_long_long code⸌ and ⸌longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong code⸌ text.
+===|
+
+▮▮ Footnote within Table
+
+The important text. [^_1] And the important text too. [^_2]
+
+| head11 | head12 | head13 |
+|--------|--------|--------|
+| data11 | data12 [^X] | data13 |
+| data21 | data22 | data23 [^Y] |
+
+The important text. [^A] And the important text too. [^B]
+
+▮▮▮ Repeat
+
+| head11 | head12 | head13 |
+|--------|--------|--------|
+| data11 | data12 [^s] | data13 |
+| data21 | data22 | data23 [^t] |
+
+•[^_1] This is New footnote.
+•[^_2] This is New footnote too.
+•[^X] Footnote 1-1 within Table
+•[^Y] Footnote 1-2 within Table
+•[^A] This is New footnote three.
+•[^B] This is ⸌|@#$%{^&*(})\!⸌.
+•[^s] Footnote 2-1 within Table
+•[^t] Footnote 2-2 within Table
+
+▮▮ Long Table
+
+|===⟦type="long"⟧
+• •• 128456789012345678901234567890
+  •• abcdefg
+  •• abcdefg
+• •• 128456789012345678901234567890
+  •• abcdefg
+  •• abcdefg 0
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg 1
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg 2
+
+     abcdefg
+• •• 128456789012345678901234567890
+  •• abcdefg
+  •• abcdefg 0
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg 1
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg 2
+
+     abcdefg
+• •• 128456789012345678901234567890
+  •• abcdefg
+  •• ••• abcdefg 0
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg 1
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg 2
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg 3
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg 4
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg 5
+     ••• abcdefg
 ===|

@@ -33,10 +33,12 @@ class HtmlWriter(Writer):
     def parse(self, node):
         super().parse(node)
         template_dir = self.template_dir()
-        template_path = os.path.join(template_dir, self.target, 'index.html')
+        target = self.target
+        theme = self.theme()
+        template_path = os.path.join(template_dir, target, theme, 'index.html')
         if not os.path.exists(template_path):
             raise Exception('template not found: {}'.format(template_path))
-        with open(template_path, 'r') as f:
+        with open(template_path, 'r', encoding=self.encoding) as f:
             template = f.read()
         t = template.replace('{', '{{').replace('}', '}}')
         t = re.sub(r'\$\{\{([^}]+)\}\}', r'{\1}', t)
@@ -47,7 +49,7 @@ class HtmlWriter(Writer):
         with tempfile.TemporaryDirectory() as tmpdirname:
             self.tmpdirname = tmpdirname
             self.parse(node)
-            with open(fpath, 'w') as f:
+            with open(fpath, 'w', encoding=self.encoding) as f:
                 f.write(self.data)
         self.tmpdirname = None
 
@@ -218,7 +220,7 @@ class HtmlWriter(Writer):
             tagname = 'th'
         if node.mergeto is None:
             s = node.size
-            align = {'l': 'left', 'c': 'center', 'r': 'right'}
+            align = {'l': 'left', 'c': 'center', 'r': 'right', 'x': 'left'}
             attrs = ['style="text-align:{}"'.format(align[node.align])]
             attrs += ['colspan="{}"'.format(s.x), 'rowspan="{}"'.format(s.y)]
             self.data += '<{} {}>'.format(tagname, ' '.join(attrs))

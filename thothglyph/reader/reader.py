@@ -7,14 +7,17 @@ logger = logging.getLogger(__file__)
 
 class Reader():
     def __init__(self, parent=None):
+        self.encoding = 'utf-8'
         self.parent = parent
         self.parser = None
         self.path = None
 
-    def read(self, path):
+    def read(self, path, encoding=None):
+        if encoding:
+            self.encoding = encoding
         logger.info('{} read start.'.format(self.__class__.__name__))
         self.path = path
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding=self.encoding) as f:
             data = f.read()
         node = self.parser.parse(data)
         self.set_sectnums(node)
@@ -39,7 +42,7 @@ class Reader():
                     level -= 1
 
     def set_footnote_nums(self, rootnode):
-        footnotes = dict()
+        footnotes = dict()  # footnotes[sect][id]
         references = dict()
         LI = nd.ListItemNode
         FNLB = nd.FootnoteListBlockNode
@@ -47,15 +50,26 @@ class Reader():
         # Footnote
         for n, gofoward in rootnode.walk_depth():
             if gofoward and isinstance(n, nd.FootnoteNode):
-                footnotes.setdefault(n.value, list())
-                footnotes[n.value].append(n)
+                sect = str(n.treeindex()[:2])
+                footnotes.setdefault(sect, dict())
+                footnotes[sect].setdefault(n.value, list())
+                footnotes[sect][n.value].append(n)
         for n, gofoward in rootnode.walk_depth():
             if gofoward and isinstance(n, LI) and isinstance(n.parent, FNLB):
-                footnotes.setdefault(n.term, list())
-                footnotes[n.term].append(n)
-        for i, key in enumerate(footnotes):
-            for n in footnotes[key]:
-                n.fn_num = i + 1
+                sect = str(n.treeindex()[:2])
+                footnotes.setdefault(sect, dict())
+                footnotes[sect].setdefault(n.term, list())
+                footnotes[sect][n.term].insert(0, n)
+        fngi = 0
+        for si, sect in enumerate(footnotes):
+            for i, key in enumerate(footnotes[sect]):
+                fngi += 1
+                for n in footnotes[sect][key]:
+                    n.fn_num = fngi
+                if footnotes[sect][key] and isinstance(footnotes[sect][key][0], LI):
+                    footnotes[sect][key][0].footnotes = footnotes[sect][key][1:]
+                    for n in footnotes[sect][key][1:]:
+                        n._description = footnotes[sect][key][0]
         # Reference
         for n, gofoward in rootnode.walk_depth():
             if gofoward and isinstance(n, LI) and isinstance(n.parent, RFLB):

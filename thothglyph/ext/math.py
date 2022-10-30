@@ -27,7 +27,7 @@ latextemplate = r'''
 
 def _get_svgstr(tmpdirname, text, mathmode):
     if tmpdirname:
-        with open(os.path.join(tmpdirname, 'math.tex'), 'w') as f:
+        with open(os.path.join(tmpdirname, 'math.tex'), 'w', encoding='utf-8') as f:
             t = latextemplate
             latextext = t % (mathmode, text, mathmode)
             f.write(latextext)

@@ -39,11 +39,13 @@ class LatexWriter(Writer):
 
     def parse(self, node):
         super().parse(node)
-        template_dir = self.template_dir(target=LatexWriter.target)
-        template_path = os.path.join(template_dir, LatexWriter.target, 'document-ja.tex')
+        template_dir = self.template_dir()
+        target = LatexWriter.target
+        theme = self.theme()
+        template_path = os.path.join(template_dir, target, theme, 'document-ja.tex')
         if not os.path.exists(template_path):
             raise Exception('template not found: {}'.format(template_path))
-        with open(template_path, 'r') as f:
+        with open(template_path, 'r', encoding=self.encoding) as f:
             template = f.read()
         t = template.replace('{', '{{').replace('}', '}}')
         t = re.sub(r'\$\{\{([^}]+)\}\}', r'{\1}', t)
@@ -54,7 +56,7 @@ class LatexWriter(Writer):
         with tempfile.TemporaryDirectory() as tmpdirname:
             self.tmpdirname = tmpdirname
             self.parse(node)
-            with open(fpath, 'w') as f:
+            with open(fpath, 'w', encoding=self.encoding) as f:
                 f.write(self.data)
         self.tmpdirname = None
 
@@ -126,6 +128,8 @@ class LatexWriter(Writer):
                 self.data += '\\item[{\\tgcheck[im]}] '
             else:
                 self.data += '\\item[{\\tgcheck[dis]}] '
+        elif isinstance(node.parent, nd.FootnoteListBlockNode):
+            pass  # unreach
         elif isinstance(node.parent, nd.ReferenceListBlockNode):
             url = 'ref.{}'.format(node.ref_num)
             self.data += '\\bibitem{{{}}} '.format(url)
@@ -134,7 +138,7 @@ class LatexWriter(Writer):
 
     def leave_listitem(self, node):
         if isinstance(node.parent, nd.FootnoteListBlockNode):
-            self.data += '\n'
+            pass  # unreach
         elif isinstance(node.parent, nd.ReferenceListBlockNode):
             self.data += '\n'
 
@@ -159,17 +163,18 @@ class LatexWriter(Writer):
             'c': 'centering',
             'r': 'raggedleft',
         }
-        if not isinstance(node.children[0], nd.TableBlockNode):
-            self.data += '\\begin{figure}[H]\n'
-            self.data += '\\{}\n'.format(table_align_cmd[align])
-            opts = 'singlelinecheck=false,justification={}'
-            opts = opts.format(table_align_cmd[align])
-            self.data += '\\captionsetup{{{}}}\n'.format(opts)
-            self.data += '\\caption{{{}}}\n'.format(node.caption)
+        self.data += '\\begin{figure}[H]\n'
+        self.data += '\\{}\n'.format(table_align_cmd[align])
+        opts = 'singlelinecheck=false,justification={}'
+        opts = opts.format(table_align_cmd[align])
+        self.data += '\\captionsetup{{{}}}\n'.format(opts)
+        if isinstance(node.children[0], nd.TableBlockNode):
+            self.data += '\\captionof{{table}}{{{}}}\n'.format(node.caption)
+        else:
+            self.data += '\\captionof{{figure}}{{{}}}\n'.format(node.caption)
 
     def leave_figureblock(self, node):
-        if not isinstance(node.children[0], nd.TableBlockNode):
-            self.data += '\\end{figure}\n'
+        self.data += '\\end{figure}\n'
 
     style_gridtable = True
 
@@ -182,45 +187,65 @@ class LatexWriter(Writer):
             'c': 'centering',
             'r': 'raggedleft',
         }
+        aligns = node.aligns[:]
+        for i, a in enumerate(aligns):
+            if a == 'x':
+                aligns[i] = 'X[l]'
+            else:
+                aligns[i] = a
         if self.style_gridtable:
-            col_aligns = '|{}|'.format('|'.join(node.aligns))
+            col_aligns = '|{}|'.format('|'.join(aligns))
         else:
-            col_aligns = '{}'.format(' '.join(node.aligns))
-        self.data += '\\begin{table}[H]\n'
-        self.data += '\\{}\n'.format(table_align_cmd[align])
-        self.data += '\\begin{threeparttable}\n'
-        if isinstance(node.parent, nd.FigureBlockNode):
-            opts = 'singlelinecheck=false,justification={}'
-            opts = opts.format(table_align_cmd[align])
-            self.data += '\\captionsetup{{{}}}\n'.format(opts)
-            self.data += '\\caption{{{}}}\n'.format(node.parent.caption)
-        self.data += '\\begin{tabular}'
-        self.data += '{{{}}}\n'.format(col_aligns.upper())
-        self.data += '\\hline\n'
+            col_aligns = '{}'.format(' '.join(aligns))
+        if not node._parent_table():
+            self.data += '\\{}'.format(table_align_cmd[align])
+            if node.type == 'long':
+                self.data += '\\begin{longtblr}\n'
+            # elif isinstance(node.parent, nd.FigureBlockNode):
+            #     self.data += '\\begin{talltblr}\n'
+            else:
+                self.data += '\\begin{tblr}\n'
+            self.data += '['
+            self.data += 'entry=none, label=none,'
+            self.data += ']\n'
+        else:
+            self.data += '\\begin{tblr}\n'
+        self.data += '{'
+        self.data += 'colspec = {{{}}}, '.format(col_aligns)
+        self.data += 'hlines, vlines, '
+        self.data += 'measure = vbox, '
+        self.data += '}\n'
 
     def leave_tableblock(self, node):
-        self.data += '\\hline\n'
-        self.data += '\\end{tabular}\n'
-        self.data += '\\end{threeparttable}\n'
-        self.data += '\\end{table}\n'
+        if not node._parent_table():
+            if node.type == 'long':
+                self.data += '\\end{longtblr}\n\n'
+            # elif isinstance(node.parent, nd.FigureBlockNode):
+            #     self.data += '\\end{talltblr}\n\n'
+            else:
+                self.data += '\\end{tblr}\n\n'
+        else:
+            self.data += '\\end{tblr}\n\n'
+
+        fns = list()
+        for n, gofoward in node.walk_depth():
+            if not gofoward:
+                continue
+            if isinstance(n, nd.FootnoteNode):
+                fns.append(n)
+        for i, fn in enumerate(fns):
+            self.data += '\\footnotetext[{}]{{\n'.format(fn.fn_num)
+            for n in fn.description.children:
+                Writer.parse(self, n)
+            self.data += '}\n'
 
     def visit_tablerow(self, node):
         if node.idx > 0:
-            row = node
-            cline_cols = list()
-            for i in range(len(row.children)):
-                cell = row.children[i]
-                if cell.mergeto and cell.mergeto.parent.idx < cell.parent.idx:
-                    pass
-                else:
-                    cline_cols.append(i + 1)
-            clines = ''.join(['\\cline{{{}-{}}}'.format(c, c) for c in cline_cols])
             self.data += ' \\\\\n'
-            self.data += clines + '\n'
-        if node.tp == 'header':
-            self.data += '\\tgthrowcolor\n'
-        else:
-            self.data += '\\tgtdrowcolor\n'
+        # if node.tp == 'header':
+        #     self.data += '\\tgthrowcolor\n'
+        # else:
+        #     self.data += '\\tgtdrowcolor\n'
 
     def leave_tablerow(self, node):
         if node.idx == len(node.parent.children) - 1:
@@ -248,8 +273,7 @@ class LatexWriter(Writer):
         else:
             if node.idx != 0:
                 self.data += ' & '
-            self.data += '\\measureremainder{\\whatsleft}'
-            self.data += '\n\\begin{varwidth}{\\whatsleft}\n'
+            self.data += '\n{\\begin{varwidth}{\\linewidth}\n'
 
     def leave_tablecell(self, node):
         if len(node.children) == 1 and isinstance(node.children[0], nd.TextNode):
@@ -265,7 +289,7 @@ class LatexWriter(Writer):
                     if s.x > 1:
                         self.data += '}'
         else:
-            self.data += '\n\\end{varwidth}\n'
+            self.data += '\n\\end{varwidth}}\n'
 
     def visit_customblock(self, node):
         if node.ext == '':
@@ -379,11 +403,15 @@ class LatexWriter(Writer):
         pass
 
     def visit_footnote(self, node):
-        url = node.fn_num
-        self.data += '\\footnote[{}]{{'.format(url)
-        for n in node.description.children:
-            Writer.parse(self, n)
-        self.data += '}'
+        table = node._parent_table()
+        if table:
+            self.data += ' \\footnotemark[{}] '.format(node.fn_num)
+        else:
+            url = node.fn_num
+            self.data += '\\footnote[{}]{{'.format(url)
+            for n in node.description.children:
+                Writer.parse(self, n)
+            self.data += '}'
 
     def leave_footnote(self, node):
         pass

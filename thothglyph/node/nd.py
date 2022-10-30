@@ -75,8 +75,14 @@ class ASTNode():
         return node
 
     def _parent_section(self):
-        node = self
+        node = self.parent
         while not isinstance(node, SectionNode):
+            node = node.parent
+        return node
+
+    def _parent_table(self):
+        node = self.parent
+        while node and not isinstance(node, TableBlockNode):
             node = node.parent
         return node
 
@@ -104,6 +110,7 @@ class ConfigNode(ASTNode):
         self.title = 'Document Title'
         self.version = str()
         self.author = str()
+        self.attrs = dict()
 
     def parse(self, text):
         exec(text)
@@ -118,7 +125,10 @@ class ConfigNode(ASTNode):
                 params.pop(key)
         for key in params:
             value = params[key]
-            setattr(self, key, value)
+            if key == 'attrs':
+                self.attrs.update(value)
+            else:
+                setattr(self, key, value)
 
 
 class SectionNode(ASTNode):
@@ -275,6 +285,7 @@ class TableBlockNode(ASTNode):
 
     def __init__(self):
         super().__init__()
+        self.type = 'normal'  # 'normal', 'long'
         self.row = 0
         self.col = 0
         self.headers = 0
@@ -465,17 +476,12 @@ class FootnoteNode(ASTNode):
     def __init__(self, value=None):
         super().__init__()
         self.value = str() if value is None else value
+        self._description = None
 
     @property
     def description(self):
-        fns = []
-        for n, gofoward in self.root.walk_depth():
-            if gofoward and isinstance(n, FootnoteListBlockNode):
-                fns.append(n)
-        for fn in fns:
-            for item in fn.children:
-                if item.term == self.value:
-                    return item
+        if self._description:
+            return self._description
         msg = 'Footnote not found: {}'.format(self.value)
         logger.error(msg)
         fn = FootnoteListBlockNode()

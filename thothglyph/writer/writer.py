@@ -10,24 +10,37 @@ class Writer():
     target = 'unknown'
     ext = 'unknown'
 
+    default_theme = 'default'
+
     class DocData():
         def __init__(self):
             pass
 
     def __init__(self):
+        self.encoding = 'utf-8'
         self.data = str()
         self.rootnode = None
         self.__continue = False
 
-    def template_dir(self, target=None):
+    def template_dir(self):
         config = self.rootnode.config
         if hasattr(config, 'templatedir'):
             template_dir = config.templatedir
         else:
             libdir = os.path.join(os.path.dirname(__file__), '..')
-            target = target or self.target
             template_dir = os.path.join(libdir, 'template')
         return template_dir
+
+    def theme(self, target=None):
+        config = self.rootnode.config
+        if hasattr(config, 'theme'):
+            theme = config.theme
+        else:
+            theme = Writer.default_theme
+        if isinstance(theme, dict):
+            target = target or self.target
+            theme = theme.get(target, Writer.default_theme)
+        return theme
 
     @property
     def template_docdata(self):
@@ -80,6 +93,6 @@ class Writer():
         logger.info('{} write start.'.format(self.__class__.__name__))
         self.rootnode = node
         self.parse(node)
-        with open(fpath, 'w') as f:
+        with open(fpath, 'w', encoding=self.encoding) as f:
             f.write(self.data)
         logger.info('{} write finish.'.format(self.__class__.__name__))

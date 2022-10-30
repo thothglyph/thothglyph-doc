@@ -12,12 +12,12 @@ Tex言語で数式を記述できる。
 sudo apt install texlive-fonts-recommended texlive-fonts-extra texlive-lang-cjk xdvik-ja evince
 ⸌⸌⸌
 
-When ⌗math⸨a \ne 0⸩, there are two solutions
-to ⌗math⸨ax^2 + bx + c = 0⸩ and they are
+When ¤math⸨a \ne 0⸩, there are two solutions
+to ¤math⸨ax^2 + bx + c = 0⸩ and they are
 
-⌗⌗⌗math
+¤¤¤math
 x = {-b \pm \sqrt{b^2-4ac} \over 2a}
-⌗⌗⌗
+¤¤¤
 
 ▮▮ Graphviz
 
@@ -27,19 +27,19 @@ x = {-b \pm \sqrt{b^2-4ac} \over 2a}
 pip install graphviz
 ⸌⸌⸌
 
-⌗⌗⌗graphviz
+¤¤¤graphviz
 graph my_graph {
     a [label="Foo"];
     b [shape=circle];
     a -- b -- c [color=blue];
 }
-⌗⌗⌗
+¤¤¤
 
 ▮▮ PlantUML
 
 UML図をテキストベースで作成できる。Java製。
 
-⌗⌗⌗plantuml
+¤¤¤plantuml
 @startuml
 Object <|-- ArrayList
 
@@ -47,7 +47,7 @@ Object : equals()
 ArrayList : Object[] elementData
 ArrayList : size()
 @enduml
-⌗⌗⌗
+¤¤¤
 
 ▮▮ blockdiag
 
@@ -57,7 +57,7 @@ ArrayList : size()
 pip install blockdiag actdiag seqdiag nwdiag
 ⸌⸌⸌
 
-⌗⌗⌗blockdiag
+¤¤¤blockdiag
 blockdiag admin {
   index [label = "List of FOOs"];
   add [label = "Add FOO"];
@@ -72,9 +72,9 @@ blockdiag admin {
   index -> show -> index;
   index -> delete_confirm -> index;
 }
-⌗⌗⌗
+¤¤¤
 
-⌗⌗⌗blockdiag
+¤¤¤blockdiag
 seqdiag {
   browser  -> webserver [label = "GET /index.html"];
   browser <-- webserver;
@@ -83,9 +83,9 @@ seqdiag {
               webserver <-- database;
   browser <-- webserver;
 }
-⌗⌗⌗
+¤¤¤
 
-⌗⌗⌗blockdiag
+¤¤¤blockdiag
 nwdiag {
   network dmz {
       address = "210.x.x.x/24"
@@ -102,9 +102,9 @@ nwdiag {
       db02;
   }
 }
-⌗⌗⌗
+¤¤¤
 
-⌗⌗⌗blockdiag
+¤¤¤blockdiag
 rackdiag {
   // define height of rack
   16U;
@@ -118,9 +118,9 @@ rackdiag {
   7: Load Balancer
   8: L3 Switch
 }
-⌗⌗⌗
+¤¤¤
 
-⌗⌗⌗blockdiag
+¤¤¤blockdiag
 packetdiag {
   colwidth = 32
   node_height = 72
@@ -143,18 +143,18 @@ packetdiag {
   160-191: (Options and Padding)
   192-223: data [colheight = 3]
 }
-⌗⌗⌗
+¤¤¤
 
 ▮▮ Mermaid
 
-⌗⌗⌗mermaid
+¤¤¤mermaid
 flowchart LR
 
 A[Hard] -->|Text| B(Round)
 B --> C{Decision}
 C -->|One| D[Result 1]
 C -->|Two| E[Result 2]
-⌗⌗⌗
+¤¤¤
 
 ▮▮ WaveDrom
 
@@ -164,7 +164,7 @@ HW設計でよく使われる図をテキストベースで作成できる。JSO
 pip install wavedrom
 ⸌⸌⸌
 
-⌗⌗⌗wavedrom
+¤¤¤wavedrom
 { "signal": [
  { "name": "CK",   "wave": "P.......",                                              "period": 2  },
  { "name": "CMD",  "wave": "x.3x=x4x=x=x=x=x", "data": "RAS NOP CAS NOP NOP NOP NOP", "phase": 0.5 },
@@ -172,9 +172,9 @@ pip install wavedrom
  { "name": "DQS",  "wave": "z.......0.1010z." },
  { "name": "DQ",   "wave": "z.........5555z.", "data": "D0 D1 D2 D3" }
 ]}
-⌗⌗⌗
+¤¤¤
 
-⌗⌗⌗wavedrom
+¤¤¤wavedrom
 { "assign":[
   ["out",
     ["|",
@@ -183,9 +183,9 @@ pip install wavedrom
     ]
   ]
 ]}
-⌗⌗⌗
+¤¤¤
 
-⌗⌗⌗wavedrom
+¤¤¤wavedrom
 {"reg": [
   { "name": "IPO",   "bits": 8, "attr": "RO" },
   {                  "bits": 7 },
@@ -194,11 +194,11 @@ pip install wavedrom
   { "name": "Clear", "bits": 3 },
   { "bits": 8 }
 ]}
-⌗⌗⌗
+¤¤¤
 
 
 ▮▮ Extention
 
-⌗⌗⌗
-⌗⌗⌗
+¤¤¤
+¤¤¤
 
