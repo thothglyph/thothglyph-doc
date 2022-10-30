@@ -75,13 +75,13 @@ class ASTNode():
         return node
 
     def _parent_section(self):
-        node = self
+        node = self.parent
         while not isinstance(node, SectionNode):
             node = node.parent
         return node
 
     def _parent_table(self):
-        node = self
+        node = self.parent
         while node and not isinstance(node, TableBlockNode):
             node = node.parent
         return node

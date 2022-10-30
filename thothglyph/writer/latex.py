@@ -186,25 +186,37 @@ class LatexWriter(Writer):
             'c': 'centering',
             'r': 'raggedleft',
         }
+        aligns = node.aligns
         if self.style_gridtable:
-            col_aligns = '|{}|'.format('|'.join(node.aligns))
+            col_aligns = '|{}|'.format('|'.join(aligns))
         else:
-            col_aligns = '{}'.format(' '.join(node.aligns))
-        self.data += '\\setlongtables\n'
-        self.data += '\\begin{tabularx}'
-        self.data += '{\\whatsleft}'
+            col_aligns = '{}'.format(' '.join(aligns))
+        if not node._parent_table():
+            self.data += '\\begin{table}[H]\n'
+            if isinstance(node.parent, nd.FigureBlockNode):
+                opts = 'singlelinecheck=false,justification={}'
+                opts = opts.format(table_align_cmd[align])
+                # self.data += '\\captionsetup{{{}}}\n'.format(opts)
+                # self.data += '\\caption{{{}}} \n'.format(node.parent.caption)
+            self.data += '\\begin{tabularx}'
+            self.data += '{\\whatsleft}'
+        else:
+            # self.data += '{\\setlongtables\n'
+            # self.data += '\\begin{tabularx}'
+            self.data += '{\\begin{xltabular}'
+            self.data += '{\\linewidth}'
         self.data += '[{}]'.format(align)
         self.data += '{{{}}}\n'.format(col_aligns.upper())
-        if isinstance(node.parent, nd.FigureBlockNode):
-            opts = 'singlelinecheck=false,justification={}'
-            opts = opts.format(table_align_cmd[align])
-            self.data += '\\captionsetup{{{}}}\n'.format(opts)
-            self.data += '\\caption{{{}}} \\\\\n'.format(node.parent.caption)
         self.data += '\\hline\n'
 
     def leave_tableblock(self, node):
         self.data += '\\hline\n'
-        self.data += '\\end{tabularx}\n'
+        if not node._parent_table():
+            self.data += '\\end{tabularx}\n'
+            self.data += '\\end{table}\n'
+        else:
+            # self.data += '\\end{tabularx}}\n'
+            self.data += '\\end{xltabular}}\n'
 
         fns = list()
         for n, gofoward in node.walk_depth():

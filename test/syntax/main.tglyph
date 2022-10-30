@@ -188,6 +188,44 @@ new paragraph text text new 1.
   •• C
 ===|
 
+▮▮▮ Nested Table
+
+|===
+• •• A
+  •• B
+    | a | b |
+    | c | d |
+  •• C
+• •• D
+  •• E
+  •• F
+===|
+
+⸌⸌⸌
+|===
+• •• A
+  •• B
+    | a | b |
+    | c | d |
+  •• C
+• •• D
+    |===
+    • •• a
+      •• b
+    • •• c
+      •• 
+      |===
+      • •• a
+        •• b
+      • •• c
+        •• d
+      ===|
+    ===|
+  •• E
+  •• F
+===|
+⸌⸌⸌
+
 ▮▮ Figure
 
 ¤figure⸨caption⸩
@@ -443,3 +481,150 @@ The important text. [^A] And the important text too. [^B]
 •[^B] This is ⸌|@#$%{^&*(})\!⸌.
 •[^s] Footnote 2-1 within Table
 •[^t] Footnote 2-2 within Table
+
+▮▮ Long Table
+
+|===
+• •• 128456789012345678901234567890
+  •• abcdefg
+  •• abcdefg
+• •• 128456789012345678901234567890
+  •• abcdefg
+  •• abcdefg 0
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg 1
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg 2
+
+     abcdefg
+• •• 128456789012345678901234567890
+  •• abcdefg
+  •• abcdefg 0
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg 1
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg
+
+     abcdefg 2
+
+     abcdefg
+• •• 128456789012345678901234567890
+  •• abcdefg
+  •• ••• abcdefg 0
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg 1
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg 2
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg 3
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg 4
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg
+     ••• abcdefg 5
+     ••• abcdefg
+===|

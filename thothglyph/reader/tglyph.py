@@ -610,10 +610,15 @@ class Parser():
         m = re.match(Lexer.block_tokens['LISTTABLE_BEGIN_LINE'], tokens[0].value)
         opts = nd.parse_optargs(m.group(1))
         tokens.pop(0)
+        nested = 1
         subtokens = list()
         while tokens:
+            if tokens[0].key == 'LISTTABLE_BEGIN_LINE':
+                nested += 1
             if tokens[0].key == 'LISTTABLE_END_LINE':
-                break
+                nested -= 1
+                if nested == 0:
+                    break
             subtokens.append(tokens.pop(0))
         tokens.pop(0)
         table = nd.TableBlockNode()
