@@ -135,6 +135,7 @@ class Parser():
         document = nd.DocumentNode()
         self.rootnode = document
         self.nodes.append(self.rootnode)
+        self._init_config()
         tokens = self.p_ignore_emptylines(tokens)
         if tokens and tokens[0].key == 'CONFIG_LINE':
             tokens = self.p_configblock(tokens)
@@ -142,11 +143,7 @@ class Parser():
         tokens = self.p_blocks(tokens)
         tokens = self.p_ignore_emptylines(tokens)
 
-    def p_configblock(self, tokens):
-        document = self.nodes[-1]
-        if not isinstance(document, nd.DocumentNode):
-            msg = 'config must be under document. {}'.format(tokens[0])
-            raise Exception(msg)
+    def _init_config(self):
         config = nd.ConfigNode()
         if self.reader.parent:
             pconfig = self.reader.parent.parser.nodes[0].config
@@ -155,7 +152,15 @@ class Parser():
                 pattrs.pop(key)
             for key in pattrs:
                 setattr(config, key, pattrs[key])
+        document = self.nodes[-1]
         document.config = config
+
+    def p_configblock(self, tokens):
+        document = self.nodes[-1]
+        if not isinstance(document, nd.DocumentNode):
+            msg = 'config must be under document. {}'.format(tokens[0])
+            raise Exception(msg)
+        config = document.config
         begintoken = tokens[0]
         tokens.pop(0)
         subtokens = list()
