@@ -1,4 +1,6 @@
-from thothglyph.reader.reader import Reader
+from __future__ import annotations
+from typing import Dict, List, Optional, Tuple
+from thothglyph.reader.reader import Reader, Parser
 from thothglyph.node import nd
 import re
 import os
@@ -10,18 +12,18 @@ logger = logging.getLogger(__file__)
 
 class Lexer():
     class Token():
-        def __init__(self, no, line, key, value):
-            self.no = no
-            self.line = line
-            self.key = key
-            self.value = value
+        def __init__(self, no: int, line: int, key: str, value: str):
+            self.no: int = no
+            self.line: int = line
+            self.key: str = key
+            self.value: str = value
 
-        def __str__(self):
+        def __str__(self) -> str:
             s = f'Token({self.no}, {self.line}, {self.key}, "{self.value}")'
             return s
 
-    newline_token = '\n'
-    block_tokens = {
+    newline_token: str = '\n'
+    block_tokens: Dict[str, str] = {
         'CONFIG_LINE': r'%%%+$',
         'SECTION_TITLE_LINE': r' *((?:▮+)|(?:▯+))(\*?) +([^⟦]+) *(?:⟦([^⟧]*)⟧)?',
         'CUSTOM_LINE': r'( *)¤¤¤(.*)',
@@ -44,14 +46,14 @@ class Lexer():
         'STR_LINE': r'.+',
         'EMPTY_LINE': r'^$',
     }
-    listblock_keys = (
+    listblock_keys: Tuple[str, ...] = (
         'BULLET_LIST_SYMBOL',
         'ORDERED_LIST_SYMBOL',
         'DESC_LIST_SYMBOL',
         'CHECK_LIST_SYMBOL',
     )
 
-    inline_tokens = {
+    inline_tokens: Dict[str, str] = {
         'ATTR': r'⁅([A-Za-z0-9_\-]+)⁆',
         'ROLE': r'¤([A-Za-z]+)(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩',
         'LINK': r'(?:⟦([^⟧]*)⟧)?⸨([^⸩]+)⸩',
@@ -68,7 +70,7 @@ class Lexer():
         'BRACKET': r'\[[^\]]+\]',
         'TEXT': r'[^¤⁒⋄‗¬⫶⸌⌃⌄⟦⸨⁅[]+',
     }
-    deco_keys = (
+    deco_keys: Tuple[str, ...] = (
         'EMPHASIS',
         'STRONG',
         'MARKED',
@@ -80,22 +82,22 @@ class Lexer():
     )
 
     def __init__(self):
-        self._block_tokens = {
+        self._block_tokens: Dict[str, re.Pattern] = {
             k: re.compile(v) for k, v in self.block_tokens.items()
         }
-        self._inline_tokens = {
+        self._inline_tokens: Dict[str, re.Pattern] = {
             k: re.compile(v) for k, v in self.inline_tokens.items()
         }
 
-    def lex_block(self, data):
+    def lex_block(self, data) -> List[Lexer.Token]:
         return self.lex_pattern(self._block_tokens, data)
 
-    def lex_inline(self, data):
+    def lex_inline(self, data) -> List[Lexer.Token]:
         return self.lex_pattern(self._inline_tokens, data)
 
-    def lex_pattern(self, patterns, data):
+    def lex_pattern(self, patterns, data) -> List[Lexer.Token]:
         lines = data.split(self.newline_token)
-        tokens = list()
+        tokens: List[Lexer.Token] = list()
         for lineno, line in enumerate(lines):
             lineno = lineno + 1
             rest = line
@@ -115,23 +117,23 @@ class Lexer():
         return tokens
 
 
-class Parser():
-    def __init__(self, reader):
-        self.reader = reader
-        self.rootnode = None
-        self.nodes = list()
-        self.lexer = Lexer()
+class TglyphParser(Parser):
+    def __init__(self, reader: Reader):
+        super().__init__(reader)
+        self.rootnode: Optional[nd.DocumentNode] = None
+        self.nodes: List[nd.ASTNode] = list()
+        self.lexer: Lexer = Lexer()
 
-    def parse(self, data):
+    def parse(self, data: str) -> Optional[nd.DocumentNode]:
         self.tokens = self.lexer.lex_block(data)
         tokens = list() + self.tokens
         tokens = self.p_document(tokens)
         return self.rootnode
 
-    def _tokens(self, token, offset):
+    def _tokens(self, token: Lexer.Token, offset: int) -> Lexer.Token:
         return self.tokens[token.no + offset]
 
-    def p_document(self, tokens):
+    def p_document(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         document = nd.DocumentNode()
         self.rootnode = document
         self.nodes.append(self.rootnode)
@@ -142,10 +144,12 @@ class Parser():
         tokens = self.p_ignore_emptylines(tokens)
         tokens = self.p_blocks(tokens)
         tokens = self.p_ignore_emptylines(tokens)
+        return tokens
 
-    def _init_config(self):
+    def _init_config(self) -> None:
         config = nd.ConfigNode()
         if self.reader.parent:
+            assert isinstance(self.reader.parent.parser, TglyphParser)
             pconfig = self.reader.parent.parser.nodes[0].config
             pattrs = dict(pconfig.__dict__)
             for key in ('parent', 'children', 'id'):
@@ -155,7 +159,7 @@ class Parser():
         document = self.nodes[-1]
         document.config = config
 
-    def p_configblock(self, tokens):
+    def p_configblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         document = self.nodes[-1]
         if not isinstance(document, nd.DocumentNode):
             msg = 'config must be under document. {}'.format(tokens[0])
@@ -199,7 +203,7 @@ class Parser():
         return tokens
 
     @property
-    def _lastsection(self):
+    def _lastsection(self) -> nd.SectionNode:
         idx = len(self.nodes) - 1
         types = (nd.DocumentNode, nd.SectionNode)
         while idx >= 0:
@@ -210,7 +214,7 @@ class Parser():
             raise Exception('Nothing document or sections.')
         return self.nodes[idx]
 
-    def p_blocks(self, tokens):
+    def p_blocks(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         while tokens:
             if tokens[0].key == 'BREAK_LINE':
                 tokens.pop(0)
@@ -225,7 +229,7 @@ class Parser():
             tokens = self.p_ignore_emptylines(tokens)
         return tokens
 
-    def p_block(self, tokens):
+    def p_block(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         if tokens[0].key == 'SECTION_TITLE_LINE':
             tokens = self.p_section(tokens)
         elif tokens[0].key == 'CNFIG_LINE':
@@ -269,7 +273,7 @@ class Parser():
             tokens.pop(0)
         return tokens
 
-    def p_section(self, tokens):
+    def p_section(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         # terminate
         accepted = (nd.DocumentNode, nd.SectionNode)
         if not any([isinstance(self.nodes[-1], n) for n in accepted]):
@@ -277,6 +281,7 @@ class Parser():
             return tokens
         if tokens[0].key == 'SECTION_TITLE_LINE':
             m = re.match(Lexer.block_tokens['SECTION_TITLE_LINE'], tokens[0].value)
+            assert m
             level = len(m.group(1))
         else:
             if tokens[1].value[-1] == '=':
@@ -289,11 +294,13 @@ class Parser():
 
         # body
         if tokens[0].key == 'SECTION_TITLE_LINE':
+            assert m
             section = nd.SectionNode()
             section.level = len(m.group(1))
         else:
             ast_section_title_token = r'(^)(?:(\*?) +)?([^⟦]+) *(?:⟦([^⟧]*)⟧)?'
             m = re.match(ast_section_title_token, tokens[0].value)
+            assert m
             section = nd.SectionNode()
             if tokens[1].value[-1] == '=':
                 section.level = 1
@@ -314,7 +321,7 @@ class Parser():
         self.nodes.pop()
         return tokens
 
-    def p_monolistitem(self, tokens):
+    def p_monolistitem(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         # terminate
         accepted = (nd.DocumentNode, nd.SectionNode)
         if not any([isinstance(self.nodes[-1], n) for n in accepted]):
@@ -322,6 +329,7 @@ class Parser():
             return tokens
         # body
         m = re.match(r' *•\[([\^#])(.+)\] +', tokens[0].value)
+        assert m
         clstable = {'^': nd.FootnoteListBlockNode, '#': nd.ReferenceListBlockNode}
         children = self.nodes[-1].children
         if children and any([isinstance(children[-1], c) for c in clstable.values()]):
@@ -349,7 +357,7 @@ class Parser():
         self.nodes.pop()
         return tokens
 
-    def _get_listblock_by_token(self, token):
+    def _get_listblock_by_token(self, token: Lexer.Token) -> List[nd.ListBlockNode]:
         table = {
             'BULLET_LIST_SYMBOL': nd.BulletListBlockNode,
             'ORDERED_LIST_SYMBOL': nd.OrderedListBlockNode,
@@ -359,12 +367,13 @@ class Parser():
         if token.key in table:
             listblock = table[token.key]()
             m = re.match(r' *([•꓾ᛝ]+)([^ ]*)( +)', token.value)
+            assert m
             listblock.level = len(m.group(1))
             listblock.indent = len(m.group(0))
             return listblock
         raise Exception("Not list symbol")
 
-    def p_listitem(self, tokens):
+    def p_listitem(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         # terminate
         table = {
             'BULLET_LIST_SYMBOL': nd.BulletListBlockNode,
@@ -374,6 +383,7 @@ class Parser():
             'LIST_TERMINATOR_SYMBOL': object,
         }
         m = re.match(Lexer.block_tokens[tokens[0].key], tokens[0].value)
+        assert m
         item = nd.ListItemNode()
         item.level = len(m.group(1))
         item.indent = len(m.group(0))
@@ -413,7 +423,7 @@ class Parser():
         self.nodes.pop()
         return tokens
 
-    def p_quoteblock(self, tokens):
+    def p_quoteblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         quote = nd.QuoteBlockNode()
         self.nodes[-1].add(quote)
         subtokens = list()
@@ -436,8 +446,9 @@ class Parser():
         self.nodes.pop()
         return tokens
 
-    def p_codeblock(self, tokens):
+    def p_codeblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.block_tokens['CODE_LINE'], tokens[0].value)
+        assert m
         indent = len(m.group(1))
         code = nd.CodeBlockNode()
         code.lang = m.group(1)
@@ -476,8 +487,9 @@ class Parser():
             code.text = text
         return tokens
 
-    def p_customblock(self, tokens):
+    def p_customblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.block_tokens['CUSTOM_LINE'], tokens[0].value)
+        assert m
         indent = len(m.group(1))
         custom = nd.CustomBlockNode()
         custom.ext = m.group(2)
@@ -516,14 +528,15 @@ class Parser():
             custom.text = text
         return tokens
 
-    def p_horizon(self, tokens):
+    def p_horizon(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         tokens.pop(0)
         horizon = nd.HorizonBlockNode()
         self.nodes[-1].add(horizon)
         return tokens
 
-    def p_tocblock(self, tokens):
+    def p_tocblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.block_tokens['TOC_LINE'], tokens[0].value)
+        assert m
         toc = nd.TocBlockNode()
         toc.opts = nd.parse_optargs(m.group(1))
         toc.value = m.group(2)
@@ -531,8 +544,9 @@ class Parser():
         tokens.pop(0)
         return tokens
 
-    def p_figureblock(self, tokens):
+    def p_figureblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.block_tokens['FIGURE_LINE'], tokens[0].value)
+        assert m
         fig = nd.FigureBlockNode()
         fig.opts = m.group(1).split(',') if m.group(1) is not None else ['']
         fig.caption = self.replace_text_attrs(m.group(2))
@@ -543,7 +557,7 @@ class Parser():
         self.nodes.pop()
         return tokens
 
-    def p_basictableblock(self, tokens):
+    def p_basictableblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         table = nd.TableBlockNode()
         self.nodes[-1].add(table)
         lines = list()
@@ -560,6 +574,7 @@ class Parser():
             ms = [re.match(r'^:?-+:?$', c) for c in rowtexts]
             if all(ms) and header_splitter == 0 and i > 0:
                 for m in ms:
+                    assert m
                     mg = m.group(0)
                     if mg[0] == mg[-1] == ':':
                         aligns.append('c')
@@ -612,8 +627,9 @@ class Parser():
                         cell.mergeto = to
         return tokens
 
-    def p_listtableblock(self, tokens):
+    def p_listtableblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.block_tokens['LISTTABLE_BEGIN_LINE'], tokens[0].value)
+        assert m
         opts = nd.parse_optargs(m.group(1))
         tokens.pop(0)
         nested = 1
@@ -665,7 +681,7 @@ class Parser():
                 cell.align = table.aligns[c]
         return tokens
 
-    def p_paragraph(self, tokens):
+    def p_paragraph(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         paragraph = nd.ParagraphNode()
         self.nodes[-1].add(paragraph)
         text = str()
@@ -686,7 +702,7 @@ class Parser():
         self.nodes.pop()
         return tokens
 
-    def p_inlinemarkup(self, tokens):
+    def p_inlinemarkup(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         while tokens:
             if tokens[0].key == 'ROLE':
                 tokens = self.p_role(tokens)
@@ -702,8 +718,9 @@ class Parser():
                 tokens = self.p_text(tokens)
         return tokens
 
-    def p_role(self, tokens):
+    def p_role(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.inline_tokens['ROLE'], tokens[0].value)
+        assert m
         role = nd.RoleNode()
         role.role = m.group(1)
         role.opts = m.group(2) if m.group(2) is not None else ''
@@ -723,7 +740,7 @@ class Parser():
             tokens.pop(0)
         return tokens
 
-    def p_image(self, tokens, role):
+    def p_image(self, tokens: List[Lexer.Token], role: nd.RoleNode) -> List[Lexer.Token]:
         image = nd.ImageRoleNode()
         image.role = role.role
         image.opts = nd.parse_optargs(role.opts)
@@ -732,7 +749,7 @@ class Parser():
         tokens.pop(0)
         return tokens
 
-    def p_plaininclude(self, tokens, role):
+    def p_plaininclude(self, tokens: List[Lexer.Token], role: nd.RoleNode) -> List[Lexer.Token]:
         tokens.pop(0)
         path = role.value
         block = self.nodes[-1]
@@ -746,11 +763,11 @@ class Parser():
             block.add(text)
         return tokens
 
-    def _check_recursive_include(self, path):
+    def _check_recursive_include(self, path: str) -> bool:
         if not os.path.exists(path):
             return False
-        pathlist = list()
-        parser = self
+        pathlist: List[str] = list()
+        parser: Parser = self
         while parser.reader.parent:
             pathlist.insert(0, parser.reader.path)
             parser = parser.reader.parent.parser
@@ -761,11 +778,11 @@ class Parser():
             return False
         return True
 
-    def p_include(self, tokens, role):
+    def p_include(self, tokens: List[Lexer.Token], role: nd.RoleNode) -> List[Lexer.Token]:
         tokens.pop(0)
         path = role.value
         if self._check_recursive_include(path):
-            reader = TglyphReader(parent=self.reader)
+            reader: Reader = TglyphReader(parent=self.reader)
             subdoc = reader.read(path)
             lastsection = self._lastsection
             for node, gofoward in subdoc.walk_depth():
@@ -781,7 +798,7 @@ class Parser():
                 block.remove(p)
         return tokens
 
-    def p_kbd(self, tokens, role):
+    def p_kbd(self, tokens: List[Lexer.Token], role: nd.RoleNode) -> List[Lexer.Token]:
         kbd = nd.KbdRoleNode()
         kbd.role = role.role
         kbd.opts = role.opts
@@ -790,7 +807,7 @@ class Parser():
         tokens.pop(0)
         return tokens
 
-    def p_btn(self, tokens, role):
+    def p_btn(self, tokens: List[Lexer.Token], role: nd.RoleNode) -> List[Lexer.Token]:
         btn = nd.BtnRoleNode()
         btn.role = role.role
         btn.opts = role.opts
@@ -799,7 +816,7 @@ class Parser():
         tokens.pop(0)
         return tokens
 
-    def p_menu(self, tokens, role):
+    def p_menu(self, tokens: List[Lexer.Token], role: nd.RoleNode) -> List[Lexer.Token]:
         menu = nd.MenuRoleNode()
         menu.role = role.role
         menu.opts = role.opts
@@ -808,8 +825,9 @@ class Parser():
         tokens.pop(0)
         return tokens
 
-    def p_link(self, tokens):
+    def p_link(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.inline_tokens['LINK'], tokens[0].value)
+        assert m
         link = nd.LinkNode()
         link.opts = m.group(1).split(',') if m.group(1) is not None else ['']
         link.value = self.replace_text_attrs(m.group(2))
@@ -817,23 +835,25 @@ class Parser():
         tokens.pop(0)
         return tokens
 
-    def p_footnote(self, tokens):
+    def p_footnote(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.inline_tokens['FOOTNOTE'], tokens[0].value)
+        assert m
         link = nd.FootnoteNode()
         link.value = m.group(1)
         self.nodes[-1].add(link)
         tokens.pop(0)
         return tokens
 
-    def p_reference(self, tokens):
+    def p_reference(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.inline_tokens['REFERENCE'], tokens[0].value)
+        assert m
         link = nd.ReferenceNode()
         link.value = m.group(1)
         self.nodes[-1].add(link)
         tokens.pop(0)
         return tokens
 
-    def p_decotext(self, tokens):
+    def p_decotext(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         while tokens:
             if tokens[0].key in Lexer.deco_keys:
                 tokens = self.p_deco(tokens)
@@ -843,7 +863,7 @@ class Parser():
                 raise Exception('Illegal text token: {}'.format(tokens))
         return tokens
 
-    def p_deco(self, tokens):
+    def p_deco(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         deco = nd.DecorationRoleNode()
         deco.role = tokens[0].key
         begintoken = tokens[0]
@@ -863,9 +883,10 @@ class Parser():
         self.nodes.pop()
         return tokens
 
-    def replace_text_attrs(self, text):
+    def replace_text_attrs(self, text: str) -> str:
         def attrvalue(m):
             attr = m.group(1)
+            assert isinstance(self.rootnode, nd.DocumentNode)
             if hasattr(self.rootnode.config, 'attrs'):
                 attrs = self.rootnode.config.attrs
                 return str(attrs.get(attr, m.group(0)))
@@ -878,7 +899,7 @@ class Parser():
         )
         return newtext
 
-    def p_text(self, tokens):
+    def p_text(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         if len(self.nodes[-1].children) == 0:
             text = nd.TextNode()
             self.nodes[-1].add(text)
@@ -893,13 +914,13 @@ class Parser():
         tokens.pop(0)
         return tokens
 
-    def p_ignore_emptylines(self, tokens):
+    def p_ignore_emptylines(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         while tokens and tokens[0].key == 'EMPTY_LINE':
             tokens.pop(0)
         return tokens
 
 
 class TglyphReader(Reader):
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[Reader] = None):
         super().__init__(parent=parent)
-        self.parser = Parser(self)
+        self.parser: TglyphParser = TglyphParser(self)

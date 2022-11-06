@@ -1,18 +1,19 @@
+from __future__ import annotations
+from typing import Dict, List, Optional
 from thothglyph.node import nd
-
 from thothglyph.node import logging
 
 logger = logging.getLogger(__file__)
 
 
 class Reader():
-    def __init__(self, parent=None):
-        self.encoding = 'utf-8'
-        self.parent = parent
-        self.parser = None
-        self.path = None
+    def __init__(self, parent: Optional[Reader] = None):
+        self.encoding: str = 'utf-8'
+        self.parent: Optional[Reader] = parent
+        self.parser: Parser = Parser(self)
+        self.path: str = str()
 
-    def read(self, path, encoding=None):
+    def read(self, path: str, encoding: Optional[str] = None) -> nd.ASTNode:
         if encoding:
             self.encoding = encoding
         logger.info('{} read start.'.format(self.__class__.__name__))
@@ -25,9 +26,9 @@ class Reader():
         logger.info('{} read finish.'.format(self.__class__.__name__))
         return node
 
-    def set_sectnums(self, rootnode):
-        nums = [0 for i in range(10)]
-        level = 0
+    def set_sectnums(self, rootnode: nd.ASTNode) -> None:
+        nums: List[int] = [0 for i in range(10)]
+        level: int = 0
         for n, gofoward in rootnode.walk_depth():
             if gofoward:
                 if isinstance(n, nd.SectionNode):
@@ -41,9 +42,9 @@ class Reader():
                         nums[level] = 0
                     level -= 1
 
-    def set_footnote_nums(self, rootnode):
-        footnotes = dict()  # footnotes[sect][id]
-        references = dict()
+    def set_footnote_nums(self, rootnode: nd.ASTNode) -> None:
+        footnotes: Dict[str, Dict[str, List[nd.ASTNode]]] = dict()  # footnotes[sect][id]
+        references: Dict[str, List[nd.ASTNode]] = dict()
         LI = nd.ListItemNode
         FNLB = nd.FootnoteListBlockNode
         RFLB = nd.ReferenceListBlockNode
@@ -60,7 +61,7 @@ class Reader():
                 footnotes.setdefault(sect, dict())
                 footnotes[sect].setdefault(n.term, list())
                 footnotes[sect][n.term].insert(0, n)
-        fngi = 0
+        fngi: int = 0
         for si, sect in enumerate(footnotes):
             for i, key in enumerate(footnotes[sect]):
                 fngi += 1
@@ -82,3 +83,11 @@ class Reader():
         for i, key in enumerate(references):
             for n in references[key]:
                 n.ref_num = i + 1
+
+
+class Parser():
+    def __init__(self, reader: Reader):
+        self.reader = reader
+
+    def parse(self, data: str) -> nd.ASTNode:
+        return nd.ASTNode()

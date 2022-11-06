@@ -6,7 +6,7 @@ readerclass = {
 }
 
 
-def Reader(target):
+def Reader(target: str):
     modname = target
     clsname = readerclass[target]
     modpath = 'thothglyph.reader.{}'.format(modname)

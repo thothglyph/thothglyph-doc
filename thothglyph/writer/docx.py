@@ -1,17 +1,17 @@
-from thothglyph.writer.writer import Writer
-from thothglyph.node import nd
-import cairosvg
+from __future__ import annotations
+from typing import Dict, List, Optional
 import importlib
 import os
-# import re
 import tempfile
-
+import cairosvg
 from docx import Document
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_BREAK
+from docx.text.paragraph import Paragraph
 # from docx.enum.text import WD_TAB_ALIGNMENT
 # from docx.enum.text import WD_TAB_LEADER
-
+from thothglyph.writer.writer import Writer
+from thothglyph.node import nd
 from thothglyph.node import logging
 
 logger = logging.getLogger(__file__)
@@ -19,8 +19,13 @@ logger = logging.getLogger(__file__)
 # monkey patch
 if True:
     from docx.oxml.xmlchemy import BaseOxmlElement, ZeroOrOne
-    from docx.oxml.simpletypes import XsdInt
+    # from docx.oxml.simpletypes import XsdInt
     from docx.oxml import register_element_cls
+
+    from types import MethodType
+    # from docx.parts.numbering import _NumberingDefinitions
+    from docx.oxml.numbering import CT_Num
+    # from docx.oxml.numbering import CT_Numbering
 
     class CT_TrPr(BaseOxmlElement):
         tblHeader = ZeroOrOne('w:tblHeader')
@@ -31,11 +36,17 @@ class DocxWriter(Writer):
     target = 'docx'
     ext = 'docx'
 
-    stylename = {
+    stylename: Dict[str, str] = {
         # paragraph styles
         'title': 'Title',
         'subtitle': 'Subtitle',
-        'heading_': ['Heading %d' % (i + 1) for i in range(6)],
+        'heading_1': 'Heading 1',
+        'heading_2': 'Heading 2',
+        'heading_3': 'Heading 3',
+        'heading_4': 'Heading 4',
+        'heading_5': 'Heading 5',
+        'heading_6': 'Heading 6',
+        'heading_7': 'Heading 7',
         'bullet_list': 'Bullet List',
         'enumerated_list': 'Enumerated List',
         '_empty_bullet_list': 'Empty Bullet List',
@@ -66,10 +77,11 @@ class DocxWriter(Writer):
         'reference': 'Hyperlink',
         'footnote_reference': 'Default Paragraph Font',
         # table styles
-        'table': ['Sphinx Table Normal', 'Sphinx Table List'],
+        'table_normal': 'Sphinx Table Normal',
+        'table_list': 'Sphinx Table List',
     }
 
-    decoration_table = {
+    decoration_table: Dict[str, str] = {
         'EMPHASIS': 'emphasis',
         'STRONG': 'strong',
         'MARKED': 'strong',
@@ -82,7 +94,7 @@ class DocxWriter(Writer):
 
     def __init__(self):
         super().__init__()
-        self.tempdirname = None
+        self.tmpdirname: Optional[str] = None
 
         self.numbered = 0
         self.numbered_level = 0
@@ -90,9 +102,9 @@ class DocxWriter(Writer):
         self.section_numIds = list()
         self.initial_header_level = 0  # int(self.settings.initial_header_level)
         # docx paragraph properties
-        self.p = None
+        self.p: Optional[Paragraph] = None
         self.p_parents = list()
-        self.p_style = list()
+        self.p_style: List[str] = list()
         self.p_level = 0
         self.numIds = list()
         self.is_first_list_item = False
@@ -101,9 +113,9 @@ class DocxWriter(Writer):
         self.item_width_rate = 0.8
         # docx run properties
         self.r = None
-        self.r_style = None
+        self.r_style: Optional[str] = None
 
-    def parse(self, node):
+    def parse(self, node: nd.ASTNode) -> None:
         template_dir = self.template_dir()
         target = self.target
         theme = self.theme()
@@ -113,19 +125,20 @@ class DocxWriter(Writer):
         # t = template.replace('{', '{{').replace('}', '}}')
         # t = re.sub(r'\$\{\{([^}]+)\}\}', r'{\1}', t)
         # self.data = t.format(doc=self.template_docdata)
+        assert self.tmpdirname
         for checkbox in ('check_en', 'check_im', 'check_dis'):
             cairosvg.svg2png(
                 url=os.path.join(template_dir, 'common', f'{checkbox}.svg'),
                 write_to=os.path.join(self.tmpdirname, f'{checkbox}.png'),
                 scale=0.625,
             )
-        self.data = Document(template_path)
+        self.data: Document = Document(template_path)
         self.data._body.clear_content()
         self.p_parents.append(self.data)
         self.section_numIds = [self._get_new_num(abstractNumId=12)]
         super().parse(node)
 
-    def write(self, fpath, node):
+    def write(self, fpath: str, node: nd.ASTNode) -> None:
         self.rootnode = node
         with tempfile.TemporaryDirectory() as tmpdirname:
             self.tmpdirname = tmpdirname
@@ -133,7 +146,11 @@ class DocxWriter(Writer):
             self.data.save(fpath)
         self.tmpdirname = None
 
-    def _add_paragraph(self, text=None, style=None):
+    def _add_paragraph(
+        self,
+        text: Optional[str] = None,
+        style: Optional[str] = None
+    ) -> Optional[Paragraph]:
         p = None
         try:
             if isinstance(style, list):
@@ -156,11 +173,6 @@ class DocxWriter(Writer):
         return r
 
     def _get_new_num(self, abstractNumId):
-        # monkey patch
-        from types import MethodType
-        # from docx.parts.numbering import _NumberingDefinitions
-        from docx.oxml.numbering import CT_Num
-        # from docx.oxml.numbering import CT_Numbering
 
         def add_num(self, abstractNum_id, restart=False):
             next_num_id = self._next_numId
@@ -191,7 +203,7 @@ class DocxWriter(Writer):
             lastp = self.data.paragraphs[-1] if len(self.data.paragraphs) > 0 else None
             if lastp:
                 lastp.add_run().add_break(WD_BREAK.PAGE)
-        p = self.data.add_heading(title, level=hlevel)
+        self.data.add_heading(title, level=hlevel)
 
     def leave_section(self, node):
         self.p = None
@@ -266,7 +278,7 @@ class DocxWriter(Writer):
         self.p_style.pop()
         self.p_level -= 1
 
-    def visit_codeblock(self, node):
+    def visit_codeblock(self, node: nd.ASTNode):
         self.r_style = self.stylename['code_block']
         self.p = self._add_paragraph(node.text, self.r_style)
         self.r = None
@@ -330,9 +342,9 @@ class DocxWriter(Writer):
                 tcW.type = 'auto'
                 tcW.w = 0
         if node.headers == 0:
-            table.style = self.stylename['table'][0]
+            table.style = self.stylename['table_normal']
         else:
-            table.style = self.stylename['table'][1]
+            table.style = self.stylename['table_list']
             for i in range(node.headers):
                 trPr = table.rows[i]._tr.get_or_add_trPr()
                 trPr.get_or_add_tblHeader()
@@ -402,6 +414,7 @@ class DocxWriter(Writer):
                     self.r = self._add_run('{} '.format(item.term), r_style)
             elif isinstance(item.parent, nd.CheckListBlockNode):
                 r_style = self.stylename['strong']
+                assert self.tmpdirname
                 if item.term == 'x':
                     checkbox = os.path.join(self.tmpdirname, 'check_en.png')
                     # self.r = self._add_run('[v] ', r_style)
@@ -443,15 +456,17 @@ class DocxWriter(Writer):
         pass
 
     def visit_imagerole(self, node):
-        options = {}
+        optdict: Dict[str, str] = dict()
         if 'w' in node.opts:
-            options['width'] = node.opts['w']
-        options = ' '.join(['{}="{}"'.format(k, v) for k, v in options.items()])
+            optdict['width'] = node.opts['w']
+        optlist = ['{}="{}"'.format(k, v) for k, v in optdict.items()]
+        options = ' '.join(optlist)
 
         image_fullpath = os.path.abspath(node.value)
         imagedir, imagefname = os.path.splitext(image_fullpath)
         fname, ext = os.path.splitext(image_fullpath)
         if ext == '.svg':
+            assert self.tmpdirname
             tmpimage_path = os.path.join(self.tmpdirname, f'{fname}.png')
             cairosvg.svg2png(
                 url=image_fullpath,
@@ -460,13 +475,16 @@ class DocxWriter(Writer):
             )
             image_fullpath = tmpimage_path
         if isinstance(node.parent, nd.ParagraphNode):
-            pic = self.r.add_picture(image_fullpath)
+            if self.r:
+                self.r.add_picture(image_fullpath)
         elif isinstance(node.parent, nd.FigureBlockNode):
-            pic = self.r.add_picture(image_fullpath)
+            if self.r:
+                self.r.add_picture(image_fullpath)
         else:
             p = self._add_paragraph()
-            r = p.add_run()
-            pic = r.add_picture(image_fullpath)
+            if p:
+                r = p.add_run()
+                r.add_picture(image_fullpath)
 
     def leave_imagerole(self, node):
         pass
