@@ -29,7 +29,7 @@ class Writer():
         self.__continue: bool = False
 
     def template_dir(self) -> str:
-        assert isinstance(self.rootnode, nd.DocumentOnde)
+        assert isinstance(self.rootnode, nd.DocumentNode)
         config = self.rootnode.config
         if hasattr(config, 'templatedir'):
             template_dir = config.templatedir
@@ -39,7 +39,7 @@ class Writer():
         return template_dir
 
     def theme(self, target: Optional[str] = None) -> str:
-        assert isinstance(self.rootnode, nd.DocumentOnde)
+        assert isinstance(self.rootnode, nd.DocumentNode)
         config = self.rootnode.config
         if hasattr(config, 'theme'):
             theme = config.theme
