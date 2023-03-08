@@ -10,8 +10,8 @@ html, body {margin: 0; padding: 0; scroll-padding-top: 60px;}
 #contents {width: 100%; height: 100%; padding: 0px 40px 20px 40;}
 #sidebar {position: sticky; top: 52px; width: 400px; height: calc(100vh - 50px - 2px); overflow-y: auto; background: #fff; border-right: 2px solid #ccc;}
 #sidebar_contents { height: 100%; white-space: nowrap; overflow-x: auto;}
-ul.toc {padding-top: 0px; padding-bottom: 0px; margin 0px;}
-li.toc {padding-top: 0px; padding-bottom: 0px; margin 0px;}
+ul.toc {padding-top: 0.1em; padding-bottom: 0.1em;}
+li.toc {padding-top: 0.1em; padding-bottom: 0.1em;}
 h1 {border-bottom: 4px solid #ccc;}
 h2 {border-bottom: 2px solid #ccc;}
 h3 {font-size: 140%; margin: 1em 0em;}
@@ -82,25 +82,19 @@ document.addEventListener('DOMContentLoaded', function () {
             id = value.textContent;
             value.id = id;
         }
-        if(value.tagName === 'H1' || value.tagName === 'H2') {
-            var ul = document.createElement('ul');
-            var li = document.createElement('li');
-            var a = document.createElement('a');
-            ul.className = li.className = a.className = 'toc';
-            a.innerHTML = value.textContent;
-            a.href = '#' + value.id;
-            li.appendChild(a)
-            ul.appendChild(li);
-
-            if(value.tagName === 'H1') {
-              div.appendChild(ul);
-            } else
-            if(value.tagName === 'H2') {
-                var lastUl = div.lastElementChild;
-                var lastLi = lastUl.lastElementChild;
-                lastLi.appendChild(ul);
-            }
+        var prnt = value.tagName === 'H1' ? div : div.lastElementChild.lastElementChild;
+        if(prnt.getElementsByTagName('ul').length == 0) {
+            var newUl = document.createElement('ul');
+            prnt.appendChild(newUl);
         }
+        var ul = prnt.lastElementChild;
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        ul.className = li.className = a.className = 'toc'
+        a.innerHTML = value.textContent;
+        a.href = '#' + value.id;
+        li.appendChild(a)
+        ul.append(li)
     });
     contentsList.appendChild(div);
 });
