@@ -304,7 +304,13 @@ class HtmlWriter(Writer):
         if 'w' in node.opts:
             options['width'] = node.opts['w']
         optstr = ' '.join(['{}="{}"'.format(k, v) for k, v in options.items()])
-        self.data += '<image src="{}" {} />'.format(node.value, optstr)
+        _, ext = os.path.splitext(node.value)
+        if ext.lower() == '.svg':
+            src = 'type="image/svg+xml" data="{}"'.format(node.value)
+            self.data += '<object {} {}></object>'.format(src, optstr)
+        else:
+            src = 'src="{}"'.format(node.value)
+            self.data += '<image {} {} />'.format(src, optstr)
 
     def leave_imagerole(self, node: nd.ASTNode) -> None:
         pass
