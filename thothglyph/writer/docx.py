@@ -256,13 +256,13 @@ class DocxWriter(Writer):
         if isinstance(item.parent, nd.FootnoteListBlockNode):
             r_style = self.stylename['footnote_reference']
             # url = '#fn.{}-{}'.format(item.treeindex()[1], item.fn_num)
-            text = item.fn_num  # item.term
+            text = item.fn_num  # item.title
             self.p = self._add_paragraph()
             self.r = self._add_run('[{}] '.format(text), r_style)
         elif isinstance(item.parent, nd.ReferenceListBlockNode):
             r_style = self.stylename['reference']
             # url = '#ref.{}'.format(item.ref_num)
-            text = item.ref_num  # item.term
+            text = item.ref_num  # item.title
             self.p = self._add_paragraph()
             self.r = self._add_run('[{}] '.format(text), r_style)
 
@@ -408,17 +408,13 @@ class DocxWriter(Writer):
             else:
                 self._multilevel_list_numbering(self.p, item.level - 1, 15)
             self.is_first_list_item = False
-            if isinstance(item.parent, nd.DescriptionListBlockNode):
-                if self.p:
-                    r_style = self.stylename['strong']
-                    self.r = self._add_run('{} '.format(item.term), r_style)
-            elif isinstance(item.parent, nd.CheckListBlockNode):
+            if isinstance(item.parent, nd.CheckListBlockNode):
                 r_style = self.stylename['strong']
                 assert self.tmpdirname
-                if item.term == 'x':
+                if item.marker == 'x':
                     checkbox = os.path.join(self.tmpdirname, 'check_en.png')
                     # self.r = self._add_run('[v] ', r_style)
-                elif item.term == '-':
+                elif item.marker == '-':
                     checkbox = os.path.join(self.tmpdirname, 'check_im.png')
                     # self.r = self._add_run('[-] ', r_style)
                 else:
@@ -432,6 +428,16 @@ class DocxWriter(Writer):
     def leave_paragraph(self, node):
         self.p = None
         self.r = None
+
+    def visit_title(self, node):
+        if not self.p:
+            self.p = self._add_paragraph()
+        if isinstance(node.parent, nd.DescriptionListBlockNode):
+            self.r_style = self.stylename['strong']
+
+    def leave_title(self, node):
+        self.r_style = None
+        self.r = self._add_run(' ')
 
     def visit_decorationrole(self, node):
         stylekey = self.decoration_table[node.role]

@@ -273,6 +273,18 @@ int main()
   popd
   ⸌⸌⸌
 
+• ⸌⸌⸌shell
+  pushd ~
+  cat .bashrc
+  popd
+  ⸌⸌⸌
+ᛝTermᛝ ⸌⸌⸌shell
+  pushd ~
+  cat .bashrc
+  popd
+  ⸌⸌⸌
+◃
+
 ⸌⸌⸌
 80 characters
 12345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -309,6 +321,9 @@ The ⁒emphasis⁒ ⋄strong⋄ ‗inserted‗ ¬deleted¬ ⋄⁒strong & emphas
 The x⌃sup⌃x x⌄sub⌄x text.
 
 The ⫶var⫶ and ⸌code⸌ text.
+
+ᛝ-text=⁒val⁒ᛝ set ⁒val⁒ to text.
+ᛝhoge=fugaᛝ ⸌hoge = fuga⸌
 
 ▮▮ Image
 
@@ -396,9 +411,14 @@ The important text. [#1] And the important text too. [#2]
 
 Hello, I am ⁅author⁆.
 
-⸌⸌⸌
 Replace in decoration text like ⋄⁅author⁆⋄, ⸌⁅val⁆⸌.
 
+• Replace in decoration text like ⋄⁅author⁆⋄, ⸌⁅val⁆⸌.
+
+ᛝReplace ⁅author⁆ᛝ ⸌⁅val⁆⸌
+ᛝReplace ⸌⁅val⁆⸌ᛝ ⁅author⁆
+
+⸌⸌⸌
 var = "⁅val⁆"
 ⸌⸌⸌
 

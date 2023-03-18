@@ -406,6 +406,11 @@ class ParagraphNode(ASTNode):
         super().__init__()
 
 
+class TitleNode(ParagraphNode):
+    def __init__(self):
+        super().__init__()
+
+
 class TextNode(ASTNode):
     attrkey = ('text',)
 

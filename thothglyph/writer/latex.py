@@ -120,12 +120,11 @@ class LatexWriter(Writer):
 
     def visit_listitem(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent, nd.DescriptionListBlockNode):
-            text = tex_escape(node.term)
-            self.data += '\\item[{}] '.format(text)
+            pass
         elif isinstance(node.parent, nd.CheckListBlockNode):
-            if node.term == 'x':
+            if node.marker == 'x':
                 self.data += '\\item[{\\tgcheck[en]}] '
-            elif node.term == '-':
+            elif node.marker == '-':
                 self.data += '\\item[{\\tgcheck[im]}] '
             else:
                 self.data += '\\item[{\\tgcheck[dis]}] '
@@ -315,6 +314,14 @@ class LatexWriter(Writer):
 
     def leave_paragraph(self, node: nd.ASTNode) -> None:
         self.data += '\n\n'
+
+    def visit_title(self, node: nd.ASTNode) -> None:
+        if isinstance(node.parent, nd.ListItemNode):
+            self.data += '\\item['
+
+    def leave_title(self, node: nd.ASTNode) -> None:
+        if isinstance(node.parent, nd.ListItemNode):
+            self.data += '] \\mbox{}\\\\'
 
     def visit_decorationrole(self, node: nd.ASTNode) -> None:
         self.data += self.decoration_table[node.role][0]

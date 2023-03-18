@@ -38,7 +38,7 @@ class Lexer():
         'CHECK_LIST_SYMBOL': r' *(•+)(\[[ x-]\]) +',
         'BULLET_LIST_SYMBOL': r' *(•+) +',
         'ORDERED_LIST_SYMBOL': r' *(꓾+) +',
-        'DESC_LIST_SYMBOL': r' *(ᛝ+)([^ᛝ]+)ᛝ +',
+        'DESC_LIST_SYMBOL': r' *(ᛝ+)([^ᛝ]+)ᛝ(?: +)?',
         'LIST_TERMINATOR_SYMBOL': r' *(◃+) *$',
         'QUOTE_SYMBOL': r'^ *> ',
         'HR_LINE': r'^ *(?:(={4,})|(-{4,}))$',
@@ -340,7 +340,7 @@ class TglyphParser(Parser):
         item = nd.ListItemNode()
         item.level = 1
         item.indent = 0
-        item.term = m.group(2)
+        item.title = m.group(2)
         monolist.add(item)
         tokens.pop(0)
         text = str()
@@ -389,9 +389,16 @@ class TglyphParser(Parser):
         item.indent = len(m.group(0))
         item_type = table[tokens[0].key].__name__
         if tokens[0].key == 'DESC_LIST_SYMBOL':
-            item.term = self.replace_text_attrs(m.group(2))
+            text = self.replace_text_attrs(m.group(2))
+            texttokens = self.lexer.lex_inline(text)
+            title = nd.TitleNode()
+            item.add(title)
+            self.nodes.append(title)
+            self.p_inlinemarkup(texttokens)
+            self.nodes.pop()
         elif tokens[0].key == 'CHECK_LIST_SYMBOL':
-            item.term = m.group(2)[1]
+            checktext = m.group(2)[1]
+            item.marker = checktext
         if isinstance(self.nodes[-1], nd.ListItemNode):
             item0 = self.nodes[-1]
             if item0.level >= item.level:

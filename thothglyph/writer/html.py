@@ -128,23 +128,23 @@ class HtmlWriter(Writer):
 
     def visit_listitem(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent, nd.DescriptionListBlockNode):
-            self.data += '<dt>{}</dt><dd>\n'.format(node.term)
+            pass
         elif isinstance(node.parent, nd.CheckListBlockNode):
-            if node.term == 'x':
+            if node.marker == 'x':
                 liclass = 'check_en'
-            elif node.term == '-':
+            elif node.marker == '-':
                 liclass = 'check_im'
             else:
                 liclass = 'check_dis'
             self.data += '<li class="checklist {}">'.format(liclass)
         elif isinstance(node.parent, nd.FootnoteListBlockNode):
             url = '#fn.{}-{}'.format(node.treeindex()[1], node.fn_num)
-            text = node.fn_num  # node.term
+            text = node.fn_num  # node.title
             self.data += '<li> '
             self.data += '<span id="{}">{}</span>. '.format(url, text)
         elif isinstance(node.parent, nd.ReferenceListBlockNode):
             url = '#ref.{}'.format(node.ref_num)
-            text = node.ref_num  # node.term
+            text = node.ref_num  # node.title
             self.data += '<li> '
             self.data += '[<span id="{}">{}</span>] '.format(url, text)
         else:
@@ -274,6 +274,14 @@ class HtmlWriter(Writer):
             len(node.parent.children) == 1
         ]):
             self.data += '</p>\n'
+
+    def visit_title(self, node: nd.ASTNode) -> None:
+        if isinstance(node.parent, nd.ListItemNode):
+            self.data += '<dt>'
+
+    def leave_title(self, node: nd.ASTNode) -> None:
+        if isinstance(node.parent, nd.ListItemNode):
+            self.data += '</dt><dd>'
 
     def visit_decorationrole(self, node: nd.ASTNode) -> None:
         self.data += '<{}>'.format(self.decoration_table[node.role])

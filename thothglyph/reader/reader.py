@@ -59,8 +59,8 @@ class Reader():
             if gofoward and isinstance(n, LI) and isinstance(n.parent, FNLB):
                 sect = str(n.treeindex()[:2])
                 footnotes.setdefault(sect, dict())
-                footnotes[sect].setdefault(n.term, list())
-                footnotes[sect][n.term].insert(0, n)
+                footnotes[sect].setdefault(n.title, list())
+                footnotes[sect][n.title].insert(0, n)
         fngi: int = 0
         for si, sect in enumerate(footnotes):
             for i, key in enumerate(footnotes[sect]):
@@ -74,8 +74,8 @@ class Reader():
         # Reference
         for n, gofoward in rootnode.walk_depth():
             if gofoward and isinstance(n, LI) and isinstance(n.parent, RFLB):
-                references.setdefault(n.term, list())
-                references[n.term].append(n)
+                references.setdefault(n.title, list())
+                references[n.title].append(n)
         for n, gofoward in rootnode.walk_depth():
             if gofoward and isinstance(n, nd.ReferenceNode):
                 references.setdefault(n.value, list())
