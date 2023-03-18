@@ -121,6 +121,14 @@ class ConfigNode(ASTNode):
         self.author: str = str()
         self.attrs: Dict[str, str] = dict()
 
+    @property
+    def docdata_params(self):
+        params = dict(self.__dict__.items())
+        ignores = ('parent', 'children', 'id', 'attrs')
+        for i in ignores:
+            params.pop(i)
+        return params
+
     def parse(self, text: str) -> None:
         exec(text)
         params: Dict[str, Any] = locals()

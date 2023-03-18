@@ -22,6 +22,13 @@ class Writer():
             self.template_dir: str = ''
             self.data: str = ''
 
+        def __getattr__(self, name):
+            msg = f'${{doc.{name}}} in template cannot be resolved.' \
+                  f' Please define "{name}" in config.'
+            logger.warn(msg)
+            alt = f'*doc.{name}*'
+            return alt
+
     def __init__(self):
         self.encoding: str = 'utf-8'
         self.data: str = str()
@@ -56,6 +63,9 @@ class Writer():
         docdata.title = self.rootnode.config.title if self.rootnode else None
         docdata.author = self.rootnode.config.author if self.rootnode else None
         docdata.version = self.rootnode.config.version if self.rootnode else None
+        for k, v in self.rootnode.config.docdata_params.items():
+            if not hasattr(docdata, k):
+                setattr(docdata, k, v)
         docdata.template_dir = self.template_dir()
         docdata.data = self.data
         return docdata

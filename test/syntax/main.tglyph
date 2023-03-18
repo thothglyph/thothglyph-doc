@@ -2,7 +2,7 @@
 title = 'Syntax Test'
 version = '1.2.3'
 author = cmd("git config user.name")
-attrs = {'author': 'Foo Bar'}
+attrs = {'author': 'Foo Bar', 'val': 'xXxXx'}
 %%%
 
 ▮* Prologue
@@ -395,6 +395,12 @@ The important text. [#1] And the important text too. [#2]
 ▮▮ Replace
 
 Hello, I am ⁅author⁆.
+
+⸌⸌⸌
+Replace in decoration text like ⋄⁅author⁆⋄, ⸌⁅val⁆⸌.
+
+var = "⁅val⁆"
+⸌⸌⸌
 
 ▮ Torture
 
