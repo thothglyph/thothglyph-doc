@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, List
 import os
 import re
 from thothglyph.node import nd
@@ -64,7 +64,7 @@ class Writer():
         docdata.author = self.rootnode.config.author if self.rootnode else None
         docdata.version = self.rootnode.config.version if self.rootnode else None
         for k, v in self.rootnode.config.docdata_params.items():
-            if not hasattr(docdata, k):
+            if k not in docdata.__dict__:
                 setattr(docdata, k, v)
         docdata.template_dir = self.template_dir()
         docdata.data = self.data
@@ -106,6 +106,30 @@ class Writer():
 
     def leave_other(self, node) -> None:
         raise Exception()
+
+    def make_output_fpath(
+        self, infpath: str, outfpath: Optional[str], node: nd.ASTNode
+    ) -> List[str, str, str]:
+        indir, infname = os.path.split(infpath)
+        infbname, infext = os.path.splitext(infname)
+        if hasattr(node.config, 'filename'):
+            conffbname = node.config.filename
+        else:
+            conffbname = ''
+        if outfpath is None:
+            outdir = indir
+            outfbname = conffbname or infbname
+            outfext = self.ext
+        else:
+            if os.path.isdir(outfpath):
+                outdir = outfpath
+                outfbname = conffbname or infbname
+                outfext = self.ext
+            else:
+                outdir, outfname = os.path.split(outfpath)
+                outfbname, outfext = os.path.splitext(outfname)
+                outfext = outfext[1:] or self.ext
+        return (outdir, outfbname, outfext)
 
     def write(self, fpath: str, node: nd.ASTNode) -> None:
         logger.info('{} write start.'.format(self.__class__.__name__))

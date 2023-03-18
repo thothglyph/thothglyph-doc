@@ -26,7 +26,7 @@ class PdfWriter(LatexWriter):
             self.tmpdirname = tmpdirname
             self.parse(node)
             dirname, fname = os.path.split(fpath)
-            fbname, fext = os.path.splitext(fpath)
+            fbname, fext = os.path.splitext(fname)
             if dirname == '':
                 dirname = '.'
             tex_fpath = os.path.join(tmpdirname, '{}.tex'.format(fbname))

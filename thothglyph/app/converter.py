@@ -42,20 +42,19 @@ def main():
 
     if args.to:
         output_type = args.to
-        if args.output:
-            output_name, output_ext = os.path.splitext(os.path.abspath(args.output))
-            output_ext = output_ext[1:]
-        else:
-            output_name = input_name
-            output_ext = None
     else:
         if args.output:
-            output_name, output_ext = os.path.splitext(os.path.abspath(args.output))
+            _, output_ext = os.path.splitext(os.path.abspath(args.output))
             output_ext = output_ext[1:]
         else:
-            output_name = input_name
-            output_ext = default_to
-        output_type = output_ext
+            output_ext = ''
+        output_type = output_ext or default_to
+
+    input_absfpath = os.path.abspath(args.input)
+    if args.output is None:
+        output_absfpath = None
+    else:
+        output_absfpath = os.path.abspath(args.output)
 
     os.chdir(input_dirname)
     reader = Reader(input_type)
@@ -63,8 +62,9 @@ def main():
     nodeprint(node)
 
     writer = Writer(output_type)
-    ext = output_ext or writer.ext
-    writer.write('{}.{}'.format(output_name, ext), node)
+    odir, ofbname, ofext = writer.make_output_fpath(input_absfpath, output_absfpath, node)
+    output_fpath = os.path.join(odir, '{}.{}'.format(ofbname, ofext))
+    writer.write(output_fpath, node)
 
 
 if __name__ == '__main__':

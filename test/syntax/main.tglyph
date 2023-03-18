@@ -1,5 +1,7 @@
 %%%
 title = 'Syntax Test'
+filename = 'syntax-test'
+date = 'yyyy/mm/dd'
 version = '1.2.3'
 author = cmd("git config user.name")
 attrs = {'author': 'Foo Bar', 'val': 'xXxXx'}
