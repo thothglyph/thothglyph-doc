@@ -206,6 +206,15 @@ class DescriptionListBlockNode(ListBlockNode):
     def __init__(self):
         super().__init__()
 
+    @property
+    def titlebreak(self):
+        if len(self.children) == 0:
+            return False
+        for child in self.children:
+            if hasattr(child, 'titlebreak') and child.titlebreak:
+                return True
+        return False
+
 
 class CheckListBlockNode(ListBlockNode):
     def __init__(self):
@@ -216,6 +225,8 @@ class ListItemNode(ASTNode):
     def __init__(self):
         super().__init__()
         self.options: Dict[str, Any] = dict()
+        self.title: Any = None
+        self.titlebreak: bool = False
 
 
 class FootnoteListBlockNode(ASTNode):

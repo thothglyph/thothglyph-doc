@@ -450,6 +450,9 @@ class TglyphParser(Parser):
         item_type = table[tokens[0].key].__name__
         if tokens[0].key == 'DESC_LIST_SYMBOL':
             text = self.replace_text_attrs(m.group(2))
+            if text[-1] == '◃':
+                item.titlebreak = True
+                text = text[:-1]
             texttokens = self.lexer.lex_inline(text)
             title = nd.TitleNode()
             item.add(title)

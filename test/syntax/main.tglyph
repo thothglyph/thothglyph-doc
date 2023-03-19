@@ -120,6 +120,15 @@ new paragraph text text new 1.
 ᛝTerm 2ᛝ Listᛝ item 2
 ◃
 ᛝListᛝ item new 1
+◃
+ᛝTerm 1◃ᛝ List item 1
+ᛝᛝTerm 1-1◃ᛝ List item 1-1
+ᛝᛝᛝTerm 1-1-1◃ᛝ List item 1-1-1
+ᛝᛝᛝTerm 1-1-2◃ᛝ List item 1-1-2
+ᛝᛝTerm 1-2◃ᛝ List item 1-2
+ᛝᛝᛝTerm 1-2-1◃ᛝ List item 1-2-1
+ᛝᛝᛝTerm 1-2-2◃ᛝ List item 1-2-2
+ᛝTerm 2◃ᛝ Listᛝ item 2
 
 ▮▮ CheckList
 

@@ -321,7 +321,9 @@ class LatexWriter(Writer):
 
     def leave_title(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent, nd.ListItemNode):
-            self.data += '] \\mbox{}\\\\'
+            self.data += '] '
+            if hasattr(node.parent, 'titlebreak'):
+                self.data += '\\mbox{}\\\\ '
 
     def visit_decorationrole(self, node: nd.ASTNode) -> None:
         self.data += self.decoration_table[node.role][0]
