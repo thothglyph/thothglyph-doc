@@ -12,14 +12,15 @@ logger = logging.getLogger(__file__)
 
 class Lexer():
     class Token():
-        def __init__(self, no: int, line: int, key: str, value: str):
+        def __init__(self, no: int, line: int, pos: int, key: str, value: str):
             self.no: int = no
             self.line: int = line
+            self.pos: int = pos
             self.key: str = key
             self.value: str = value
 
         def __str__(self) -> str:
-            s = f'Token({self.no}, {self.line}, {self.key}, "{self.value}")'
+            s = f'Token({self.no}, {self.line}, {self.pos}, {self.key}, "{self.value}")'
             return s
 
     newline_token: str = '\n'
@@ -101,14 +102,17 @@ class Lexer():
         for lineno, line in enumerate(lines):
             lineno = lineno + 1
             rest = line
+            curpos = 0
             while True:
                 for key, pattern in patterns.items():
                     m = re.match(pattern, rest)
                     if m:
                         no = len(tokens)
-                        tokens.append(Lexer.Token(no, lineno, key, m.group(0)))
+                        pos = curpos
+                        tokens.append(Lexer.Token(no, lineno, pos, key, m.group(0)))
                         logger.debug(tokens[-1])
                         rest = rest[len(m.group(0)):]
+                        curpos += len(m.group(0))
                         break
                 else:
                     raise Exception(rest)
@@ -277,7 +281,7 @@ class TglyphParser(Parser):
         # terminate
         accepted = (nd.DocumentNode, nd.SectionNode)
         if not any([isinstance(self.nodes[-1], n) for n in accepted]):
-            tokens.insert(0, Lexer.Token(-1, -1, 'BLOCKS_TERMINATOR', ''))
+            tokens.insert(0, Lexer.Token(-1, -1, -1, 'BLOCKS_TERMINATOR', ''))
             return tokens
         if tokens[0].key == 'SECTION_TITLE_LINE':
             m = re.match(Lexer.block_tokens['SECTION_TITLE_LINE'], tokens[0].value)
@@ -289,7 +293,7 @@ class TglyphParser(Parser):
             else:
                 level = 2
         if self._lastsection.level >= level:
-            tokens.insert(0, Lexer.Token(-1, -1, 'SECTION_TERMINATOR', ''))
+            tokens.insert(0, Lexer.Token(-1, -1, -1, 'SECTION_TERMINATOR', ''))
             return tokens
 
         # body
@@ -325,7 +329,7 @@ class TglyphParser(Parser):
         # terminate
         accepted = (nd.DocumentNode, nd.SectionNode)
         if not any([isinstance(self.nodes[-1], n) for n in accepted]):
-            tokens.insert(0, Lexer.Token(-1, -1, 'BLOCKS_TERMINATOR', ''))
+            tokens.insert(0, Lexer.Token(-1, -1, -1, 'BLOCKS_TERMINATOR', ''))
             return tokens
         # body
         m = re.match(r' *•\[([\^#])(.+)\] +', tokens[0].value)
@@ -402,7 +406,7 @@ class TglyphParser(Parser):
         if isinstance(self.nodes[-1], nd.ListItemNode):
             item0 = self.nodes[-1]
             if item0.level >= item.level:
-                tokens.insert(0, Lexer.Token(-1, -1, 'BLOCKS_TERMINATOR', ''))
+                tokens.insert(0, Lexer.Token(-1, -1, -1, 'BLOCKS_TERMINATOR', ''))
                 return tokens
         # body
         if tokens[0].key == 'LIST_TERMINATOR_SYMBOL':
@@ -435,7 +439,7 @@ class TglyphParser(Parser):
         self.nodes[-1].add(quote)
         subtokens = list()
         prev = begintoken = tokens[0]
-        prev = Lexer.Token(-1, -1, 'DUMMY', '')
+        prev = Lexer.Token(-1, -1, -1, 'DUMMY', '')
         text = str()
         while tokens:
             if tokens[0].line != prev.line:
@@ -447,7 +451,7 @@ class TglyphParser(Parser):
             prev = tokens.pop(0)
         else:
             raise Exception(begintoken)
-        subtokens.append(Lexer.Token(-1, -1, 'BLOCKS_TERMINATOR', ''))
+        subtokens.append(Lexer.Token(-1, -1, -1, 'BLOCKS_TERMINATOR', ''))
         self.nodes.append(quote)
         self.p_blocks(subtokens)
         self.nodes.pop()
@@ -456,7 +460,7 @@ class TglyphParser(Parser):
     def p_codeblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.block_tokens['CODE_LINE'], tokens[0].value)
         assert m
-        indent = len(m.group(1))
+        indent = tokens[0].pos + len(m.group(1))
         code = nd.CodeBlockNode()
         code.lang = m.group(1)
         self.nodes[-1].add(code)
@@ -482,10 +486,16 @@ class TglyphParser(Parser):
         else:
             text = str()
             prev = begintoken
+            warned = False
             for token in subtokens:
                 if token.line != prev.line:
                     if prev.key != 'CODE_LINE':
                         text += '\n'
+                    numspace = re.match(r' *', token.value).end()
+                    if numspace < indent and not warned:
+                        msg = 'Code indentation is to the left of the block indentation.'
+                        logger.warn(msg + ' line:{}'.format(token.line))
+                        warned = True
                     text += token.value[indent:]
                 else:
                     text += token.value
@@ -497,7 +507,7 @@ class TglyphParser(Parser):
     def p_customblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.block_tokens['CUSTOM_LINE'], tokens[0].value)
         assert m
-        indent = len(m.group(1))
+        indent = tokens[0].pos + len(m.group(1))
         custom = nd.CustomBlockNode()
         custom.ext = m.group(2)
         self.nodes[-1].add(custom)
@@ -523,10 +533,16 @@ class TglyphParser(Parser):
         else:
             prev = begintoken
             text = str()
+            warned = False
             for token in subtokens:
                 if token.line != prev.line:
                     if prev.key != 'CUSTOM_LINE':
                         text += '\n'
+                    numspace = re.match(r' *', token.value).end()
+                    if numspace < indent and not warned:
+                        msg = 'Code indentation is to the left of the block indentation.'
+                        logger.warn(msg + ' line:{}'.format(token.line))
+                        warned = True
                     text += token.value[indent:]
                 else:
                     text += token.value

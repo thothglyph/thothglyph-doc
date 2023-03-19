@@ -275,18 +275,6 @@ int main()
   popd
   ⸌⸌⸌
 
-• ⸌⸌⸌shell
-  pushd ~
-  cat .bashrc
-  popd
-  ⸌⸌⸌
-ᛝTermᛝ ⸌⸌⸌shell
-  pushd ~
-  cat .bashrc
-  popd
-  ⸌⸌⸌
-◃
-
 ⸌⸌⸌
 80 characters
 12345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -425,6 +413,19 @@ var = "⁅val⁆"
 ⸌⸌⸌
 
 ▮ Torture
+
+▮▮ CodeBlock indentation
+
+• ⸌⸌⸌shell
+  pushd ~
+  cat .bashrc
+  popd
+  ⸌⸌⸌
+ᛝTermᛝ ⸌⸌⸌shell
+       pushd ~
+       cat .bashrc
+       popd
+       ⸌⸌⸌
 
 ▮▮ Long inline code
 
