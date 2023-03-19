@@ -18,25 +18,53 @@ Thothglyph Language の最大の特徴は、マークアップシンボルの多
 欠点として、通常の文書にはあまり出現しない文字をシンボルに使用しているため、書きにくく感じるかもしれません。
 これを軽減するために各種エディタ向けに Thothglyph 用の入力補助やシンタックスハイライトのプラグインを用意しています。
 
-## Blocks
+## Preprocess
 
-ドキュメントはブロックの木構造で構成されています。
-ブロックは基本的に行単位でまとまっています。
+Thothglyph はドキュメントを構文解析する前に簡単なプリプロセスを実行します。
 
 ### Config
 
-`%%%`のみの行で囲まれたブロックは Config となります。
-ドキュメントの最初のみ記述可能なブロックです。
+`⑇⑇⑇`のみの行で囲まれたテキストは Config ブロックとなります。
+ドキュメントの最初のみ記述可能な構文です。
 ドキュメントの設定を Python 言語で記述します。
 
 ```
-%%%
+⑇⑇⑇
 title = 'Document Title'
 version = '1.2.3'
 author = cmd("git config user.name")
 attrs = {'author': 'Foo Bar'}
-%%%
+⑇⑇⑇
 ```
+
+### ControlFlow
+
+1文字の'⑇'の後に特定のキーワードを記入すると ControlFlow となります。
+ドキュメントの一部分を条件により表示/非表示できます。
+サポートしているキーワードは if, elif, end です。
+条件には Config ブロックで定義した attrs の値を使用できます。
+
+```
+⑇if author == 'Smith'
+Profile about Smith.
+⑇elif author == 'Tanaka'
+Profile about Tanaka.
+⑇end
+```
+
+### Comment
+
+2文字の'⑇'のに続く行末までの文字列はコメントとなります。
+コメントはプリプロセスの段階で文中から削除されます。
+
+```
+This line includes comment --> ⑇⑇ This is comment.
+```
+
+## Blocks
+
+ドキュメントはブロックの木構造で構成されています。
+ブロックは基本的に行単位でまとまっています。
 
 ### Section
 
@@ -170,6 +198,9 @@ New Paragraph.
 ◃
 ᛝTerm 1ᛝ List item new 1
 ```
+
+用語と本文は通常横並びで出力されます。
+用語のの終端に`◃`を記入すると用語の後改行して本文を出力します。
 
 ### Check List
 
