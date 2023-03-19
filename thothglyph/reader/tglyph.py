@@ -24,8 +24,18 @@ class Lexer():
             return s
 
     newline_token: str = '\n'
+    preproc_keywords: Tuple[str] = (
+        'if', 'elif', 'else',
+        'end',
+    )
+    preproc_tokens: Dict[str, str] = {
+        'CONFIG_LINE': r'⑇⑇⑇$',
+        'COMMENT': r'⑇⑇(.+)',
+        'CONTROL_FLOW': r'⑇(\w+)(.*)',
+        'TEXT': r'[^⑇]*',
+    }
     block_tokens: Dict[str, str] = {
-        'CONFIG_LINE': r'%%%+$',
+        'CONFIG_LINE': r'⑇⑇⑇+$',
         'SECTION_TITLE_LINE': r' *((?:▮+)|(?:▯+))(\*?) +([^⟦]+) *(?:⟦([^⟧]*)⟧)?',
         'CUSTOM_LINE': r'( *)¤¤¤(.*)',
         'CODE_LINE': r'( *)⸌⸌⸌(.*)',
@@ -83,12 +93,18 @@ class Lexer():
     )
 
     def __init__(self):
+        self._preproc_tokens: Dict[str, re.Pattern] = {
+            k: re.compile(v) for k, v in self.preproc_tokens.items()
+        }
         self._block_tokens: Dict[str, re.Pattern] = {
             k: re.compile(v) for k, v in self.block_tokens.items()
         }
         self._inline_tokens: Dict[str, re.Pattern] = {
             k: re.compile(v) for k, v in self.inline_tokens.items()
         }
+
+    def lex_preproc(self, data) -> List[Lexer.Token]:
+        return self.lex_pattern(self._preproc_tokens, data)
 
     def lex_block(self, data) -> List[Lexer.Token]:
         return self.lex_pattern(self._block_tokens, data)
@@ -124,12 +140,18 @@ class Lexer():
 class TglyphParser(Parser):
     def __init__(self, reader: Reader):
         super().__init__(reader)
+        self.config: Optional[nd.ConfigNode] = None
+        self.pplines: List[str] = list()
         self.rootnode: Optional[nd.DocumentNode] = None
         self.nodes: List[nd.ASTNode] = list()
         self.lexer: Lexer = Lexer()
 
+        self.rootnode = nd.DocumentNode()
+        self.nodes.append(self.rootnode)
+
     def parse(self, data: str) -> Optional[nd.DocumentNode]:
-        self.tokens = self.lexer.lex_block(data)
+        ppdata = self.preprocess(data)
+        self.tokens = self.lexer.lex_block(ppdata)
         tokens = list() + self.tokens
         tokens = self.p_document(tokens)
         return self.rootnode
@@ -137,38 +159,37 @@ class TglyphParser(Parser):
     def _tokens(self, token: Lexer.Token, offset: int) -> Lexer.Token:
         return self.tokens[token.no + offset]
 
-    def p_document(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
-        document = nd.DocumentNode()
-        self.rootnode = document
-        self.nodes.append(self.rootnode)
+    def preprocess(self, data: str) -> str:
         self._init_config()
-        tokens = self.p_ignore_emptylines(tokens)
-        if tokens and tokens[0].key == 'CONFIG_LINE':
-            tokens = self.p_configblock(tokens)
-        tokens = self.p_ignore_emptylines(tokens)
-        tokens = self.p_blocks(tokens)
-        tokens = self.p_ignore_emptylines(tokens)
-        return tokens
+        tokens = self.lexer.lex_preproc(data)
+        self.pplines = list()
+        while tokens:
+            if tokens[0].key == 'CONFIG_LINE':
+                tokens = self.p_configblock(tokens)
+            elif tokens[0].key == 'COMMENT':
+                tokens.pop(0)
+            elif tokens[0].key == 'CONTROL_FLOW':
+                tokens = self.p_controlflow(tokens)
+            else:
+                self.pplines.append(tokens[0].value)
+                tokens.pop(0)
+        ppdata = '\n'.join(self.pplines)
+        return ppdata
 
     def _init_config(self) -> None:
         config = nd.ConfigNode()
         if self.reader.parent:
             assert isinstance(self.reader.parent.parser, TglyphParser)
-            pconfig = self.reader.parent.parser.nodes[0].config
+            pconfig = self.reader.parent.parser.rootnode.config
             pattrs = dict(pconfig.__dict__)
             for key in ('parent', 'children', 'id'):
                 pattrs.pop(key)
             for key in pattrs:
                 setattr(config, key, pattrs[key])
-        document = self.nodes[-1]
-        document.config = config
+        self.rootnode.config = config
 
     def p_configblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
-        document = self.nodes[-1]
-        if not isinstance(document, nd.DocumentNode):
-            msg = 'config must be under document. {}'.format(tokens[0])
-            raise Exception(msg)
-        config = document.config
+        config = self.rootnode.config
         begintoken = tokens[0]
         tokens.pop(0)
         subtokens = list()
@@ -179,7 +200,6 @@ class TglyphParser(Parser):
         else:
             raise Exception(begintoken)
         tokens.pop(0)
-        # config.parse(text)
         m = re.match(Lexer.inline_tokens['ROLE'], subtokens[0].value) if subtokens else None
         if m and m.group(1) == 'include':
             role = nd.RoleNode()
@@ -196,7 +216,7 @@ class TglyphParser(Parser):
             text = str()
             for token in subtokens:
                 if token.line != prev.line:
-                    if prev.key != 'CINFIG_LINE':
+                    if prev.key != 'CONFIG_LINE':
                         text += '\n'
                     text += token.value[0:]
                 else:
@@ -204,6 +224,42 @@ class TglyphParser(Parser):
                 prev = token
             text = self.replace_text_attrs(text)
             config.parse(text)
+        return tokens
+
+    def p_controlflow(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
+        match = re.match(Lexer.preproc_tokens['CONTROL_FLOW'], tokens[0].value)
+        assert match
+        keyword, sentence = match.group(1), match.group(2)
+        if keyword == 'if':
+            tokens.pop(0)
+            cond = eval(sentence, {}, self.rootnode.config.attrs)
+            tokens = self.p_if_else(tokens, cond)
+        else:
+            raise Exception('Illegal text token: {}'.format(tokens[0]))
+        return tokens
+
+    def p_if_else(self, tokens: List[Lexer.Token], cond: bool) -> List[Lexer.Token]:
+        while tokens:
+            if tokens[0].key == 'TEXT' and cond:
+                self.pplines.append(tokens[0].value)
+            elif tokens[0].key == 'CONTROL_FLOW':
+                match = re.match(Lexer.preproc_tokens['CONTROL_FLOW'], tokens[0].value)
+                assert match
+                keyword, sentence = match.group(1), match.group(2)
+                if keyword == 'end':
+                    break
+                elif keyword == 'elif':
+                    cond = not cond and eval(sentence, {}, self.rootnode.config.attrs)
+                elif keyword == 'else':
+                    cond = not cond
+            tokens.pop(0)
+        tokens.pop(0)
+        return tokens
+
+    def p_document(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
+        tokens = self.p_ignore_emptylines(tokens)
+        tokens = self.p_blocks(tokens)
+        tokens = self.p_ignore_emptylines(tokens)
         return tokens
 
     @property
@@ -236,7 +292,7 @@ class TglyphParser(Parser):
     def p_block(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         if tokens[0].key == 'SECTION_TITLE_LINE':
             tokens = self.p_section(tokens)
-        elif tokens[0].key == 'CNFIG_LINE':
+        elif tokens[0].key == 'CONFIG_LINE':
             tokens = self.p_configblock(tokens)
         elif tokens[0].key == 'TOC_LINE':
             tokens = self.p_tocblock(tokens)
@@ -882,8 +938,10 @@ class TglyphParser(Parser):
                 tokens = self.p_deco(tokens)
             elif tokens[0].key == 'TEXT':
                 tokens = self.p_text(tokens)
+            elif tokens[0].key == 'ATTR':
+                tokens = self.p_text(tokens)
             else:
-                raise Exception('Illegal text token: {}'.format(tokens))
+                raise Exception('Illegal text token: {}'.format(tokens[0]))
         return tokens
 
     def p_deco(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
