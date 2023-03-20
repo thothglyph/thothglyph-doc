@@ -32,6 +32,11 @@ class LatexWriter(Writer):
         'SUP': ('\\textsuperscript{', '}'),
         'SUB': ('\\textsubscript{', '}'),
     }
+    lang_table: Dict[str, str] = {
+        'c': 'C',
+        'c++': 'C++',
+        'shell': 'sh',
+    }
     bp_scale: float = 72.0 / 150.0
 
     def __init__(self):
@@ -149,7 +154,10 @@ class LatexWriter(Writer):
         self.data += '\\end{quote}\n'
 
     def visit_codeblock(self, node: nd.ASTNode) -> None:
-        self.data += '\\begin{lstlisting}\n'
+        self.data += '\\begin{lstlisting}'
+        if node.lang in self.lang_table:
+            self.data += '[language={}]'.format(self.lang_table[node.lang])
+        self.data += '\n'
         self.data += node.text + '\n'
         self.data += '\\end{lstlisting}\n'
 
@@ -317,12 +325,12 @@ class LatexWriter(Writer):
 
     def visit_title(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent, nd.ListItemNode):
-            self.data += '\\item['
+            self.data += '\\item[\\desctitle{'
 
     def leave_title(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent, nd.ListItemNode):
-            self.data += '] '
-            if hasattr(node.parent, 'titlebreak'):
+            self.data += '}] '
+            if node.parent.titlebreak:
                 self.data += '\\mbox{}\\\\ '
 
     def visit_decorationrole(self, node: nd.ASTNode) -> None:
@@ -460,6 +468,7 @@ def tex_escape(text: str) -> str:
         '|': '{\\textbar}',
         '<': '{\\textless}',
         '>': '{\\textgreater}',
+        '-': '\\phantom{}-',
     }
     text = text.translate(str.maketrans(trans))
     return text

@@ -1,12 +1,17 @@
-\documentclass[11pt,titlepage]{ltjsreport}
+\documentclass[unicode,11pt,titlepage]{ltjsreport}
 \usepackage{luatexja}
 \pdfvariable imageresolution 150
 \usepackage[margin=20truemm]{geometry}
 \usepackage{luatexja-otf}
-\renewcommand\familydefault{\sfdefault}
+\usepackage[T1]{fontenc}
+% \renewcommand{\rmdefault}{cmr}
+% \renewcommand{\sfdefault}{cmss}
+% \renewcommand{\ttdefault}{cmtt}
+\renewcommand\familydefault{\rmdefault}
 \renewcommand\kanjifamilydefault{\gtdefault}
 \renewcommand{\thesection}{\thechapter.\arabic{section}}
 \renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\usepackage[scaled=0.9]{beramono} % code block
 \usepackage{fancyhdr}
 \usepackage{nameref}
 \usepackage[unicode,bookmarksnumbered]{hyperref}
@@ -41,8 +46,6 @@
 \counterwithout{table}{chapter}
 \counterwithout{equation}{chapter}
 \usepackage{xcolor, soul}
-\usepackage[T1]{fontenc}
-\usepackage[scaled=0.9]{beramono}
 %%%%
 \usepackage{tikz}
 \usetikzlibrary{calc}
@@ -83,14 +86,15 @@
   {\@omit@numberfalse\@chapter}
   {\@omit@numbertrue\@schapter}}
 \def\@makechapterhead#1{%
-  \vspace*{2\Cvs}
+  \vspace*{1\Cvs}
   {\parindent \z@ \raggedright \normalfont
   \ifnum \c@secnumdepth >\m@ne
   \huge\headfont \@chapapp\thechapter\@chappos
   \fi
+  \quad
   \interlinepenalty\@M
-  \Huge \headfont #1\par\nobreak
-  \vskip 3\Cvs}}
+  \huge \headfont #1\par\nobreak
+  \vskip 1\Cvs}}
 \renewcommand{\paragraph}{\@startsection{paragraph}{4}{0ex}%
    {-3.25ex plus -1ex minus -0.2ex}%
    {1.5ex plus 0.2ex}%
@@ -163,6 +167,7 @@
   \hl{#3}%
   \endgroup
 }
+\newcommand{\desctitle}[1]{\textbf{#1}}
 \newcommand{\varbox}[1]{\colortext[gray]{0.95}{\small \texttt{\textbf{#1}}}}
 \newcommand{\codebox}[1]{\colortext[gray]{0.95}{\small \texttt{#1}}}
 \newcommand{\kbdbox}[1]{\ovalbox{\footnotesize \texttt{#1}}}
@@ -180,13 +185,18 @@
 
 \maketitle
 \thispagestyle{fancy}
-\lstset{%
+\lstdefinestyle{common}{
   numbers=none,
-  basicstyle={\footnotesize \ttfamily},
-  stringstyle={\footnotesize \ttfamily},
+  basicstyle={\small \ttfamily},
+  stringstyle={\small \ttfamily},
   frame=single,
   breaklines=true,
+  backgroundcolor=\color[gray]{0.95},
+  commentstyle={\color{teal}},
+  stringstyle={\color{violet}},
+  keywordstyle={\color{blue}},
 }
+\lstset{style=common}
 
 ${doc.data}
 

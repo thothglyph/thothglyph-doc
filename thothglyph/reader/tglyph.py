@@ -521,7 +521,7 @@ class TglyphParser(Parser):
         assert m
         indent = tokens[0].pos + len(m.group(1))
         code = nd.CodeBlockNode()
-        code.lang = m.group(1)
+        code.lang = m.group(2)
         self.nodes[-1].add(code)
         begintoken = tokens[0]
         tokens.pop(0)
@@ -552,8 +552,9 @@ class TglyphParser(Parser):
                         text += '\n'
                     numspace = re.match(r' *', token.value).end()
                     if numspace < indent and not warned:
-                        msg = 'Code indentation is to the left of the block indentation.'
-                        logger.warn(msg + ' line:{}'.format(token.line))
+                        msg = 'code indentation is to the left of the block indentation.'
+                        msg = f'{self.reader.path}:{token.line}: {msg}'
+                        logger.warn(msg)
                         warned = True
                     text += token.value[indent:]
                 else:
@@ -902,7 +903,7 @@ class TglyphParser(Parser):
         menu = nd.MenuRoleNode()
         menu.role = role.role
         menu.opts = role.opts
-        menu.value = re.split(r' *\> *', role.value.strip())
+        menu.value = re.split(r' +\> +', role.value.strip())
         self.nodes[-1].add(menu)
         tokens.pop(0)
         return tokens

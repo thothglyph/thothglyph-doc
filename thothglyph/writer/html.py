@@ -141,15 +141,16 @@ class HtmlWriter(Writer):
                 liclass = 'check_dis'
             self.data += '<li class="checklist {}">'.format(liclass)
         elif isinstance(node.parent, nd.FootnoteListBlockNode):
-            url = '#fn.{}-{}'.format(node.treeindex()[1], node.fn_num)
+            url = 'fn.{}-{}'.format(node.treeindex()[1], node.fn_num)
             text = node.fn_num  # node.title
             self.data += '<li> '
             self.data += '<span id="{}">{}</span>. '.format(url, text)
         elif isinstance(node.parent, nd.ReferenceListBlockNode):
-            url = '#ref.{}'.format(node.ref_num)
+            url = 'ref.{}'.format(node.ref_num)
             text = node.ref_num  # node.title
             self.data += '<li> '
             self.data += '[<span id="{}">{}</span>] '.format(url, text)
+            # self.data += '<li id="{}">[{}] '.format(url, text)
         else:
             self.data += '<li>'
 
@@ -331,21 +332,23 @@ class HtmlWriter(Writer):
         pass
 
     def visit_kbdrole(self, node: nd.ASTNode) -> None:
-        value = ' + '.join(['<kbd>{}</kbd>'.format(v) for v in node.value])
+        texts = [html.escape(t) for t in node.value]
+        value = ' + '.join(['<kbd>{}</kbd>'.format(v) for v in texts])
         self.data += value
 
     def leave_kbdrole(self, node: nd.ASTNode) -> None:
         pass
 
     def visit_btnrole(self, node: nd.ASTNode) -> None:
-        value = '<kbd>{}</kbd>'.format(node.value)
+        value = '<kbd>{}</kbd>'.format(html.escape(node.value))
         self.data += value
 
     def leave_btnrole(self, node: nd.ASTNode) -> None:
         pass
 
     def visit_menurole(self, node: nd.ASTNode) -> None:
-        value = ' > '.join(['<span class="menu">{}</span>'.format(v) for v in node.value])
+        texts = [html.escape(t) for t in node.value]
+        value = ' > '.join(['<span class="menu">{}</span>'.format(v) for v in texts])
         self.data += value
 
     def leave_menurole(self, node: nd.ASTNode) -> None:
