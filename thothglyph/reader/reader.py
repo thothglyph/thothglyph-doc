@@ -23,6 +23,7 @@ class Reader():
         node = self.parser.parse(data)
         self.set_sectnums(node)
         self.set_footnote_nums(node)
+        self.merge_tablecell_text(node)
         logger.info('{} read finish.'.format(self.__class__.__name__))
         return node
 
@@ -83,6 +84,35 @@ class Reader():
         for i, key in enumerate(references):
             for n in references[key]:
                 n.ref_num = i + 1
+
+    def merge_tablecell_text(self, rootnode: nd.ASTNode) -> None:
+        tables = []
+        for n, gofoward in rootnode.walk_depth():
+            if not gofoward and isinstance(n, nd.TableBlockNode):
+                tables.append(n)
+        mergelist = {}
+        for table in tables:
+            for cell in table.cells():
+                if cell.mergeto:
+                    mergelist.setdefault(cell.mergeto, {'obj': cell.mergeto, 'from': list()})
+                    mergelist[cell.mergeto]['from'].append(cell)
+        for merge in mergelist.values():
+            mergetexts = [c for mf in merge['from'] for c in mf.children]
+            mergetexts = ''.join([t.text for t in mergetexts if isinstance(t, nd.TextNode)])
+            if mergetexts == '':
+                continue
+            cell = merge['obj']
+            paragraph = nd.ParagraphNode()
+            for child in cell.children:
+                paragraph.add(child)
+            cell.children.clear()
+            cell.add(paragraph)
+            for mergefrom in merge['from']:
+                paragraph = nd.ParagraphNode()
+                for child in mergefrom.children:
+                    paragraph.add(child)
+                mergefrom.children.clear()
+                cell.add(paragraph)
 
 
 class Parser():

@@ -264,40 +264,34 @@ class LatexWriter(Writer):
             align = '{}|'.format(node.align)
         else:
             align = '{}'.format(node.align)
-        if len(node.children) == 1 and isinstance(node.children[0], nd.TextNode):
-            if node.idx != 0:
-                if node.mergeto is None:
-                    self.data += ' & '
-                    s = node.size
-                    if s.x > 1:
-                        self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
-                    if s.y > 1:
-                        self.data += '\\multirow{{{}}}{{*}}{{'.format(s.y)
-                elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
-                    self.data += ' & '
-                    s = node.mergeto.size
-                    if s.x > 1:
-                        self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
-        else:
-            if node.idx != 0:
+        if node.idx != 0:
+            if node.mergeto is None:
                 self.data += ' & '
-            self.data += '\n{\\begin{varwidth}{\\linewidth}\n'
+                s = node.size
+                if s.x > 1:
+                    self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
+                if s.y > 1:
+                    self.data += '\\multirow{{{}}}{{*}}{{'.format(s.y)
+            elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
+                self.data += ' & '
+                s = node.mergeto.size
+                if s.x > 1:
+                    self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
+        self.data += '\n{\\begin{varwidth}{\\linewidth}\n'
 
     def leave_tablecell(self, node: nd.ASTNode) -> None:
-        if len(node.children) == 1 and isinstance(node.children[0], nd.TextNode):
-            if node.idx != 0:
-                if node.mergeto is None:
-                    s = node.size
-                    if s.x > 1:
-                        self.data += '}'
-                    if s.y > 1:
-                        self.data += '}'
-                elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
-                    s = node.mergeto.size
-                    if s.x > 1:
-                        self.data += '}'
-        else:
-            self.data += '\n\\end{varwidth}}\n'
+        self.data += '\n\\end{varwidth}}\n'
+        if node.idx != 0:
+            if node.mergeto is None:
+                s = node.size
+                if s.x > 1:
+                    self.data += '}'
+                if s.y > 1:
+                    self.data += '}'
+            elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
+                s = node.mergeto.size
+                if s.x > 1:
+                    self.data += '}'
 
     def visit_customblock(self, node: nd.ASTNode) -> None:
         if node.ext == '':
@@ -444,8 +438,6 @@ class LatexWriter(Writer):
 
     def visit_text(self, node: nd.ASTNode) -> None:
         text = node.text
-        # if not(isinstance(node.parent, nd.RoleNode) and node.parent.role == 'CODE'):
-        #     text = tex_escape(text)
         text = tex_escape(text)
         self.data += text
 

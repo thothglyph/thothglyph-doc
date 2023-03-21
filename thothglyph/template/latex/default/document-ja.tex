@@ -1,8 +1,7 @@
 \documentclass[unicode,11pt,titlepage]{ltjsreport}
-\usepackage{luatexja}
+\usepackage{luatexja-otf}
 \pdfvariable imageresolution 150
 \usepackage[margin=20truemm]{geometry}
-\usepackage{luatexja-otf}
 \usepackage[T1]{fontenc}
 % \renewcommand{\rmdefault}{cmr}
 % \renewcommand{\sfdefault}{cmss}
@@ -130,6 +129,7 @@
     {\@latex@warning{Empty `thebibliography' environment}}%
    \endlist}
 \let\@openbib@code\@empty
+\makeatother
 \newcommand{\tgincludegraphics}[2][100bp]{%
   \measureremainder{\whatsleft}
   % \ifdim #1<\linewidth
@@ -173,18 +173,6 @@
 \newcommand{\kbdbox}[1]{\ovalbox{\footnotesize \texttt{#1}}}
 \newcommand{\btnbox}[1]{\ovalbox{\footnotesize \textsf{#1}}}
 \newcommand{\menubox}[1]{\colortext[gray]{0.9}{\footnotesize \textsf{#1}}}
-\makeatother
-\title{${doc.title}}
-\author{${doc.author}}
-\date{${doc.date}}
-\pagestyle{fancy}
-\fancyhead[LE,LO]{${doc.title}}
-\fancyhead[RE,RO]{!confidencial!}
-\fancyfoot[CE,CO]{\thepage}
-\begin{document}
-
-\maketitle
-\thispagestyle{fancy}
 \lstdefinestyle{common}{
   numbers=none,
   basicstyle={\small \ttfamily},
@@ -198,6 +186,16 @@
 }
 \lstset{style=common}
 
-${doc.data}
+\title{${doc.title}}
+\author{${doc.author}}
+\date{${doc.date}}
+\pagestyle{fancy}
+\fancyhead[LE,LO]{${doc.title}}
+\fancyhead[RE,RO]{!confidencial!}
+\fancyfoot[CE,CO]{\thepage}
 
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+${doc.data}
 \end{document}

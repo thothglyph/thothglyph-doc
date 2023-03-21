@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
+from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Tuple
 import re
 import subprocess
 import types
@@ -323,6 +323,11 @@ class TableBlockNode(ASTNode):
 
     def cell(self, row: int, col: int) -> ASTNode:
         return self.children[row].children[col]
+
+    def cells(self) -> Iterator:
+        for row in self.children:
+            for cell in row.children:
+                yield cell
 
     def _fignum_format(self, gindex: int, lindex: List[int]) -> str:
         def default_fignum_format(gindex: int, lindex: List[int]) -> str:

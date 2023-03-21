@@ -302,15 +302,17 @@ New Paragraph.
 | a | b | c |
 ```
 
-セルの内容を`<`もしくは`^`にすることで、セルを結合できます。
+セルの内容を`⏴`もしくは`⏶`で開始することで、セルを結合できます。
 
 ```
-| head11 | head12 | <      | <      |
+| head11 | head12 | ⏴      | ⏴      |
 |--------|--------|--------|--------|
 | data11 | data12 | data13 | data14 |
-| data21 | data22 | <      | data24 |
-| data31 | ^      | <      | ^      |
-| data41 | data42 | <      | data44 |
+| data21 | data22 | ⏴      | data24 |
+| data31 | ⏶      | ⏴      | ⏶      |
+| data41 | data42 | ⏴      | data44 |
+| data51 | data52 | data53 |⏴data54 |
+| data61 |⏶data62 |⏶data63 |⏴data64 |
 ```
 
 ### List Table
@@ -346,6 +348,23 @@ List Table 内はレベル2以上の Bullet List で構成されます。
   •• data13
 • •• data23
   •• data22
+  •• data23
+===|
+```
+
+Basic Tableと 同様にセルの内容を`⏴`もしくは`⏶`で開始することで、セルを結合できます。
+
+```
+|===
+• •• head1
+  •• head2
+  •• ⏴
+◃
+• •• data11
+  •• data12
+  •• data13
+• •• data23
+  •• ⏶data22
   •• data23
 ===|
 ```

@@ -684,7 +684,10 @@ class TglyphParser(Parser):
             for c, celltext in enumerate(rowtexts):
                 cell = nd.TableCellNode()
                 row.add(cell)
+                cell.idx = c
+                cell.align = table.aligns[c]
                 text = self.replace_text_attrs(celltext)
+                text = self._tablecell_merge(table, cell, r, c, text)
                 try:
                     texttokens = self.lexer.lex_inline(text)
                     self.nodes.append(cell)
@@ -692,22 +695,6 @@ class TglyphParser(Parser):
                     self.nodes.pop()
                 except Exception:
                     cell.add(nd.TextNode(text))
-                cell.idx = c
-                cell.align = table.aligns[c]
-                if text == '<':
-                    cell.children[0].text = ''
-                    to = table.cell(r, c - 1)
-                    to = to.mergeto if to.mergeto else to
-                    if to.parent.idx == cell.parent.idx:
-                        to.size.x += 1
-                    cell.mergeto = to
-                elif text == '^':
-                    cell.children[0].text = ''
-                    to = table.cell(r - 1, c)
-                    to = to.mergeto if to.mergeto else to
-                    to.size.y += 1
-                    if to.idx == cell.idx:
-                        cell.mergeto = to
         return tokens
 
     def p_listtableblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
@@ -762,7 +749,36 @@ class TglyphParser(Parser):
                 row.add(cell)
                 cell.idx = c
                 cell.align = table.aligns[c]
+                if not(all([
+                    cell.children,
+                    isinstance(cell.children[0], nd.ParagraphNode),
+                    cell.children[0].children,
+                    isinstance(cell.children[0].children[0], nd.TextNode),
+                ])):
+                    continue
+                text = cell.children[0].children[0].text
+                text = self._tablecell_merge(table, cell, r, c, text)
+                cell.children[0].children[0].text = text
         return tokens
+
+    def _tablecell_merge(
+        self, table: nd.TableBlockNode, cell: nd.TableCellNode, r: int, c: int, text: str
+    ) -> str:
+        if text.startswith('⏴'):
+            text = text[1:]
+            to = table.cell(r, c - 1)
+            to = to.mergeto if to.mergeto else to
+            if to.parent.idx == cell.parent.idx:
+                to.size.x += 1
+            cell.mergeto = to
+        elif text.startswith('⏶'):
+            text = text[1:]
+            to = table.cell(r - 1, c)
+            to = to.mergeto if to.mergeto else to
+            to.size.y += 1
+            if to.idx == cell.idx:
+                cell.mergeto = to
+        return text
 
     def p_paragraph(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         paragraph = nd.ParagraphNode()

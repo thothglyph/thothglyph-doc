@@ -170,14 +170,42 @@ new paragraph text text new 1.
 | data⸌21⸌ | data22 | data23 |
 | a | b | c |
 
-| head11 | head12 | <      | <      |
+| head11 | head12 | ⏴      | ⏴      |
 |--------|--------|--------|--------|
 | data11 | data12 | data13 | data14 |
-| data21 | data22 | <      | data24 |
-| data31 | ^      | <      | ^      |
-| data41 | data42 | <      | data44 |
+| data21 | data22 | ⏴      | data24 |
+| data31 | ⏶      | ⏴      | ⏶      |
+| data41 | data42 | ⏴      | data44 |
+| data51 | data52 | data53 |⏴data54 |
+| data61 |⏶data62 |⏶data63 |⏴data64 |
 
 ▮▮▮ ListTable
+
+|===
+• •• head1
+  •• head2
+  •• head3
+◃
+• •• data11
+  •• data12
+  •• data13
+• •• data23
+  •• data22
+  •• data23
+===|
+
+|===
+• •• head1
+  •• head2
+  •• ⏴
+◃
+• •• data11
+  •• data12
+  •• data13
+• •• data23
+  •• ⏶data22
+  •• data23
+===|
 
 |===⟦align="lcr"⟧
 • •• head1
@@ -317,7 +345,7 @@ paragraph
 
 The ⁒emphasis⁒ ⋄strong⋄ ‗inserted‗ ¬deleted¬ ⋄⁒strong & emphasis⁒⋄ text.
 
-The x⌃sup⌃x x⌄sub⌄x text.
+The x⏶sup⏶x x⏷sub⏷x text.
 
 The ⫶var⫶ and ⸌code⸌ text.
 
