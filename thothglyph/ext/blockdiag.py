@@ -1,3 +1,5 @@
+import os
+import re
 import cairosvg
 import blockdiag.parser
 import blockdiag.builder
@@ -17,9 +19,6 @@ import rackdiag.drawer
 import packetdiag.parser
 import packetdiag.builder
 import packetdiag.drawer
-import os
-import re
-
 from thothglyph.node import logging
 
 logger = logging.getLogger(__file__)

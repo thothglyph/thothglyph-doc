@@ -10,11 +10,15 @@ html, body {margin: 0; padding: 0; scroll-padding-top: 60px;}
 #contents {width: 100%; height: 100%; padding: 0px 40px 20px 40;}
 #sidebar {position: sticky; top: 52px; width: 400px; height: calc(100vh - 50px - 2px); overflow-y: auto; background: #fff; border-right: 2px solid #ccc;}
 #sidebar_contents { height: 100%; white-space: nowrap; overflow-x: auto;}
+ul.toc {padding-top: 0.1em; padding-bottom: 0.1em;}
+li.toc {padding-top: 0.1em; padding-bottom: 0.1em;}
 h1 {border-bottom: 4px solid #ccc;}
 h2 {border-bottom: 2px solid #ccc;}
 h3 {font-size: 140%; margin: 1em 0em;}
 h4, h5, h6 {font-size: 120%; margin: 1em 0em;}
 .section {font-size: 110%; font-weight: bold; margin: 1em 0em;}
+li {padding: 0.2em 0em; margin: 0px}
+li p {padding: 0.2em 0em; margin: 0px;}
 ul.checklist {padding-inline-start: 2em;}
 li.check_en {padding-left: 0.5em;}
 li.check_im {padding-left: 0.5em;}
@@ -25,10 +29,18 @@ li.check_dis {list-style-image: url(${doc.template_dir}/common/check_dis.svg); p
 ul.referencelist{list-style: none; padding: 0em 1em;}
 ul.footnotelist{list-style: none; padding: 0em 1em;}
 dl dt {font-weight: bold;}
+div dt {padding: 0.2em 0em; margin: 0px;}
+div dt {padding: 0.2em 0em;}
+div dt p {padding: 0.2em 0em; margin: 0px;}
+div dd p {padding: 0.2em 0em; margin: 0px;}
+.compactdl div {display:flex; justify-content:flex-start;}
+.compactdl div dt {padding: 0 1em 0 0; margin: 0em}
+.compactdl div dd {padding: 0em 0em; margin: 0em}
 blockquote {border-left: 4px solid #ccc; padding-left: 0.5em;}
 table {border-collapse: collapse; margin: 1em 0em;}
 table th {background: #eee;}
 table th,td {border: 1px solid #888; padding: 0.5em 1em;}
+th,td p {padding: 0.2em 0em; margin: 0px;}
 pre {padding: 10px 10px; border: 1px solid #ddd; background: #f8f8f8;}
 pre code {font-size: medium; border: 0px; padding: 0px;}
 code {background: #f8f8f8; border: 1px solid #ddd; padding: 5px 3px 0 3px; font-family: courier, monospace;}
@@ -78,24 +90,19 @@ document.addEventListener('DOMContentLoaded', function () {
             id = value.textContent;
             value.id = id;
         }
-        if(value.tagName === 'H1' || value.tagName === 'H2') {
-            var ul = document.createElement('ul');
-            var li = document.createElement('li');
-            var a = document.createElement('a');
-            a.innerHTML = value.textContent;
-            a.href = '#' + value.id;
-            li.appendChild(a)
-            ul.appendChild(li);
-
-            if(value.tagName === 'H1') {
-              div.appendChild(ul);
-            } else
-            if(value.tagName === 'H2') {
-                var lastUl = div.lastElementChild;
-                var lastLi = lastUl.lastElementChild;
-                lastLi.appendChild(ul);
-            }
+        var prnt = value.tagName === 'H1' ? div : div.lastElementChild.lastElementChild;
+        if(prnt.getElementsByTagName('ul').length == 0) {
+            var newUl = document.createElement('ul');
+            prnt.appendChild(newUl);
         }
+        var ul = prnt.lastElementChild;
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        ul.className = li.className = a.className = 'toc'
+        a.innerHTML = value.textContent;
+        a.href = '#' + value.id;
+        li.appendChild(a)
+        ul.append(li)
     });
     contentsList.appendChild(div);
 });

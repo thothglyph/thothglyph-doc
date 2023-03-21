@@ -1,35 +1,40 @@
+from __future__ import annotations
+from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Tuple
 import re
 import subprocess
 import types
-
 from thothglyph.node import logging
 
 logger = logging.getLogger(__file__)
 
 
 class ASTNode():
-    attrkey = ()
+    attrkey: Tuple[str, ...] = tuple()
 
     def __init__(self):
-        self.parent = None
-        self.children = list()
-        self.id = str()
+        self.parent: Optional[ASTNode] = None
+        self.children: List[ASTNode] = list()
+        self.id: str = str()
 
     def __str__(self):
-        cls = self.__class__.__name__
-        kv = {k: getattr(self, k) for k in self.attrkey}
-        attrs = ', '.join(['{}:"{}"'.format(k, v) for k, v in kv.items()])
-        s = '{}({})'.format(cls, attrs)
+        cls: str = self.__class__.__name__
+        kv: Dict[str, str] = {k: getattr(self, k) for k in self.attrkey}
+        attrs: str = ', '.join(['{}:"{}"'.format(k, v) for k, v in kv.items()])
+        s: str = '{}({})'.format(cls, attrs)
         return s
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
     @property
-    def root(self):
-        node = self
+    def root(self) -> DocumentNode:
+        node: ASTNode = self
         while node.parent is not None:
             node = node.parent
+        if not isinstance(node, DocumentNode):
+            msg = 'root node is not a DocumentNode'
+            logger.error(msg)
+            raise Exception(msg)
         return node
 
     def add(self, node):
@@ -40,8 +45,8 @@ class ASTNode():
         node.parent = None
         self.children.remove(node)
 
-    def walk_depth(self):
-        def _walk(node, visited):
+    def walk_depth(self) -> Generator[Tuple[ASTNode, bool], None, None]:
+        def _walk(node: ASTNode, visited: List[ASTNode]):
             visited += [node]
             yield node, True  # go foward
             for child in node.children:
@@ -51,8 +56,8 @@ class ASTNode():
 
         yield self, True  # go foward
         if len(self.children) > 0:
-            rest = self.children[:]
-            visited = []
+            rest: List[ASTNode] = self.children[:]
+            visited: List[ASTNode] = []
             while len(rest) > 0:
                 first = rest[0]
                 for _ in _walk(first, visited): yield _  # noqa
@@ -61,37 +66,41 @@ class ASTNode():
                         rest.remove(n)
         yield self, False  # go back
 
-    def lastnode(self, cond=None):
-        def default_cond(n):
+    def lastnode(self, cond: Optional[Callable[[ASTNode], bool]] = None) -> Optional[ASTNode]:
+        def default_cond(n: ASTNode):
             return True
 
         cond = default_cond if cond is None else cond
-        node = self
+        node: Optional[ASTNode] = self
         while node:
-            children = [n for n in node.children if cond(n)]
+            children: List[ASTNode] = [n for n in node.children if cond(n)]
             if not children:
                 break
             node = children[-1]
         return node
 
-    def _parent_section(self):
+    def _parent_section(self) -> Optional[SectionNode]:
         node = self.parent
-        while not isinstance(node, SectionNode):
+        while node and not isinstance(node, SectionNode):
             node = node.parent
-        return node
+        if isinstance(node, SectionNode):
+            return node
+        return None
 
-    def _parent_table(self):
+    def _parent_table(self) -> Optional[TableBlockNode]:
         node = self.parent
         while node and not isinstance(node, TableBlockNode):
             node = node.parent
-        return node
+        if isinstance(node, TableBlockNode):
+            return node
+        return None
 
-    def treeindex(self):
+    def treeindex(self) -> List[int]:
         if self.parent is None:
             return [0]
         return self.parent.treeindex() + [self.parent.children.index(self)]
 
-    def treeid(self):
+    def treeid(self) -> str:
         return '-'.join([str(i) for i in self.treeindex()])
 
 
@@ -100,21 +109,29 @@ class DocumentNode(ASTNode):
 
     def __init__(self):
         super().__init__()
-        self.level = 0
-        self.config = ConfigNode()
+        self.level: int = 0
+        self.config: ConfigNode = ConfigNode()
 
 
 class ConfigNode(ASTNode):
     def __init__(self):
         super().__init__()
-        self.title = 'Document Title'
-        self.version = str()
-        self.author = str()
-        self.attrs = dict()
+        self.title: str = 'Document Title'
+        self.version: str = str()
+        self.author: str = str()
+        self.attrs: Dict[str, str] = dict()
 
-    def parse(self, text):
+    @property
+    def docdata_params(self):
+        params = dict(self.__dict__.items())
+        ignores = ('parent', 'children', 'id', 'attrs')
+        for i in ignores:
+            params.pop(i)
+        return params
+
+    def parse(self, text: str) -> None:
         exec(text)
-        params = locals()
+        params: Dict[str, Any] = locals()
         for param in list(params.keys()):
             if isinstance((params[param]), type):
                 params.pop(param)
@@ -124,7 +141,7 @@ class ConfigNode(ASTNode):
             if key in params:
                 params.pop(key)
         for key in params:
-            value = params[key]
+            value: Any = params[key]
             if key == 'attrs':
                 self.attrs.update(value)
             else:
@@ -136,18 +153,18 @@ class SectionNode(ASTNode):
 
     def __init__(self):
         super().__init__()
-        self.level = 0
-        self.title = str()
-        self.opts = dict()
-        self._sectindex = None
+        self.level: int = 0
+        self.title: str = str()
+        self.opts: Dict[str, Any] = dict()
+        self._sectindex: List[int] = list()
 
-    def sectindex(self):
+    def sectindex(self) -> List[int]:
         return self._sectindex
 
     @property
-    def sectnum(self):
-        sectnums = [str(i + 1) for i in self.sectindex()]
-        sectnum = '.'.join(sectnums)
+    def sectnum(self) -> str:
+        sectnums: List[str] = [str(i + 1) for i in self.sectindex()]
+        sectnum: str = '.'.join(sectnums)
         return sectnum
 
 
@@ -160,7 +177,7 @@ class TocBlockNode(BlockNode):
     def __init__(self):
         super().__init__()
 
-    def walk_sections(self):
+    def walk_sections(self) -> Generator[Tuple[ASTNode, bool], None, None]:
         for n, gofoward in self.root.walk_depth():
             if isinstance(n, SectionNode):
                 yield n, gofoward
@@ -171,8 +188,8 @@ class ListBlockNode(BlockNode):
 
     def __init__(self):
         super().__init__()
-        self.level = -1
-        self.indent = -1
+        self.level: int = -1
+        self.indent: int = -1
 
 
 class BulletListBlockNode(ListBlockNode):
@@ -189,6 +206,15 @@ class DescriptionListBlockNode(ListBlockNode):
     def __init__(self):
         super().__init__()
 
+    @property
+    def titlebreak(self):
+        if len(self.children) == 0:
+            return False
+        for child in self.children:
+            if hasattr(child, 'titlebreak') and child.titlebreak:
+                return True
+        return False
+
 
 class CheckListBlockNode(ListBlockNode):
     def __init__(self):
@@ -198,7 +224,9 @@ class CheckListBlockNode(ListBlockNode):
 class ListItemNode(ASTNode):
     def __init__(self):
         super().__init__()
-        self.options = dict()
+        self.options: Dict[str, Any] = dict()
+        self.title: Any = None
+        self.titlebreak: bool = False
 
 
 class FootnoteListBlockNode(ASTNode):
@@ -214,34 +242,30 @@ class ReferenceListBlockNode(ASTNode):
 class FigureBlockNode(ASTNode):
     def __init__(self):
         super().__init__()
-        self.caption = None
-        self.align = 'l'
+        self.caption: str = str()
+        self.align: str = 'l'
 
-    def _parent_section(self):
-        node = self
-        while not isinstance(node, SectionNode):
-            node = node.parent
-        return node
-
-    def _fignum_format(self, gindex, lindex):
-        def default_figure_fignum_format(gindex, lindex):
+    def _fignum_format(self, gindex: int, lindex: List[int]) -> str:
+        def default_figure_fignum_format(gindex: int, lindex: List[int]) -> str:
             return 'Figure {}.'.format(gindex)
 
-        def default_table_fignum_format(gindex, lindex):
+        def default_table_fignum_format(gindex: int, lindex: List[int]) -> str:
             return 'Table {}.'.format(gindex)
 
         if isinstance(self.children[0], TableBlockNode):
             if hasattr(self.root.config, 'table_fignum_format'):
-                return self.root.config.table_fignum_format(gindex, lindex)
+                fmt = getattr(self.root.config, 'table_fignum_format')
+                return fmt(gindex, lindex)
             return default_table_fignum_format(gindex, lindex)
         else:
             if hasattr(self.root.config, 'figure_fignum_format'):
-                return self.root.config.figure_fignum_format(gindex, lindex)
+                fmt = getattr(self.root.config, 'figure_fignum_format')
+                return fmt(gindex, lindex)
             return default_figure_fignum_format(gindex, lindex)
 
     @property
-    def fignum(self):
-        gindex = 1
+    def fignum(self) -> str:
+        gindex: int = 1
         if isinstance(self.children[0], TableBlockNode):
             for n, gofoward in self.root.walk_depth():
                 if not gofoward:
@@ -258,8 +282,12 @@ class FigureBlockNode(ASTNode):
                     if n == self:
                         break
                     gindex += 1
-        section = self._parent_section()
-        lindex = 1
+        section: Optional[SectionNode] = self._parent_section()
+        if section is None:
+            msg: str = 'The figure is not into any sections'
+            logger.error(msg)
+            raise Exception(msg)
+        lindex: int = 1
         if isinstance(self.children[0], TableBlockNode):
             for n, gofoward in self.root.walk_depth():
                 if not gofoward:
@@ -276,8 +304,8 @@ class FigureBlockNode(ASTNode):
                     if n == self:
                         break
                     lindex += 1
-        lindex = section.sectindex() + [lindex]
-        return self._fignum_format(gindex, lindex)
+        lindexs: List[int] = section.sectindex() + [lindex]
+        return self._fignum_format(gindex, lindexs)
 
 
 class TableBlockNode(ASTNode):
@@ -285,66 +313,75 @@ class TableBlockNode(ASTNode):
 
     def __init__(self):
         super().__init__()
-        self.type = 'normal'  # 'normal', 'long'
-        self.row = 0
-        self.col = 0
-        self.headers = 0
-        self.caption = None
-        self.align = 'l'  # table align
-        self.aligns = list()  # column alings
+        self.type: str = 'normal'  # 'normal', 'long'
+        self.row: int = 0
+        self.col: int = 0
+        self.headers: int = 0
+        self.caption: Optional[str] = None
+        self.align: str = 'l'  # table align
+        self.aligns: List[str] = list()  # column alings
 
-    def cell(self, row, col):
-        # return self.children[row * self.col + col]
+    def cell(self, row: int, col: int) -> ASTNode:
         return self.children[row].children[col]
 
-    def _fignum_format(self, gindex, lindex):
-        def default_fignum_format(gindex, lindex):
+    def cells(self) -> Iterator:
+        for row in self.children:
+            for cell in row.children:
+                yield cell
+
+    def _fignum_format(self, gindex: int, lindex: List[int]) -> str:
+        def default_fignum_format(gindex: int, lindex: List[int]) -> str:
             return 'Table {}.'.format(gindex)
 
         if hasattr(self.root.config, 'table_fignum_format'):
-            return self.root.config.table_fignum_format(gindex, lindex)
+            fmt = getattr(self.root.config, 'table_fignum_format')
+            return fmt(gindex, lindex)
         return default_fignum_format(gindex, lindex)
 
     @property
-    def fignum(self):
-        gindex = 1
+    def fignum(self) -> str:
+        gindex: int = 1
         for n, gofoward in self.root.walk_depth():
             if gofoward:
                 if isinstance(n, TableBlockNode) and n.caption is not None:
                     if n == self:
                         break
                     gindex += 1
-        section = self._parent_section()
-        lindex = 1
+        section: Optional[SectionNode] = self._parent_section()
+        if section is None:
+            msg: str = 'The figure is not into any sections'
+            logger.error(msg)
+            raise Exception(msg)
+        lindex: int = 1
         for n, gofoward in section.walk_depth():
             if gofoward:
                 if isinstance(n, TableBlockNode) and n.caption is not None:
                     if n == self:
                         break
                     lindex += 1
-        lindex = section.sectindex() + [lindex]
-        return self._fignum_format(gindex, lindex)
+        lindexs: List[int] = section.sectindex() + [lindex]
+        return self._fignum_format(gindex, lindexs)
 
 
 class TableRowNode(ASTNode):
     def __init__(self):
         super().__init__()
-        self.tp = 'data'  # 'header', 'data'
-        self.idx = -1
+        self.tp: str = 'data'  # 'header', 'data'
+        self.idx: int = -1
 
 
 class TableCellNode(ASTNode):
     class Size():
-        def __init__(self, x, y):
-            self.x = x
-            self.y = y
+        def __init__(self, x: int, y: int):
+            self.x: int = x
+            self.y: int = y
 
     def __init__(self):
         super().__init__()
-        self.idx = -1
-        self.align = 'c'
-        self.mergeto = None
-        self.size = TableCellNode.Size(1, 1)
+        self.idx: int = -1
+        self.align: str = 'c'
+        self.mergeto: Optional[TableCellNode] = None
+        self.size: TableCellNode.Size = TableCellNode.Size(1, 1)
 
 
 class LiteralBlockNode(ASTNode):
@@ -362,8 +399,8 @@ class CodeBlockNode(ASTNode):
 
     def __init__(self):
         super().__init__()
-        self.lang = str()
-        self.text = str()
+        self.lang: str = str()
+        self.text: str = str()
 
 
 class CustomBlockNode(ASTNode):
@@ -371,8 +408,8 @@ class CustomBlockNode(ASTNode):
 
     def __init__(self):
         super().__init__()
-        self.ext = str()
-        self.text = str()
+        self.ext: str = str()
+        self.text: str = str()
 
 
 class HorizonBlockNode(ASTNode):
@@ -385,12 +422,17 @@ class ParagraphNode(ASTNode):
         super().__init__()
 
 
+class TitleNode(ParagraphNode):
+    def __init__(self):
+        super().__init__()
+
+
 class TextNode(ASTNode):
     attrkey = ('text',)
 
-    def __init__(self, text=None):
+    def __init__(self, text: Optional[str] = None):
         super().__init__()
-        self.text = str() if text is None else text
+        self.text: str = str() if text is None else text
 
 
 class RoleNode(ASTNode):
@@ -398,10 +440,10 @@ class RoleNode(ASTNode):
 
     def __init__(self, role=None, args=None, opts=None, value=None):
         super().__init__()
-        self.role = str() if role is None else role
-        self.args = list() if args is None else args
-        self.opts = list() if opts is None else opts
-        self.value = str() if value is None else value
+        self.role: str = str() if role is None else role
+        self.args: Any = list() if args is None else args
+        self.opts: Any = list() if opts is None else opts
+        self.value: str = str() if value is None else value
 
 
 class DecorationRoleNode(RoleNode):
@@ -439,12 +481,12 @@ class LinkNode(ASTNode):
 
     def __init__(self, opts=None, value=None):
         super().__init__()
-        self.opts = list() if opts is None else opts
-        self.value = str() if value is None else value
+        self.opts: Any = list() if opts is None else opts
+        self.value: str = str() if value is None else value
 
     @property
-    def target_id(self):
-        root = self.root
+    def target_id(self) -> str:
+        root: ASTNode = self.root
         # find by id
         for n, gofoward in root.walk_depth():
             if gofoward and isinstance(n, SectionNode):
@@ -453,8 +495,8 @@ class LinkNode(ASTNode):
         return self.value.replace(' ', '_')
 
     @property
-    def target_title(self):
-        root = self.root
+    def target_title(self) -> str:
+        root: ASTNode = self.root
         # find by id
         for n, gofoward in root.walk_depth():
             if gofoward and isinstance(n, SectionNode):
@@ -473,20 +515,19 @@ class LinkNode(ASTNode):
 class FootnoteNode(ASTNode):
     attrkey = ('value',)
 
-    def __init__(self, value=None):
+    def __init__(self, value: Optional[str] = None):
         super().__init__()
-        self.value = str() if value is None else value
+        self.value: str = str() if value is None else value
         self._description = None
 
     @property
-    def description(self):
+    def description(self) -> ListItemNode:
         if self._description:
             return self._description
-        msg = 'Footnote not found: {}'.format(self.value)
+        msg: str = 'Footnote not found: {}'.format(self.value)
         logger.error(msg)
-        fn = FootnoteListBlockNode()
-        fn.value = msg
-        return fn
+        item: ListItemNode = ListItemNode()
+        return item
 
 
 class ReferenceNode(ASTNode):
@@ -494,12 +535,12 @@ class ReferenceNode(ASTNode):
 
     def __init__(self, value=None):
         super().__init__()
-        self.value = str() if value is None else value
+        self.value: str = str() if value is None else value
 
 
-def parse_optargs(argstr):
-    tstr = argstr[:] if argstr else ''
-    opts = {}
+def parse_optargs(argstr: str) -> Dict[str, str]:
+    tstr: str = argstr[:] if argstr else ''
+    opts: Dict[str, str] = dict()
     while tstr:
         m = re.match(r'^(?: *([0-9a-z_\-]+)="([^"]*)") *', tstr)
         if m:
@@ -510,29 +551,29 @@ def parse_optargs(argstr):
     return opts
 
 
-def parse_funcargs(argstr):
+def parse_funcargs(argstr) -> List[Any]:
     def f(*args, **kwargs):
         return args, kwargs
 
     exec('args = f({})'.format(argstr))
-    params = locals()
+    params: Dict[str, Any] = locals()
     return params['args']
 
 
-def nodeprint(node):
-    depth = 0
+def nodeprint(node) -> None:
+    depth: int = 0
     for n, gofoward in node.walk_depth():
         if gofoward:
-            indent = '  ' * depth
+            indent: str = '  ' * depth
             logger.debug('{}{}'.format(indent, n))
             depth += 1
         else:
             depth -= 1
 
 
-def cmd(cmdstr):
+def cmd(cmdstr) -> str:
     p = subprocess.run(cmdstr.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if p.stderr:
         logger.error(p.stderr.decode())
-    out = p.stdout.decode()
+    out: str = p.stdout.decode()
     return out

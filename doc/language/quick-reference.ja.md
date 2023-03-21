@@ -10,33 +10,71 @@
 
 ### 言語の特徴
 
-Thothglyph Language の最大の特徴は、マークアップシンボルの多くに Unicode 文字を使っていることです。
-シンボルに使用可能な文字が増えたことで、視認のしやすさと構文の単純化を両立できます。
-また、既存のマークアップ言語やプログラミング言語の構文との衝突を避けられます。
-これにより、様々なソースコードを文書に含みながらマークアップを適用できます。
+Thothglyph Language の最大の特徴は、マークアップシンボルの多くに非 ASCII 文字を使っていることです。
+これらの文字を使うことで、既存のマークアップ言語やプログラミング言語の構文との衝突を避け、
+様々なソースコードをエスケープなしで文書に含められます。
+また、シンボルに使用可能な文字が増えたことで、視認のしやすさと構文の単純化を両立できます。
 
 欠点として、通常の文書にはあまり出現しない文字をシンボルに使用しているため、書きにくく感じるかもしれません。
 これを軽減するために各種エディタ向けに Thothglyph 用の入力補助やシンタックスハイライトのプラグインを用意しています。
+
+## Preprocess
+
+Thothglyph はドキュメントを構文解析する前に簡単なプリプロセスを実行します。
+
+### Config
+
+`⑇⑇⑇`のみの行で囲まれたテキストは Config ブロックとなります。
+ドキュメントの最初のみ記述可能な構文です。
+ドキュメントの設定を Python 言語で記述します。
+
+```
+⑇⑇⑇
+title = 'Document Title'
+version = '1.2.3'
+author = cmd("git config user.name")
+attrs = {'author': 'Foo Bar'}
+⑇⑇⑇
+```
+
+後述の Include ロールで外部ファイルをインクルードできます。
+
+```
+⑇⑇⑇
+¤include⸨./conf.py⸩
+⑇⑇⑇
+```
+
+### ControlFlow
+
+1文字の'⑇'の後に特定のキーワードを記入すると ControlFlow となります。
+ドキュメントの一部分を条件により表示/非表示できます。
+サポートしているキーワードは if, elif, end です。
+条件には Config ブロックで定義した attrs の値を使用できます。
+
+```
+⑇if author == 'Smith'
+Profile about Smith.
+⑇elif author == 'Tanaka'
+Profile about Tanaka.
+⑇end
+```
+
+
+
+### Comment
+
+2文字の'⑇'に続く行末までの文字列はコメントとなります。
+コメントはプリプロセスの段階で文中から削除されます。
+
+```
+This line includes comment --> ⑇⑇ This is comment.
+```
 
 ## Blocks
 
 ドキュメントはブロックの木構造で構成されています。
 ブロックは基本的に行単位でまとまっています。
-
-### Config
-
-`%%%`のみの行で囲まれたブロックは Config となります。
-ドキュメントの最初のみ記述可能なブロックです。
-ドキュメントの設定を Python 言語で記述します。
-
-```
-%%%
-title = 'Document Title'
-version = '1.2.3'
-author = cmd("git config user.name")
-attrs = {'author': 'Foo Bar'}
-%%%
-```
 
 ### Section
 
@@ -69,6 +107,15 @@ Section Lv.2 ATX-style
 
 ```
 ▮ Section Title ⟦sect1⟧
+```
+
+`▮` の末尾に `*` を記入すると見出しの番号付けをスキップします。
+
+```
+▮ まえがき (1. まえがき)
+▮* 目次 (目次)
+▮ XXとは (2. XXとは)
+▮ YYとは (3. YYとは)
 ```
 
 ### Paragraph
@@ -128,8 +175,8 @@ paragraph 2.
 •• orange
 •• grape
 ◃◃
-•• gratin
 •• sushi
+•• tempura
 ◃
 New Paragraph.
 ```
@@ -169,6 +216,14 @@ New Paragraph.
 ᛝTerm 2ᛝ List item 2
 ◃
 ᛝTerm 1ᛝ List item new 1
+```
+
+用語と本文は通常横並びで出力されます。
+用語の終端に`◃`を記入すると用語の後改行して本文を出力します。
+
+```
+ᛝTerm 1◃ᛝ List item 1
+ᛝTerm 2◃ᛝ List item 2
 ```
 
 ### Check List
@@ -247,15 +302,17 @@ New Paragraph.
 | a | b | c |
 ```
 
-セルの内容を`<`もしくは`^`にすることで、セルを結合できます。
+セルの内容を`⏴`もしくは`⏶`で開始することで、セルを結合できます。
 
 ```
-| head11 | head12 | <      | <      |
+| head11 | head12 | ⏴      | ⏴      |
 |--------|--------|--------|--------|
 | data11 | data12 | data13 | data14 |
-| data21 | data22 | <      | data24 |
-| data31 | ^      | <      | ^      |
-| data41 | data42 | <      | data44 |
+| data21 | data22 | ⏴      | data24 |
+| data31 | ⏶      | ⏴      | ⏶      |
+| data41 | data42 | ⏴      | data44 |
+| data51 | data52 | data53 |⏴data54 |
+| data61 |⏶data62 |⏶data63 |⏴data64 |
 ```
 
 ### List Table
@@ -291,6 +348,23 @@ List Table 内はレベル2以上の Bullet List で構成されます。
   •• data13
 • •• data23
   •• data22
+  •• data23
+===|
+```
+
+Basic Tableと 同様にセルの内容を`⏴`もしくは`⏶`で開始することで、セルを結合できます。
+
+```
+|===
+• •• head1
+  •• head2
+  •• ⏴
+◃
+• •• data11
+  •• data12
+  •• data13
+• •• data23
+  •• ⏶data22
   •• data23
 ===|
 ```
@@ -370,6 +444,14 @@ digraph graph_name {
   beta;
   alpha -> beta;
 }
+¤¤¤
+```
+
+後述の Include ロールで外部ファイルをインクルードできます。
+
+```
+¤¤¤graphviz
+¤include⸨./graph1.dot⸩
 ¤¤¤
 ```
 
@@ -468,7 +550,7 @@ First section: ⸨sect1⸩!
 
 文中に`[^ID]`と記入すると Footnote となります。
 別の場所で Footnote List ブロックに脚注の内容を記入します。
-ID には数字も可能です。ただし本文中に出現した順に番号が割り振られるため数値に意味はありません。
+ID には数字も指定可能です。ただし本文中に出現した順に番号が割り振られるため数値に意味はありません。
 ID はセクションレベル1以下で一意のものにする必要があります。
 セクションレベル1が異なる Footnote List は参照できません。
 
@@ -484,7 +566,7 @@ The important text. [^1] And the important text too. [^2]
 文中に`[#ID]`と記入すると Reference となります。
 別の場所で Reference List ブロックに参考文献の内容を記入します。
 Reference List のリストには本文中で引用されていないものも含められます。
-ID には数字も可能です。ただし Reference List のリスト順に番号が割り振られるため数値に意味はありません。
+ID には数字も指定可能です。ただし Reference List のリスト順に番号が割り振られるため数値に意味はありません。
 
 ```
 The important text. [#1] And the important text too. [#2]

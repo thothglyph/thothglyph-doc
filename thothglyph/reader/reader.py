@@ -1,18 +1,19 @@
+from __future__ import annotations
+from typing import Dict, List, Optional
 from thothglyph.node import nd
-
 from thothglyph.node import logging
 
 logger = logging.getLogger(__file__)
 
 
 class Reader():
-    def __init__(self, parent=None):
-        self.encoding = 'utf-8'
-        self.parent = parent
-        self.parser = None
-        self.path = None
+    def __init__(self, parent: Optional[Reader] = None):
+        self.encoding: str = 'utf-8'
+        self.parent: Optional[Reader] = parent
+        self.parser: Parser = Parser(self)
+        self.path: str = str()
 
-    def read(self, path, encoding=None):
+    def read(self, path: str, encoding: Optional[str] = None) -> nd.ASTNode:
         if encoding:
             self.encoding = encoding
         logger.info('{} read start.'.format(self.__class__.__name__))
@@ -22,12 +23,13 @@ class Reader():
         node = self.parser.parse(data)
         self.set_sectnums(node)
         self.set_footnote_nums(node)
+        self.merge_tablecell_text(node)
         logger.info('{} read finish.'.format(self.__class__.__name__))
         return node
 
-    def set_sectnums(self, rootnode):
-        nums = [0 for i in range(10)]
-        level = 0
+    def set_sectnums(self, rootnode: nd.ASTNode) -> None:
+        nums: List[int] = [0 for i in range(10)]
+        level: int = 0
         for n, gofoward in rootnode.walk_depth():
             if gofoward:
                 if isinstance(n, nd.SectionNode):
@@ -41,9 +43,9 @@ class Reader():
                         nums[level] = 0
                     level -= 1
 
-    def set_footnote_nums(self, rootnode):
-        footnotes = dict()  # footnotes[sect][id]
-        references = dict()
+    def set_footnote_nums(self, rootnode: nd.ASTNode) -> None:
+        footnotes: Dict[str, Dict[str, List[nd.ASTNode]]] = dict()  # footnotes[sect][id]
+        references: Dict[str, List[nd.ASTNode]] = dict()
         LI = nd.ListItemNode
         FNLB = nd.FootnoteListBlockNode
         RFLB = nd.ReferenceListBlockNode
@@ -58,9 +60,9 @@ class Reader():
             if gofoward and isinstance(n, LI) and isinstance(n.parent, FNLB):
                 sect = str(n.treeindex()[:2])
                 footnotes.setdefault(sect, dict())
-                footnotes[sect].setdefault(n.term, list())
-                footnotes[sect][n.term].insert(0, n)
-        fngi = 0
+                footnotes[sect].setdefault(n.title, list())
+                footnotes[sect][n.title].insert(0, n)
+        fngi: int = 0
         for si, sect in enumerate(footnotes):
             for i, key in enumerate(footnotes[sect]):
                 fngi += 1
@@ -73,8 +75,8 @@ class Reader():
         # Reference
         for n, gofoward in rootnode.walk_depth():
             if gofoward and isinstance(n, LI) and isinstance(n.parent, RFLB):
-                references.setdefault(n.term, list())
-                references[n.term].append(n)
+                references.setdefault(n.title, list())
+                references[n.title].append(n)
         for n, gofoward in rootnode.walk_depth():
             if gofoward and isinstance(n, nd.ReferenceNode):
                 references.setdefault(n.value, list())
@@ -82,3 +84,40 @@ class Reader():
         for i, key in enumerate(references):
             for n in references[key]:
                 n.ref_num = i + 1
+
+    def merge_tablecell_text(self, rootnode: nd.ASTNode) -> None:
+        tables = []
+        for n, gofoward in rootnode.walk_depth():
+            if not gofoward and isinstance(n, nd.TableBlockNode):
+                tables.append(n)
+        mergelist = {}
+        for table in tables:
+            for cell in table.cells():
+                if cell.mergeto:
+                    mergelist.setdefault(cell.mergeto, {'obj': cell.mergeto, 'from': list()})
+                    mergelist[cell.mergeto]['from'].append(cell)
+        for merge in mergelist.values():
+            mergetexts = [c for mf in merge['from'] for c in mf.children]
+            mergetexts = ''.join([t.text for t in mergetexts if isinstance(t, nd.TextNode)])
+            if mergetexts == '':
+                continue
+            cell = merge['obj']
+            paragraph = nd.ParagraphNode()
+            for child in cell.children:
+                paragraph.add(child)
+            cell.children.clear()
+            cell.add(paragraph)
+            for mergefrom in merge['from']:
+                paragraph = nd.ParagraphNode()
+                for child in mergefrom.children:
+                    paragraph.add(child)
+                mergefrom.children.clear()
+                cell.add(paragraph)
+
+
+class Parser():
+    def __init__(self, reader: Reader):
+        self.reader = reader
+
+    def parse(self, data: str) -> nd.ASTNode:
+        return nd.ASTNode()

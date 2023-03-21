@@ -9,7 +9,7 @@ writerclass = {
 }
 
 
-def Writer(target):
+def Writer(target: str):
     modname = target
     clsname = writerclass[target]
     modpath = 'thothglyph.writer.{}'.format(modname)

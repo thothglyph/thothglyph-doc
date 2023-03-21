@@ -1,8 +1,7 @@
-import cairosvg
-import graphviz
 import os
 import re
-
+import cairosvg
+import graphviz
 from thothglyph.node import logging
 
 logger = logging.getLogger(__file__)
@@ -10,7 +9,7 @@ logger = logging.getLogger(__file__)
 
 def customblock_write_html(self, node):
     text = node.text
-    graph = graphviz.Source(text)
+    graph = graphviz.Source(text)  # type: ignore
     svgstr = graph.pipe(format='svg').decode('utf-8')
     svgstr = re.sub(r'.+<svg', r'<svg', svgstr, flags=re.MULTILINE | re.DOTALL)
     self.data += '<div>\n'
@@ -21,7 +20,7 @@ def customblock_write_html(self, node):
 
 def customblock_write_latex(self, node):
     text = node.text
-    graph = graphviz.Source(text)
+    graph = graphviz.Source(text)  # type: ignore
     svgstr = graph.pipe(format='svg')
     fname = os.path.join(self.tmpdirname, node.treeid() + '.pdf')
     cairosvg.svg2pdf(bytestring=svgstr, write_to=fname)
@@ -29,9 +28,10 @@ def customblock_write_latex(self, node):
         r'.+<svg width="(.+)pt" height="(.+)pt"', svgstr.decode(),
         flags=re.MULTILINE | re.DOTALL
     )
+    assert m
     w, _ = int(m.group(1)), int(m.group(2))
-    w = '{}bp'.format(int(w * self.bp_scale))
-    self.data += '\\tgincludegraphics[{}]{{{}}}\n\n'.format(w, fname)
+    wstr = '{}bp'.format(int(w * self.bp_scale))
+    self.data += '\\tgincludegraphics[{}]{{{}}}\n\n'.format(wstr, fname)
 
 
 def customblock_write_pdf(self, node):

@@ -1,12 +1,13 @@
 # sudo apt install texlive-luatex texlive-fonts-recommended texlive-fonts-extra texlive-lang-cjk
-from thothglyph.writer.writer import Writer
-from thothglyph.node import nd
+from __future__ import annotations
+from typing import Dict, Optional, Tuple, Union
 import importlib
 import os
 import re
 import tempfile
 from PIL import Image
-
+from thothglyph.writer.writer import Writer
+from thothglyph.node import nd
 from thothglyph.node import logging
 
 logger = logging.getLogger(__file__)
@@ -16,12 +17,12 @@ class LatexWriter(Writer):
     target = 'latex'
     ext = 'tex'
 
-    sectlevel_cmds = {
+    sectlevel_cmds: Dict[str, Tuple[str, ...]] = {
         'article': ('section', 'subsection', 'paragraph', 'subparagraph'),
         'report': ('chapter', 'section', 'subsection', 'paragraph', 'subparagraph'),
         'book': ('chapter', 'section', 'subsection', 'paragraph', 'subparagraph'),
     }
-    decoration_table = {
+    decoration_table: Dict[str, Tuple[str, str]] = {
         'EMPHASIS': ('\\textit{', '}'),
         'STRONG': ('\\textbf{', '}'),
         'MARKED': ('\\uline{', '}'),
@@ -31,13 +32,18 @@ class LatexWriter(Writer):
         'SUP': ('\\textsuperscript{', '}'),
         'SUB': ('\\textsubscript{', '}'),
     }
-    bp_scale = 72.0 / 150.0
+    lang_table: Dict[str, str] = {
+        'c': 'C',
+        'c++': 'C++',
+        'shell': 'sh',
+    }
+    bp_scale: float = 72.0 / 150.0
 
     def __init__(self):
         super().__init__()
-        self.tmpdirname = None
+        self.tmpdirname: Optional[str] = None
 
-    def parse(self, node):
+    def parse(self, node) -> None:
         super().parse(node)
         template_dir = self.template_dir()
         target = LatexWriter.target
@@ -51,7 +57,7 @@ class LatexWriter(Writer):
         t = re.sub(r'\$\{\{([^}]+)\}\}', r'{\1}', t)
         self.data = t.format(doc=self.template_docdata)
 
-    def write(self, fpath, node):
+    def write(self, fpath: str, node: nd.ASTNode) -> None:
         self.rootnode = node
         with tempfile.TemporaryDirectory() as tmpdirname:
             self.tmpdirname = tmpdirname
@@ -60,7 +66,7 @@ class LatexWriter(Writer):
                 f.write(self.data)
         self.tmpdirname = None
 
-    def visit_section(self, node):
+    def visit_section(self, node: nd.ASTNode) -> None:
         level_offset = 0
         _id = node.id or node.title.replace(' ', '_')
         title = tex_escape(node.title)
@@ -72,59 +78,58 @@ class LatexWriter(Writer):
         self.data += '\\{}{{{}}}'.format(cmd, title)
         self.data += '\\label{{{}}}\n'.format(_id)
 
-    def leave_section(self, node):
+    def leave_section(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_tocblock(self, node):
+    def visit_tocblock(self, node: nd.ASTNode) -> None:
         self.data += '\\tableofcontents\n'
 
-    def leave_tocblock(self, node):
+    def leave_tocblock(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_bulletlistblock(self, node):
+    def visit_bulletlistblock(self, node: nd.ASTNode) -> None:
         self.data += '\\begin{itemize}\n'
 
-    def leave_bulletlistblock(self, node):
+    def leave_bulletlistblock(self, node: nd.ASTNode) -> None:
         self.data += '\\end{itemize}\n'
 
-    def visit_orderedlistblock(self, node):
+    def visit_orderedlistblock(self, node: nd.ASTNode) -> None:
         self.data += '\\begin{enumerate}\n'
 
-    def leave_orderedlistblock(self, node):
+    def leave_orderedlistblock(self, node: nd.ASTNode) -> None:
         self.data += '\\end{enumerate}\n'
 
-    def visit_descriptionlistblock(self, node):
+    def visit_descriptionlistblock(self, node: nd.ASTNode) -> None:
         self.data += '\\begin{description}\n'
 
-    def leave_descriptionlistblock(self, node):
+    def leave_descriptionlistblock(self, node: nd.ASTNode) -> None:
         self.data += '\\end{description}\n'
 
-    def visit_checklistblock(self, node):
+    def visit_checklistblock(self, node: nd.ASTNode) -> None:
         self.data += '\\begin{tgchecklist}\n'
 
-    def leave_checklistblock(self, node):
+    def leave_checklistblock(self, node: nd.ASTNode) -> None:
         self.data += '\\end{tgchecklist}\n'
 
-    def visit_footnotelistblock(self, node):
+    def visit_footnotelistblock(self, node: nd.ASTNode) -> None:
         self._continue()
 
-    def leave_footnotelistblock(self, node):
+    def leave_footnotelistblock(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_referencelistblock(self, node):
+    def visit_referencelistblock(self, node: nd.ASTNode) -> None:
         self.data += '\\begin{thebibliography}{{99}}\n'
 
-    def leave_referencelistblock(self, node):
+    def leave_referencelistblock(self, node: nd.ASTNode) -> None:
         self.data += '\\end{thebibliography}\n'
 
-    def visit_listitem(self, node):
+    def visit_listitem(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent, nd.DescriptionListBlockNode):
-            text = tex_escape(node.term)
-            self.data += '\\item[{}] '.format(text)
+            pass
         elif isinstance(node.parent, nd.CheckListBlockNode):
-            if node.term == 'x':
+            if node.marker == 'x':
                 self.data += '\\item[{\\tgcheck[en]}] '
-            elif node.term == '-':
+            elif node.marker == '-':
                 self.data += '\\item[{\\tgcheck[im]}] '
             else:
                 self.data += '\\item[{\\tgcheck[dis]}] '
@@ -136,27 +141,30 @@ class LatexWriter(Writer):
         else:
             self.data += '\\item '
 
-    def leave_listitem(self, node):
+    def leave_listitem(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent, nd.FootnoteListBlockNode):
             pass  # unreach
         elif isinstance(node.parent, nd.ReferenceListBlockNode):
             self.data += '\n'
 
-    def visit_quoteblock(self, node):
+    def visit_quoteblock(self, node: nd.ASTNode) -> None:
         self.data += '\\begin{quote}\n'
 
-    def leave_quoteblock(self, node):
+    def leave_quoteblock(self, node: nd.ASTNode) -> None:
         self.data += '\\end{quote}\n'
 
-    def visit_codeblock(self, node):
-        self.data += '\\begin{lstlisting}\n'
+    def visit_codeblock(self, node: nd.ASTNode) -> None:
+        self.data += '\\begin{lstlisting}'
+        if node.lang in self.lang_table:
+            self.data += '[language={}]'.format(self.lang_table[node.lang])
+        self.data += '\n'
         self.data += node.text + '\n'
         self.data += '\\end{lstlisting}\n'
 
-    def leave_codeblock(self, node):
+    def leave_codeblock(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_figureblock(self, node):
+    def visit_figureblock(self, node: nd.ASTNode) -> None:
         align = node.align
         table_align_cmd = {
             'l': 'raggedright',
@@ -173,12 +181,12 @@ class LatexWriter(Writer):
         else:
             self.data += '\\captionof{{figure}}{{{}}}\n'.format(node.caption)
 
-    def leave_figureblock(self, node):
+    def leave_figureblock(self, node: nd.ASTNode) -> None:
         self.data += '\\end{figure}\n'
 
     style_gridtable = True
 
-    def visit_tableblock(self, node):
+    def visit_tableblock(self, node: nd.ASTNode) -> None:
         align = node.align
         if isinstance(node.parent, nd.FigureBlockNode):
             align = node.parent.align
@@ -216,7 +224,7 @@ class LatexWriter(Writer):
         self.data += 'measure = vbox, '
         self.data += '}\n'
 
-    def leave_tableblock(self, node):
+    def leave_tableblock(self, node: nd.ASTNode) -> None:
         if not node._parent_table():
             if node.type == 'long':
                 self.data += '\\end{longtblr}\n\n'
@@ -239,7 +247,7 @@ class LatexWriter(Writer):
                 Writer.parse(self, n)
             self.data += '}\n'
 
-    def visit_tablerow(self, node):
+    def visit_tablerow(self, node: nd.ASTNode) -> None:
         if node.idx > 0:
             self.data += ' \\\\\n'
         # if node.tp == 'header':
@@ -247,51 +255,45 @@ class LatexWriter(Writer):
         # else:
         #     self.data += '\\tgtdrowcolor\n'
 
-    def leave_tablerow(self, node):
+    def leave_tablerow(self, node: nd.ASTNode) -> None:
         if node.idx == len(node.parent.children) - 1:
             self.data += ' \\\\\n'
 
-    def visit_tablecell(self, node):
+    def visit_tablecell(self, node: nd.ASTNode) -> None:
         if self.style_gridtable:
             align = '{}|'.format(node.align)
         else:
             align = '{}'.format(node.align)
-        if len(node.children) == 1 and isinstance(node.children[0], nd.TextNode):
-            if node.idx != 0:
-                if node.mergeto is None:
-                    self.data += ' & '
-                    s = node.size
-                    if s.x > 1:
-                        self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
-                    if s.y > 1:
-                        self.data += '\\multirow{{{}}}{{*}}{{'.format(s.y)
-                elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
-                    self.data += ' & '
-                    s = node.mergeto.size
-                    if s.x > 1:
-                        self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
-        else:
-            if node.idx != 0:
+        if node.idx != 0:
+            if node.mergeto is None:
                 self.data += ' & '
-            self.data += '\n{\\begin{varwidth}{\\linewidth}\n'
+                s = node.size
+                if s.x > 1:
+                    self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
+                if s.y > 1:
+                    self.data += '\\multirow{{{}}}{{*}}{{'.format(s.y)
+            elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
+                self.data += ' & '
+                s = node.mergeto.size
+                if s.x > 1:
+                    self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
+        self.data += '\n{\\begin{varwidth}{\\linewidth}\n'
 
-    def leave_tablecell(self, node):
-        if len(node.children) == 1 and isinstance(node.children[0], nd.TextNode):
-            if node.idx != 0:
-                if node.mergeto is None:
-                    s = node.size
-                    if s.x > 1:
-                        self.data += '}'
-                    if s.y > 1:
-                        self.data += '}'
-                elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
-                    s = node.mergeto.size
-                    if s.x > 1:
-                        self.data += '}'
-        else:
-            self.data += '\n\\end{varwidth}}\n'
+    def leave_tablecell(self, node: nd.ASTNode) -> None:
+        self.data += '\n\\end{varwidth}}\n'
+        if node.idx != 0:
+            if node.mergeto is None:
+                s = node.size
+                if s.x > 1:
+                    self.data += '}'
+                if s.y > 1:
+                    self.data += '}'
+            elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
+                s = node.mergeto.size
+                if s.x > 1:
+                    self.data += '}'
 
-    def visit_customblock(self, node):
+    def visit_customblock(self, node: nd.ASTNode) -> None:
         if node.ext == '':
             self.data += '\\begin{lstlisting}\n'
             self.data += node.text + '\n'
@@ -306,22 +308,32 @@ class LatexWriter(Writer):
                 self.data += node.text + '\n'
                 self.data += '\\end{lstlisting}\n'
 
-    def leave_customblock(self, node):
+    def leave_customblock(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_paragraph(self, node):
+    def visit_paragraph(self, node: nd.ASTNode) -> None:
         pass
 
-    def leave_paragraph(self, node):
+    def leave_paragraph(self, node: nd.ASTNode) -> None:
         self.data += '\n\n'
 
-    def visit_decorationrole(self, node):
+    def visit_title(self, node: nd.ASTNode) -> None:
+        if isinstance(node.parent, nd.ListItemNode):
+            self.data += '\\item[\\desctitle{'
+
+    def leave_title(self, node: nd.ASTNode) -> None:
+        if isinstance(node.parent, nd.ListItemNode):
+            self.data += '}] '
+            if node.parent.titlebreak:
+                self.data += '\\mbox{}\\\\ '
+
+    def visit_decorationrole(self, node: nd.ASTNode) -> None:
         self.data += self.decoration_table[node.role][0]
 
-    def leave_decorationrole(self, node):
+    def leave_decorationrole(self, node: nd.ASTNode) -> None:
         self.data += self.decoration_table[node.role][1]
 
-    def visit_role(self, node):
+    def visit_role(self, node: nd.ASTNode) -> None:
         if node.role == '':
             self.data += '\\fbox{\\lstinline{'
             self.data += node.value
@@ -336,12 +348,13 @@ class LatexWriter(Writer):
                 self.data += node.value
                 self.data += '}}\n'
 
-    def leave_role(self, node):
+    def leave_role(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_imagerole(self, node):
+    def visit_imagerole(self, node: nd.ASTNode) -> None:
         fname, ext = os.path.splitext(node.value)
         if ext == '.svg':
+            assert self.tmpdirname
             imgpath = os.path.join(self.tmpdirname, node.value)
             inc_imgpath = '{}.pdf'.format(imgpath)
         else:
@@ -361,33 +374,33 @@ class LatexWriter(Writer):
                 w = '\\linewidth'
         self.data += '\\tgincludegraphics[{}]{{{}}}'.format(w, inc_imgpath)
 
-    def leave_imagerole(self, node):
+    def leave_imagerole(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_kbdrole(self, node):
+    def visit_kbdrole(self, node: nd.ASTNode) -> None:
         value = ['\\kbdbox{{{}}}'.format(v) for v in node.value]
-        value = ' {\\scriptsize+} '.join(value)
-        self.data += value
+        valuestr = ' {\\scriptsize+} '.join(value)
+        self.data += valuestr
 
-    def leave_kbdrole(self, node):
+    def leave_kbdrole(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_btnrole(self, node):
+    def visit_btnrole(self, node: nd.ASTNode) -> None:
         value = '\\btnbox{{{}}}'.format(node.value)
         self.data += value
 
-    def leave_btnrole(self, node):
+    def leave_btnrole(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_menurole(self, node):
+    def visit_menurole(self, node: nd.ASTNode) -> None:
         value = ['\\menubox{{{}}}'.format(v) for v in node.value]
-        value = ' {\\tiny>} '.join(value)
-        self.data += value
+        valuestr = ' {\\tiny>} '.join(value)
+        self.data += valuestr
 
-    def leave_menurole(self, node):
+    def leave_menurole(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_link(self, node):
+    def visit_link(self, node: nd.ASTNode) -> None:
         if '://' in node.value:
             url = node.value
             text = node.opts[0] if node.opts[0] else node.value
@@ -399,10 +412,10 @@ class LatexWriter(Writer):
             text = tex_escape(text)
             self.data += '\\nameref{{{}}}'.format(url)
 
-    def leave_link(self, node):
+    def leave_link(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_footnote(self, node):
+    def visit_footnote(self, node: nd.ASTNode) -> None:
         table = node._parent_table()
         if table:
             self.data += ' \\footnotemark[{}] '.format(node.fn_num)
@@ -413,41 +426,41 @@ class LatexWriter(Writer):
                 Writer.parse(self, n)
             self.data += '}'
 
-    def leave_footnote(self, node):
+    def leave_footnote(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_reference(self, node):
+    def visit_reference(self, node: nd.ASTNode) -> None:
         url = 'ref.{}'.format(node.ref_num)
         self.data += '\\cite{{{}}}'.format(url)
 
-    def leave_reference(self, node):
+    def leave_reference(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_text(self, node):
+    def visit_text(self, node: nd.ASTNode) -> None:
         text = node.text
-        # if not(isinstance(node.parent, nd.RoleNode) and node.parent.role == 'CODE'):
-        #     text = tex_escape(text)
         text = tex_escape(text)
         self.data += text
 
-    def leave_text(self, node):
+    def leave_text(self, node: nd.ASTNode) -> None:
         pass
 
-    def visit_other(self, node):
+    def visit_other(self, node: nd.ASTNode) -> None:
         pass
 
-    def leave_other(self, node):
+    def leave_other(self, node: nd.ASTNode) -> None:
         pass
 
 
-def tex_escape(text):
+def tex_escape(text: str) -> str:
     text = text.replace('\\', '\\textbackslash ')
     text = re.sub(r'([#%&{}$_])', r'\\\1', text)
-    text = text.translate(str.maketrans({
+    trans: Dict[str, Union[int, str, None]] = {
         '~': '{\\textasciitilde}',
         '^': '{\\textasciicircum}',
         '|': '{\\textbar}',
         '<': '{\\textless}',
         '>': '{\\textgreater}',
-    }))
+        '-': '\\phantom{}-',
+    }
+    text = text.translate(str.maketrans(trans))
     return text
