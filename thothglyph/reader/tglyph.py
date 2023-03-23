@@ -651,11 +651,11 @@ class TglyphParser(Parser):
             tokens.pop(0)
         tabletexts = list()
         aligns = list()
-        header_splitter = 0
+        header_splitter = -1
         for i, line in enumerate(lines):
             rowtexts = re.split(r' *\| *', line.strip())[1:-1]
-            ms = [re.match(r'^:?-+:?$', c) for c in rowtexts]
-            if all(ms) and header_splitter == 0 and i > 0:
+            ms = [re.match(r'^[+:]?-+[+:]?$', c) for c in rowtexts]
+            if all(ms) and header_splitter == -1:
                 for m in ms:
                     assert m
                     mg = m.group(0)
@@ -663,11 +663,15 @@ class TglyphParser(Parser):
                         aligns.append('c')
                     elif mg[-1] == ':':
                         aligns.append('r')
+                    elif mg[0] == '+':
+                        aligns.append('x')
                     else:
                         aligns.append('l')
                 header_splitter = i
             else:
                 tabletexts.append(rowtexts)
+        if header_splitter < 0:
+            header_splitter = 0
         # table.type = opts.get('type', 'normal')
         if len(aligns) == 0:
             aligns = ['c' for i in range(len(tabletexts[0]))]

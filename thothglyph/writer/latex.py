@@ -264,34 +264,38 @@ class LatexWriter(Writer):
             align = '{}|'.format(node.align)
         else:
             align = '{}'.format(node.align)
-        if node.idx != 0:
-            if node.mergeto is None:
+        if node.mergeto is None:
+            if node.idx != 0:
                 self.data += ' & '
-                s = node.size
-                if s.x > 1:
-                    self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
-                if s.y > 1:
-                    self.data += '\\multirow{{{}}}{{*}}{{'.format(s.y)
-            elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
+            s = node.size
+            if s.x > 1:
+                self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
+            if s.y > 1:
+                self.data += '\\multirow{{{}}}{{*}}{{'.format(s.y)
+            self.data += '\n{\\begin{varwidth}{\\linewidth}\n'
+        elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
+            # horizontal cell merging
+            if node.idx != 0:
                 self.data += ' & '
-                s = node.mergeto.size
-                if s.x > 1:
-                    self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
-        self.data += '\n{\\begin{varwidth}{\\linewidth}\n'
+            s = node.mergeto.size
+            if s.x > 1:
+                self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
+        else:
+            # vertical cell merging
+            pass
 
     def leave_tablecell(self, node: nd.ASTNode) -> None:
-        self.data += '\n\\end{varwidth}}\n'
-        if node.idx != 0:
-            if node.mergeto is None:
-                s = node.size
-                if s.x > 1:
-                    self.data += '}'
-                if s.y > 1:
-                    self.data += '}'
-            elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
-                s = node.mergeto.size
-                if s.x > 1:
-                    self.data += '}'
+        if node.mergeto is None:
+            self.data += '\n\\end{varwidth}}\n'
+            s = node.size
+            if s.x > 1:
+                self.data += '}'
+            if s.y > 1:
+                self.data += '}'
+        elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
+            s = node.mergeto.size
+            if s.x > 1:
+                self.data += '}'
 
     def visit_customblock(self, node: nd.ASTNode) -> None:
         if node.ext == '':
@@ -460,7 +464,7 @@ def tex_escape(text: str) -> str:
         '|': '{\\textbar}',
         '<': '{\\textless}',
         '>': '{\\textgreater}',
-        '-': '\\phantom{}-',
+        '-': '{\\phantom{}}-',
     }
     text = text.translate(str.maketrans(trans))
     return text

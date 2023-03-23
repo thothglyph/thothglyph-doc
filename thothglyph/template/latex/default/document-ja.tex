@@ -1,16 +1,13 @@
 \documentclass[unicode,11pt,titlepage]{ltjsreport}
-\usepackage{luatexja-otf}
+\usepackage[no-math,deluxe,expert,haranoaji]{luatexja-preset}
 \pdfvariable imageresolution 150
 \usepackage[margin=20truemm]{geometry}
-\usepackage[T1]{fontenc}
-% \renewcommand{\rmdefault}{cmr}
-% \renewcommand{\sfdefault}{cmss}
-% \renewcommand{\ttdefault}{cmtt}
-\renewcommand\familydefault{\rmdefault}
-\renewcommand\kanjifamilydefault{\gtdefault}
-\renewcommand{\thesection}{\thechapter.\arabic{section}}
-\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
-\usepackage[scaled=0.9]{beramono} % code block
+\setmainfont{TeX Gyre Schola}
+\setsansfont{TeX Gyre Heros}
+\setmonofont{TeX Gyre Cursor}
+\setmainjfont{TeX Gyre Schola}
+\setsansjfont{TeX Gyre Heros}
+\setmonojfont{TeX Gyre Cursor}
 \usepackage{fancyhdr}
 \usepackage{nameref}
 \usepackage[unicode,bookmarksnumbered]{hyperref}

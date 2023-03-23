@@ -170,6 +170,10 @@ new paragraph text text new 1.
 | data⸌21⸌ | data22 | data23 |
 | a | b | c |
 
+|:------:|-------:|+-------|
+| data11 | data12 | data13 |
+| A | B | C |
+
 | head11 | head12 | ⏴      | ⏴      |
 |--------|--------|--------|--------|
 | data11 | data12 | data13 | data14 |
@@ -189,7 +193,7 @@ new paragraph text text new 1.
 • •• data11
   •• data12
   •• data13
-• •• data23
+• •• data21
   •• data22
   •• data23
 ===|
@@ -202,7 +206,7 @@ new paragraph text text new 1.
 • •• data11
   •• data12
   •• data13
-• •• data23
+• •• data21
   •• ⏶data22
   •• data23
 ===|
@@ -345,12 +349,12 @@ paragraph
 
 The ⁒emphasis⁒ ⋄strong⋄ ‗inserted‗ ¬deleted¬ ⋄⁒strong & emphasis⁒⋄ text.
 
-The x⏶sup⏶x x⏷sub⏷x text.
+The x⌃sup⌃x x⌄sub⌄x text.
 
 The ⫶var⫶ and ⸌code⸌ text.
 
-ᛝ-text=⁒val⁒ᛝ set ⁒val⁒ to text.
-ᛝhoge=fugaᛝ ⸌hoge = fuga⸌
+ᛝ--text=⁒val⁒ᛝ set ⁒val⁒ to text.
+ᛝ-Wl,--hoge-fuga=piyoᛝ This is ⸌-Wl,--hoge-fuga=piyo⸌
 
 ▮▮ Image
 
@@ -503,6 +507,16 @@ The important text. [^a] And the important text too. [^b]
 | data11 | data12 | data13 |
 | data21 | data22 | data23 |
 | data31 | data32 | data33 |
+
+▮▮ Basic Table Cell Merging
+
+| Type | Size | Ptr/Align | ⏴ |
+| Int⸌byte⸌ | 1 | 4 | 4 |
+| ⏶ ⸌short⸌ | 2 | 4 | ⏴ |
+| ⏶ ⸌int⸌ | 4 | ⏶ | ⏴ |
+| ⏶ ⸌long⸌ | 8 | 4 | 4 |
+| Float | 4 | 4 | 4 |
+| ⏶   | 8 | 4 | 4 |
 
 ▮▮ Wide Table
 
