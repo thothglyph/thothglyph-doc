@@ -40,9 +40,13 @@ class PdfWriter(LatexWriter):
                 '{}.tex'.format(fbname),
             ]
             rets = list()
-            # lualatex fails to build hyperrefs at first. So the command is executed twice.
+            logger.warning('1st PDF writing (build main text)')
             p = subprocess.run(latex_cmds, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             rets.append(p.returncode)
+            logger.warning('2nd PDF writing (insert toc pages)')
+            p = subprocess.run(latex_cmds, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            rets.append(p.returncode)
+            logger.warning('3rd PDF writing (fix page number)')
             p = subprocess.run(latex_cmds, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             rets.append(p.returncode)
 
