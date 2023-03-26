@@ -32,6 +32,16 @@ class LatexWriter(Writer):
         'SUP': ('\\textsuperscript{', '}'),
         'SUB': ('\\textsubscript{', '}'),
     }
+    code_decoration_table: Dict[str, Tuple[str, str]] = {
+        'EMPHASIS': '<?tg:I?>',
+        'STRONG': '<?tg:S?>',
+        'MARKED': '<?tg:U?>',
+        'STRIKE': '<?tg:SO?>',
+        'VAR': '<?tg:VAR?>',
+        'CODE': '',
+        'SUP': '',
+        'SUB': '',
+    }
     lang_table: Dict[str, str] = {
         'c': 'C',
         'c++': 'C++',
@@ -160,11 +170,9 @@ class LatexWriter(Writer):
         if node.lang in self.lang_table:
             self.data += '[language={}]'.format(self.lang_table[node.lang])
         self.data += '\n'
-        self.data += node.text + '\n'
-        self.data += '\\end{lstlisting}\n'
 
     def leave_codeblock(self, node: nd.ASTNode) -> None:
-        pass
+        self.data += '\\end{lstlisting}\n'
 
     def visit_figureblock(self, node: nd.ASTNode) -> None:
         align = node.align
@@ -334,10 +342,16 @@ class LatexWriter(Writer):
                 self.data += '\\mbox{}\\\\ '
 
     def visit_decorationrole(self, node: nd.ASTNode) -> None:
-        self.data += self.decoration_table[node.role][0]
+        if isinstance(node.parent_block, nd.CodeBlockNode):
+            self.data += self.code_decoration_table[node.role]
+        else:
+            self.data += self.decoration_table[node.role][0]
 
     def leave_decorationrole(self, node: nd.ASTNode) -> None:
-        self.data += self.decoration_table[node.role][1]
+        if isinstance(node.parent_block, nd.CodeBlockNode):
+            self.data += self.code_decoration_table[node.role]
+        else:
+            self.data += self.decoration_table[node.role][1]
 
     def visit_role(self, node: nd.ASTNode) -> None:
         if node.role == '':
@@ -443,9 +457,14 @@ class LatexWriter(Writer):
         pass
 
     def visit_text(self, node: nd.ASTNode) -> None:
-        text = node.text
-        text = tex_escape(text)
-        self.data += text
+        if isinstance(node.parent_block, nd.CodeBlockNode):
+            text = node.text
+            for key, delim in self.code_decoration_table.items():
+                text = text.replace(key, delim)
+            self.data += text
+        else:
+            text = tex_escape(node.text)
+            self.data += text
 
     def leave_text(self, node: nd.ASTNode) -> None:
         pass

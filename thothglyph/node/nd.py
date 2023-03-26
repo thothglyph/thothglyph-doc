@@ -229,17 +229,17 @@ class ListItemNode(ASTNode):
         self.titlebreak: bool = False
 
 
-class FootnoteListBlockNode(ASTNode):
+class FootnoteListBlockNode(BlockNode):
     def __init__(self):
         super().__init__()
 
 
-class ReferenceListBlockNode(ASTNode):
+class ReferenceListBlockNode(BlockNode):
     def __init__(self):
         super().__init__()
 
 
-class FigureBlockNode(ASTNode):
+class FigureBlockNode(BlockNode):
     def __init__(self):
         super().__init__()
         self.caption: str = str()
@@ -308,7 +308,7 @@ class FigureBlockNode(ASTNode):
         return self._fignum_format(gindex, lindexs)
 
 
-class TableBlockNode(ASTNode):
+class TableBlockNode(BlockNode):
     attrkey = ('row', 'col', 'headers')
 
     def __init__(self):
@@ -384,26 +384,25 @@ class TableCellNode(ASTNode):
         self.size: TableCellNode.Size = TableCellNode.Size(1, 1)
 
 
-class LiteralBlockNode(ASTNode):
+class LiteralBlockNode(BlockNode):
     def __init__(self):
         super().__init__()
 
 
-class QuoteBlockNode(ASTNode):
+class QuoteBlockNode(BlockNode):
     def __init__(self):
         super().__init__()
 
 
-class CodeBlockNode(ASTNode):
+class CodeBlockNode(BlockNode):
     attrkey = ('lang',)
 
     def __init__(self):
         super().__init__()
         self.lang: str = str()
-        self.text: str = str()
 
 
-class CustomBlockNode(ASTNode):
+class CustomBlockNode(BlockNode):
     attrkey = ('ext',)
 
     def __init__(self):
@@ -412,12 +411,12 @@ class CustomBlockNode(ASTNode):
         self.text: str = str()
 
 
-class HorizonBlockNode(ASTNode):
+class HorizonBlockNode(BlockNode):
     def __init__(self):
         super().__init__()
 
 
-class ParagraphNode(ASTNode):
+class ParagraphNode(BlockNode):
     def __init__(self):
         super().__init__()
 
@@ -427,7 +426,21 @@ class TitleNode(ParagraphNode):
         super().__init__()
 
 
-class TextNode(ASTNode):
+class InlineNode(ASTNode):
+    def __init__(self):
+        super().__init__()
+
+    @property
+    def parent_block(self):
+        p = self.parent
+        while p:
+            if isinstance(p, BlockNode):
+                break
+            p = p.parent
+        return p
+
+
+class TextNode(InlineNode):
     attrkey = ('text',)
 
     def __init__(self, text: Optional[str] = None):
@@ -435,7 +448,7 @@ class TextNode(ASTNode):
         self.text: str = str() if text is None else text
 
 
-class RoleNode(ASTNode):
+class RoleNode(InlineNode):
     attrkey = ('role', 'args', 'opts', 'value')
 
     def __init__(self, role=None, args=None, opts=None, value=None):
@@ -476,7 +489,7 @@ class MenuRoleNode(RoleNode):
         super().__init__()
 
 
-class LinkNode(ASTNode):
+class LinkNode(InlineNode):
     attrkey = ('opts', 'value')
 
     def __init__(self, opts=None, value=None):
@@ -512,7 +525,7 @@ class LinkNode(ASTNode):
         return self.value
 
 
-class FootnoteNode(ASTNode):
+class FootnoteNode(InlineNode):
     attrkey = ('value',)
 
     def __init__(self, value: Optional[str] = None):
@@ -530,7 +543,7 @@ class FootnoteNode(ASTNode):
         return item
 
 
-class ReferenceNode(ASTNode):
+class ReferenceNode(InlineNode):
     attrkey = ('value',)
 
     def __init__(self, value=None):

@@ -355,6 +355,10 @@ The ⫶var⫶ and ⸌code⸌ text.
 
 ᛝ--text=⁒val⁒ᛝ set ⁒val⁒ to text.
 ᛝ-Wl,--hoge-fuga=piyoᛝ This is ⸌-Wl,--hoge-fuga=piyo⸌
+◃
+⸌⸌⸌
+The ⁒emphasis⁒ ⋄strong⋄ ‗inserted‗ ¬deleted¬ ⋄⁒strong & emphasis⁒⋄ text.
+⸌⸌⸌
 
 ▮▮ Image
 

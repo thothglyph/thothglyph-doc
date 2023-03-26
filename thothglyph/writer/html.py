@@ -172,11 +172,9 @@ class HtmlWriter(Writer):
 
     def visit_codeblock(self, node: nd.ASTNode) -> None:
         self.data += '<pre><code>'
-        self.data += html.escape(node.text) + '\n'
-        self.data += '</code></pre>\n'
 
     def leave_codeblock(self, node: nd.ASTNode) -> None:
-        pass
+        self.data += '</code></pre>\n'
 
     def visit_figureblock(self, node: nd.ASTNode) -> None:
         if node.align == 'l':

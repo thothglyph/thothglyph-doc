@@ -103,20 +103,20 @@ class Lexer():
             k: re.compile(v) for k, v in self.inline_tokens.items()
         }
 
-    def lex_preproc(self, data) -> List[Lexer.Token]:
+    def lex_preproc(self, data: str) -> List[Lexer.Token]:
         return self.lex_pattern(self._preproc_tokens, data)
 
-    def lex_block(self, data) -> List[Lexer.Token]:
+    def lex_block(self, data: str) -> List[Lexer.Token]:
         return self.lex_pattern(self._block_tokens, data)
 
-    def lex_inline(self, data) -> List[Lexer.Token]:
-        return self.lex_pattern(self._inline_tokens, data)
+    def lex_inline(self, data: str, begin=1) -> List[Lexer.Token]:
+        return self.lex_pattern(self._inline_tokens, data, begin=begin)
 
-    def lex_pattern(self, patterns, data) -> List[Lexer.Token]:
+    def lex_pattern(self, patterns, data: str, begin=1) -> List[Lexer.Token]:
         lines = data.split(self.newline_token)
         tokens: List[Lexer.Token] = list()
         for lineno, line in enumerate(lines):
-            lineno = lineno + 1
+            lineno = lineno
             rest = line
             curpos = 0
             while True:
@@ -125,7 +125,7 @@ class Lexer():
                     if m:
                         no = len(tokens)
                         pos = curpos
-                        tokens.append(Lexer.Token(no, lineno, pos, key, m.group(0)))
+                        tokens.append(Lexer.Token(no, lineno + begin, pos, key, m.group(0)))
                         logger.debug(tokens[-1])
                         rest = rest[len(m.group(0)):]
                         curpos += len(m.group(0))
@@ -516,6 +516,15 @@ class TglyphParser(Parser):
         self.nodes.pop()
         return tokens
 
+    def _insert_linebreak(self, tokens: List[Lexer.Token]) -> None:
+        prev = tokens[0]
+        for i in reversed(range(len(tokens))):
+            token = tokens[i]
+            if token.line != prev.line:
+                lineno = prev.line
+                pos = prev.pos + len(prev.value)
+                tokens.insert(i, Lexer.Token(-1, lineno, pos, 'TEXT', '\n'))
+
     def p_codeblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.block_tokens['CODE_LINE'], tokens[0].value)
         assert m
@@ -561,7 +570,11 @@ class TglyphParser(Parser):
                     text += token.value
                 prev = token
             text = self.replace_text_attrs(text)
-            code.text = text
+            texttokens = self.lexer.lex_inline(text, begin=begintoken.line)
+            self._insert_linebreak(texttokens)
+            self.nodes.append(code)
+            self.p_decotext(texttokens)
+            self.nodes.pop()
         return tokens
 
     def p_customblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:

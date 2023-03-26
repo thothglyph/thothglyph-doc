@@ -282,7 +282,7 @@ class DocxWriter(Writer):
 
     def visit_codeblock(self, node: nd.ASTNode):
         self.r_style = self.stylename['code_block']
-        self.p = self._add_paragraph(node.text, self.r_style)
+        self.p = self._add_paragraph('', self.r_style)
         self.r = None
 
     def leave_codeblock(self, node):

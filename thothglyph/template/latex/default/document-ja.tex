@@ -165,7 +165,7 @@
   \endgroup
 }
 \newcommand{\desctitle}[1]{\textbf{#1}}
-\newcommand{\varbox}[1]{\colortext[gray]{0.95}{\small \texttt{\textbf{#1}}}}
+\newcommand{\varbox}[1]{\colortext[gray]{0.95}{\small \texttt{\itshape{#1}}}}
 \newcommand{\codebox}[1]{\colortext[gray]{0.95}{\small \texttt{#1}}}
 \newcommand{\kbdbox}[1]{\ovalbox{\footnotesize \texttt{#1}}}
 \newcommand{\btnbox}[1]{\ovalbox{\footnotesize \textsf{#1}}}
@@ -176,10 +176,16 @@
   stringstyle={\small \ttfamily},
   frame=single,
   breaklines=true,
+  showstringspaces=false,
   backgroundcolor=\color[gray]{0.95},
   commentstyle={\color{teal}},
   stringstyle={\color{violet}},
   keywordstyle={\color{blue}},
+  moredelim=**[is][\itshape]{<?tg:I?>}{<?tg:I?>},
+  moredelim=**[is][\bfseries]{<?tg:S?>}{<?tg:S?>},
+  moredelim=**[is][\underbar]{<?tg:U?>}{<?tg:U?>},
+  moredelim=**[is][\sout]{<?tg:SO?>}{<?tg:SO?>},
+  moredelim=**[is][\itshape]{<?tg:VAR?>}{<?tg:VAR?>},
 }
 \lstset{style=common}
 
