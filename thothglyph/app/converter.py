@@ -11,7 +11,7 @@ import logging
 NAMESPACE = 'thothglyph'
 
 logger = logging.getLogger(NAMESPACE)
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.INFO)
 
 
 def main():

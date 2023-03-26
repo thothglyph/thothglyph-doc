@@ -21,6 +21,8 @@ class PdfWriter(LatexWriter):
         self.tmpdirname: Optional[str] = None
 
     def write(self, fpath: str, node: nd.ASTNode):
+        clsname = self.__class__.__name__
+        logger.info('{}: write document'.format(clsname))
         self.rootnode = node
         with tempfile.TemporaryDirectory() as tmpdirname:
             self.tmpdirname = tmpdirname
@@ -39,20 +41,22 @@ class PdfWriter(LatexWriter):
                 '-interaction=nonstopmode',
                 '{}.tex'.format(fbname),
             ]
-            rets = list()
-            logger.warning('1st PDF writing (build main text)')
-            p = subprocess.run(latex_cmds, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            rets.append(p.returncode)
-            logger.warning('2nd PDF writing (insert toc pages)')
-            p = subprocess.run(latex_cmds, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            rets.append(p.returncode)
-            logger.warning('3rd PDF writing (fix page number)')
-            p = subprocess.run(latex_cmds, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            rets.append(p.returncode)
-
-            mv_cmd = ['mv', '-f', '{}/{}.pdf'.format(tmpdirname, fbname), dirname]
-            subprocess.run(mv_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if not all([r == 0 for r in rets]):
+            clsname = self.__class__.__name__
+            steps = ('write main contents', 'insert toc pages', 'fix page numbers')
+            try:
+                for i, step in enumerate(steps, start=1):
+                    logger.info('{}: {}. {}'.format(clsname, i, step))
+                    p = subprocess.run(
+                        latex_cmds, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                    )
+                    if p.returncode != 0:
+                        raise Exception(p.returncode)
+                mv_cmd = ['mv', '-f', '{}/{}.pdf'.format(tmpdirname, fbname), dirname]
+                subprocess.run(mv_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception as e:
+                msg = '{} exit with code {}\n'.format(latex_cmds[0], e)
+                msg += 'log: {}/{}.pdf.log'.format(dirname, fbname)
+                logger.error(msg)
                 mv_cmd = [
                     'mv', '-f',
                     '{}/{}.log'.format(tmpdirname, fbname),

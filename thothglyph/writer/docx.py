@@ -139,6 +139,8 @@ class DocxWriter(Writer):
         super().parse(node)
 
     def write(self, fpath: str, node: nd.ASTNode) -> None:
+        clsname = self.__class__.__name__
+        logger.info('{}: write document'.format(clsname))
         self.rootnode = node
         with tempfile.TemporaryDirectory() as tmpdirname:
             self.tmpdirname = tmpdirname
