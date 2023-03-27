@@ -305,6 +305,7 @@ int main()
 {
   int x           = 1;
   long long int y = 2;
+  char s[100] = "Good morning!\n";
   printf("Hello World!!\n");
   exit(0);
 }
@@ -495,9 +496,13 @@ The important text. [^1] And the important text too. [^2]
 
 The important text. [^a] And the important text too. [^b]
 
+This is [not] important [(text)].
+
 •[^1] This is New footnote.
 •[^2] This is New footnote too.
 •[^a] This is New footnote three.
+•[^b] This is ⸌|@#$%{^&*(})\!⸌.
+
 •[^b] This is ⸌|@#$%{^&*(})\!⸌.
 
 ▮▮ Figure numbering
