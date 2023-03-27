@@ -549,8 +549,8 @@ class TglyphParser(Parser):
         return tokens
 
     def _insert_linebreak(self, tokens: List[Lexer.Token]) -> None:
-        prev = tokens[0]
-        for i in reversed(range(len(tokens))):
+        for i in reversed(range(1, len(tokens))):
+            prev = tokens[i - 1]
             token = tokens[i]
             if token.line != prev.line:
                 lineno = prev.line

@@ -298,7 +298,7 @@ new paragraph text text new 1.
 
 ▮▮ CodeBlock
 
-⸌⸌⸌
+⸌⸌⸌c
 #include <stdio.h>
 # include <stdlib.h>
 int main()
@@ -311,7 +311,7 @@ int main()
 }
 ⸌⸌⸌
 
-  ⸌⸌⸌shell
+  ⸌⸌⸌sh
   pushd ~
   cat .bashrc
   popd
@@ -359,6 +359,15 @@ The ⫶var⫶ and ⸌code⸌ text.
 ◃
 ⸌⸌⸌
 The ⁒emphasis⁒ ⋄strong⋄ ‗inserted‗ ¬deleted¬ ⋄⁒strong & emphasis⁒⋄ text.
+⸌⸌⸌
+
+⸌⸌⸌c
+__attribute__((⫶used⫶)) void _start(void)
+{
+    int ret = ⋄main⋄();
+    exit(ret);
+    // ‗no return‗
+}
 ⸌⸌⸌
 
 ▮▮ Image
@@ -470,12 +479,12 @@ var = "⁅val⁆"
 
 ▮▮ CodeBlock indentation
 
-• ⸌⸌⸌shell
+• ⸌⸌⸌sh
   pushd ~
   cat .bashrc
   popd
   ⸌⸌⸌
-ᛝTermᛝ ⸌⸌⸌shell
+ᛝTermᛝ ⸌⸌⸌sh
        pushd ~
        cat .bashrc
        popd

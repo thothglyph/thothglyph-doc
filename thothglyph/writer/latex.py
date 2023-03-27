@@ -42,11 +42,6 @@ class LatexWriter(Writer):
         'SUP': '',
         'SUB': '',
     }
-    lang_table: Dict[str, str] = {
-        'c': 'C',
-        'c++': 'C++',
-        'shell': 'sh',
-    }
     bp_scale: float = 72.0 / 150.0
 
     def __init__(self):
@@ -167,8 +162,8 @@ class LatexWriter(Writer):
 
     def visit_codeblock(self, node: nd.ASTNode) -> None:
         self.data += '\\begin{lstlisting}'
-        if node.lang in self.lang_table:
-            self.data += '[language={}]'.format(self.lang_table[node.lang])
+        if node.lang:
+            self.data += '[style={}]'.format(node.lang)
         self.data += '\n'
 
     def leave_codeblock(self, node: nd.ASTNode) -> None:
