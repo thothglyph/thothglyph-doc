@@ -205,13 +205,19 @@
 \title{${doc.title}}
 \author{${doc.author}}
 \date{${doc.date}}
-\pagestyle{fancy}
+\fancypagestyle{fancy}{
 \fancyhead[LE,LO]{${doc.title}}
 \fancyhead[RE,RO]{!confidencial!}
 \fancyfoot[CE,CO]{\thepage}
+}
+\fancypagestyle{beforecontents}{
+\fancyhead[LE,LO]{${doc.title}}
+\fancyhead[RE,RO]{!confidencial!}
+\fancyfoot[CE,CO]{}
+}
+\pagestyle{fancy}
 
 \begin{document}
 \maketitle
-\thispagestyle{fancy}
 ${doc.data}
 \end{document}

@@ -47,6 +47,7 @@ class LatexWriter(Writer):
     def __init__(self):
         super().__init__()
         self.tmpdirname: Optional[str] = None
+        self.contentphase: str = 'before'  # before, main, after
 
     def parse(self, node) -> None:
         super().parse(node)
@@ -73,6 +74,10 @@ class LatexWriter(Writer):
                 f.write(self.data)
         self.tmpdirname = None
 
+    def visit_document(self, node: nd.ASTNode) -> None:
+        self.data += '\\setcounter{page}{0}\n'
+        self.data += '\\pagenumbering{arabic}\\pagestyle{beforecontents}\n'
+
     def visit_section(self, node: nd.ASTNode) -> None:
         level_offset = 0
         _id = node.id or node.title.replace(' ', '_')
@@ -82,6 +87,9 @@ class LatexWriter(Writer):
         cmd = self.sectlevel_cmds[doctype][level]
         if node.opts['nonum']:
             cmd += '*'
+        if not node.opts['nonum'] and node.level == 1 and self.contentphase == 'before':
+            self.data += '\\pagenumbering{arabic}\\pagestyle{fancy}\n'
+            self.contentphase = 'main'
         self.data += '\\{}{{{}}}'.format(cmd, title)
         self.data += '\\label{{{}}}\n'.format(_id)
 
@@ -92,7 +100,7 @@ class LatexWriter(Writer):
         self.data += '\\tableofcontents\n'
 
     def leave_tocblock(self, node: nd.ASTNode) -> None:
-        pass
+        self.data += '\\clearpage\\setcounter{page}{0}\n'
 
     def visit_bulletlistblock(self, node: nd.ASTNode) -> None:
         self.data += '\\begin{itemize}\n'
