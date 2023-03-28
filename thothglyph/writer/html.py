@@ -1,9 +1,10 @@
 from __future__ import annotations
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 import html
 import importlib
 import os
 import re
+import shutil
 import tempfile
 from thothglyph.writer.writer import Writer
 from thothglyph.node import nd
@@ -30,6 +31,7 @@ class HtmlWriter(Writer):
     def __init__(self):
         super().__init__()
         self.tmpdirname: Optional[str] = None
+        self.imgdirname: str = 'img'
 
     def parse(self, node: nd.ASTNode) -> None:
         super().parse(node)
@@ -52,9 +54,45 @@ class HtmlWriter(Writer):
         with tempfile.TemporaryDirectory() as tmpdirname:
             self.tmpdirname = tmpdirname
             self.parse(node)
-            with open(fpath, 'w', encoding=self.encoding) as f:
+            self._copy_template(fpath)
+            self._copy_resources(fpath)
+            fdir = os.path.abspath(fpath + '.dir')
+            indexpath = os.path.join(self.tmpdirname, 'index.html')
+            with open(indexpath, 'w', encoding=self.encoding) as f:
                 f.write(self.data)
+            os.makedirs(fdir, exist_ok=True)
+            shutil.copytree(self.tmpdirname, fdir, dirs_exist_ok=True)
         self.tmpdirname = None
+
+    def _copy_template(self, fpath: str) -> None:
+        commondir = os.path.join(self.template_dir(), 'common')
+        newcommondir = os.path.join(self.tmpdirname, 'template', 'common')
+        shutil.copytree(commondir, newcommondir, dirs_exist_ok=True)
+
+    def _copy_resources(self, fpath: str) -> None:
+        rscs: Dict[str, List[str]] = dict()
+        typetable: Dict[str, Dict[str, str]] = {
+            'img': {
+                'dir': os.path.join(self.tmpdirname, self.imgdirname),
+            },
+        }
+        for n, gofoward in self.rootnode.walk_depth():
+            if not gofoward:
+                continue
+            if isinstance(n, nd.ImageRoleNode):
+                tp = 'img'
+                path = os.path.abspath(n.value)
+            else:
+                continue
+            rscs.setdefault(tp, list())
+            if path not in rscs[tp]:
+                rscs[tp].append(path)
+        for tp, paths in rscs.items():
+            newrscdir = typetable[tp]['dir']
+            os.makedirs(newrscdir, exist_ok=True)
+            for rscpath in paths:
+                _, rscfname = os.path.split(rscpath)
+                shutil.copy2(rscpath, os.path.join(newrscdir, rscfname))
 
     def visit_section(self, node: nd.ASTNode) -> None:
         self.data += '<section>'
@@ -320,12 +358,14 @@ class HtmlWriter(Writer):
         if 'w' in node.opts:
             options['width'] = node.opts['w']
         optstr = ' '.join(['{}="{}"'.format(k, v) for k, v in options.items()])
-        _, ext = os.path.splitext(node.value)
+        fname = os.path.basename(node.value)
+        _, ext = os.path.splitext(fname)
+        imgpath = os.path.join(self.imgdirname, fname)
         if ext.lower() == '.svg':
-            src = 'type="image/svg+xml" data="{}"'.format(node.value)
+            src = 'type="image/svg+xml" data="{}"'.format(imgpath)
             self.data += '<object {} {}></object>'.format(src, optstr)
         else:
-            src = 'src="{}"'.format(node.value)
+            src = 'src="{}"'.format(imgpath)
             self.data += '<image {} {} />'.format(src, optstr)
 
     def leave_imagerole(self, node: nd.ASTNode) -> None:
