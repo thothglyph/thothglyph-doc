@@ -906,7 +906,13 @@ class TglyphParser(Parser):
             with open(path, 'r', encoding=self.reader.encoding) as f:
                 text.text = f.read().rstrip()
             block.text = text.text
+        elif os.path.exists(path) and isinstance(block, nd.CodeBlockNode):
+            text = nd.TextNode()
+            with open(path, 'r', encoding=self.reader.encoding) as f:
+                text.text = f.read().rstrip()
+            block.add(text)
         else:
+            logger.warn('include file cannot found: {}'.format(path))
             text = nd.TextNode(role.value)
             block.add(text)
         return tokens
