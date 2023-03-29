@@ -1,6 +1,7 @@
 # Repository specification
 test/clean.sh
 test/**/*.html
+test/**/*.html.dir
 test/**/*.tex
 test/**/*.latex
 test/**/*.pdf

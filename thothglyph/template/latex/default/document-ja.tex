@@ -1,16 +1,13 @@
 \documentclass[unicode,11pt,titlepage]{ltjsreport}
-\usepackage{luatexja-otf}
+\usepackage[no-math,deluxe,expert,haranoaji]{luatexja-preset}
 \pdfvariable imageresolution 150
 \usepackage[margin=20truemm]{geometry}
-\usepackage[T1]{fontenc}
-% \renewcommand{\rmdefault}{cmr}
-% \renewcommand{\sfdefault}{cmss}
-% \renewcommand{\ttdefault}{cmtt}
-\renewcommand\familydefault{\rmdefault}
-\renewcommand\kanjifamilydefault{\gtdefault}
-\renewcommand{\thesection}{\thechapter.\arabic{section}}
-\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
-\usepackage[scaled=0.9]{beramono} % code block
+\setmainfont{TeX Gyre Schola}
+\setsansfont{TeX Gyre Heros}
+\setmonofont{TeX Gyre Cursor}
+\setmainjfont{HaranoAjiMincho-Regular}
+\setsansjfont{HaranoAjiGothic-Regular}
+\setmonojfont{HaranoAjiGothic-Light}
 \usepackage{fancyhdr}
 \usepackage{nameref}
 \usepackage[unicode,bookmarksnumbered]{hyperref}
@@ -168,7 +165,7 @@
   \endgroup
 }
 \newcommand{\desctitle}[1]{\textbf{#1}}
-\newcommand{\varbox}[1]{\colortext[gray]{0.95}{\small \texttt{\textbf{#1}}}}
+\newcommand{\varbox}[1]{\colortext[gray]{0.95}{\small \texttt{\itshape{#1}}}}
 \newcommand{\codebox}[1]{\colortext[gray]{0.95}{\small \texttt{#1}}}
 \newcommand{\kbdbox}[1]{\ovalbox{\footnotesize \texttt{#1}}}
 \newcommand{\btnbox}[1]{\ovalbox{\footnotesize \textsf{#1}}}
@@ -179,23 +176,48 @@
   stringstyle={\small \ttfamily},
   frame=single,
   breaklines=true,
+  showstringspaces=false,
   backgroundcolor=\color[gray]{0.95},
   commentstyle={\color{teal}},
   stringstyle={\color{violet}},
   keywordstyle={\color{blue}},
+  moredelim=**[is][\itshape]{<?tg:I?>}{<?tg:I?>},
+  moredelim=**[is][\bfseries]{<?tg:S?>}{<?tg:S?>},
+  moredelim=**[is][\underbar]{<?tg:U?>}{<?tg:U?>},
+  moredelim=**[is][\sout]{<?tg:SO?>}{<?tg:SO?>},
+  moredelim=**[is][\itshape]{<?tg:VAR?>}{<?tg:VAR?>},
 }
+\lstdefinestyle{bash}{language=bash, style=common}
+\lstdefinestyle{c}{language=C, style=common}
+\lstdefinestyle{c++}{language=C++, style=common}
+\lstdefinestyle{csh}{language=csh, style=common}
+\lstdefinestyle{java}{language=Java, style=common}
+\lstdefinestyle{make}{language=make, style=common}
+\lstdefinestyle{perl}{language=Perl, style=common}
+\lstdefinestyle{php}{language=PHP, style=common}
+\lstdefinestyle{python}{language=Python, style=common}
+\lstdefinestyle{ruby}{language=Ruby, style=common}
+\lstdefinestyle{sh}{language=sh, style=common}
+\lstdefinestyle{verilog}{language=Verilog, style=common}
+\lstdefinestyle{xml}{language=XML, style=common}
 \lstset{style=common}
 
 \title{${doc.title}}
 \author{${doc.author}}
 \date{${doc.date}}
-\pagestyle{fancy}
+\fancypagestyle{fancy}{
 \fancyhead[LE,LO]{${doc.title}}
 \fancyhead[RE,RO]{!confidencial!}
 \fancyfoot[CE,CO]{\thepage}
+}
+\fancypagestyle{beforecontents}{
+\fancyhead[LE,LO]{${doc.title}}
+\fancyhead[RE,RO]{!confidencial!}
+\fancyfoot[CE,CO]{}
+}
+\pagestyle{fancy}
 
 \begin{document}
 \maketitle
-\thispagestyle{fancy}
 ${doc.data}
 \end{document}

@@ -35,10 +35,8 @@ class Lexer():
         'TEXT': r'[^⑇]*',
     }
     block_tokens: Dict[str, str] = {
-        'CONFIG_LINE': r'⑇⑇⑇+$',
+        'PREPROCESSED_LINE': r'^⑇$',
         'SECTION_TITLE_LINE': r' *((?:▮+)|(?:▯+))(\*?) +([^⟦]+) *(?:⟦([^⟧]*)⟧)?',
-        'CUSTOM_LINE': r'( *)¤¤¤(.*)',
-        'CODE_LINE': r'( *)⸌⸌⸌(.*)',
         'TOC_LINE': r' *¤toc(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
         'FIGURE_LINE': r' *¤figure(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
         'TABLE_LINE': r'^ *\|.+\| *$',
@@ -51,6 +49,8 @@ class Lexer():
         'ORDERED_LIST_SYMBOL': r' *(꓾+) +',
         'DESC_LIST_SYMBOL': r' *(ᛝ+)([^ᛝ]+)ᛝ(?: +)?',
         'LIST_TERMINATOR_SYMBOL': r' *(◃+) *$',
+        'CUSTOM_LINE': r'( *)¤¤¤(.*)',
+        'CODE_LINE': r'( *)⸌⸌⸌(.*)',
         'QUOTE_SYMBOL': r'^ *> ',
         'HR_LINE': r'^ *(?:(={4,})|(-{4,}))$',
         'BREAK_LINE': r' *↲',
@@ -64,12 +64,7 @@ class Lexer():
         'CHECK_LIST_SYMBOL',
     )
 
-    inline_tokens: Dict[str, str] = {
-        'ATTR': r'⁅([A-Za-z0-9_\-]+)⁆',
-        'ROLE': r'¤([A-Za-z]+)(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩',
-        'LINK': r'(?:⟦([^⟧]*)⟧)?⸨([^⸩]+)⸩',
-        'FOOTNOTE': r'\[\^([\w\-.]+)\]',
-        'REFERENCE': r'\[\#([\w\-.]+)\]',
+    inline_deco_tokens: Dict[str, str] = {
         'EMPHASIS': r'⁒',
         'STRONG': r'⋄',
         'MARKED': r'‗',
@@ -78,19 +73,18 @@ class Lexer():
         'CODE': r'⸌',
         'SUP': r'⌃',
         'SUB': r'⌄',
-        'BRACKET': r'\[[^\]]+\]',
-        'TEXT': r'[^¤⁒⋄‗¬⫶⸌⌃⌄⟦⸨⁅[]+',
+        'TEXT': r'.*',
     }
-    deco_keys: Tuple[str, ...] = (
-        'EMPHASIS',
-        'STRONG',
-        'MARKED',
-        'STRIKE',
-        'VAR',
-        'CODE',
-        'SUP',
-        'SUB',
-    )
+    deco_keys: Tuple[str, ...] = tuple(inline_deco_tokens.keys())[:-1]
+
+    inline_tokens: Dict[str, str] = {
+        'ATTR': r'⁅([A-Za-z0-9_\-]+)⁆',
+        'ROLE': r'¤([A-Za-z]+)(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩',
+        'LINK': r'(?:⟦([^⟧]*)⟧)?⸨([^⸩]+)⸩',
+        'FOOTNOTE': r'\[\^([\w\-.]+)\]',
+        'REFERENCE': r'\[\#([\w\-.]+)\]',
+        'BRACKET': r'\[[^\]]+\]',
+    } | inline_deco_tokens
 
     def __init__(self):
         self._preproc_tokens: Dict[str, re.Pattern] = {
@@ -99,41 +93,68 @@ class Lexer():
         self._block_tokens: Dict[str, re.Pattern] = {
             k: re.compile(v) for k, v in self.block_tokens.items()
         }
+        self._inline_deco_tokens: Dict[str, re.Pattern] = {
+            k: re.compile(v) for k, v in self.inline_deco_tokens.items()
+        }
         self._inline_tokens: Dict[str, re.Pattern] = {
             k: re.compile(v) for k, v in self.inline_tokens.items()
         }
 
-    def lex_preproc(self, data) -> List[Lexer.Token]:
+    def lex_preproc(self, data: str) -> List[Lexer.Token]:
         return self.lex_pattern(self._preproc_tokens, data)
 
-    def lex_block(self, data) -> List[Lexer.Token]:
+    def lex_block(self, data: str) -> List[Lexer.Token]:
         return self.lex_pattern(self._block_tokens, data)
 
-    def lex_inline(self, data) -> List[Lexer.Token]:
-        return self.lex_pattern(self._inline_tokens, data)
+    def lex_inline_deco(self, data: str, begin=1) -> List[Lexer.Token]:
+        return self.lex_pattern(self._inline_deco_tokens, data, begin=begin)
 
-    def lex_pattern(self, patterns, data) -> List[Lexer.Token]:
+    def lex_inline(self, data: str, begin=1) -> List[Lexer.Token]:
+        return self.lex_pattern(self._inline_tokens, data, begin=begin)
+
+    def lex_pattern(self, patterns, data: str, begin=0) -> List[Lexer.Token]:
         lines = data.split(self.newline_token)
         tokens: List[Lexer.Token] = list()
         for lineno, line in enumerate(lines):
-            lineno = lineno + 1
             rest = line
-            curpos = 0
-            while True:
+            rests: List[Tuple[int, str]] = [(0, line)]
+            linetokens: List[Lexer.Token] = list()
+            while rests:
                 for key, pattern in patterns.items():
-                    m = re.match(pattern, rest)
-                    if m:
-                        no = len(tokens)
-                        pos = curpos
-                        tokens.append(Lexer.Token(no, lineno, pos, key, m.group(0)))
-                        logger.debug(tokens[-1])
-                        rest = rest[len(m.group(0)):]
-                        curpos += len(m.group(0))
+                    newrests: List[Tuple[int, str]] = list()
+                    matched = False
+                    for rest in rests:
+                        bpos, text = rest
+                        m = pattern.search(text)
+                        if m:
+                            matched = True
+                            no = -1
+                            lno = lineno + begin
+                            pos = bpos + m.start()
+                            linetokens.append(
+                                Lexer.Token(no, lno, pos, key, m.group(0))
+                            )
+                            logger.debug(linetokens[-1])
+                            subtexts = text[:m.start()], text[m.end():]
+                            if len(subtexts[0]) > 0:
+                                newrests.append((bpos, subtexts[0]))
+                            if len(subtexts[1]) > 0:
+                                newrests.append((bpos + m.end(), subtexts[1]))
+                        else:
+                            newrests.append((bpos, text))
+                    rests = newrests
+                    if matched:
                         break
-                else:
-                    raise Exception(rest)
-                if len(rest) == 0:
-                    break
+            linetokens.sort(key=lambda t: t.pos)
+            for i, token in enumerate(linetokens):
+                token.no = len(tokens) + i
+            if all([
+                len(rests) > 0,
+                len(rests) == len(newrests),
+                all([rests[i] == newrests[i] for i in range(len(rests))])
+            ]):
+                raise Exception(lineno, line, rests)
+            tokens.extend(linetokens)
         return tokens
 
 
@@ -167,6 +188,8 @@ class TglyphParser(Parser):
             if tokens[0].key == 'CONFIG_LINE':
                 tokens = self.p_configblock(tokens)
             elif tokens[0].key == 'COMMENT':
+                if tokens[0].pos == 0:
+                    self._line_preprocessed()
                 tokens.pop(0)
             elif tokens[0].key == 'CONTROL_FLOW':
                 tokens = self.p_controlflow(tokens)
@@ -188,17 +211,23 @@ class TglyphParser(Parser):
                 setattr(config, key, pattrs[key])
         self.rootnode.config = config
 
+    def _line_preprocessed(self):
+        self.pplines.append('⑇')
+
     def p_configblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         config = self.rootnode.config
         begintoken = tokens[0]
+        self._line_preprocessed()
         tokens.pop(0)
         subtokens = list()
         while tokens:
             if tokens[0].key == 'CONFIG_LINE':
                 break
+            self._line_preprocessed()
             subtokens.append(tokens.pop(0))
         else:
             raise Exception(begintoken)
+        self._line_preprocessed()
         tokens.pop(0)
         m = re.match(Lexer.inline_tokens['ROLE'], subtokens[0].value) if subtokens else None
         if m and m.group(1) == 'include':
@@ -231,6 +260,7 @@ class TglyphParser(Parser):
         assert match
         keyword, sentence = match.group(1), match.group(2)
         if keyword == 'if':
+            self._line_preprocessed()
             tokens.pop(0)
             cond = eval(sentence, {}, self.rootnode.config.attrs)
             tokens = self.p_if_else(tokens, cond)
@@ -252,7 +282,9 @@ class TglyphParser(Parser):
                     cond = not cond and eval(sentence, {}, self.rootnode.config.attrs)
                 elif keyword == 'else':
                     cond = not cond
+            self._line_preprocessed()
             tokens.pop(0)
+        self._line_preprocessed()
         tokens.pop(0)
         return tokens
 
@@ -516,6 +548,15 @@ class TglyphParser(Parser):
         self.nodes.pop()
         return tokens
 
+    def _insert_linebreak(self, tokens: List[Lexer.Token]) -> None:
+        for i in reversed(range(1, len(tokens))):
+            prev = tokens[i - 1]
+            token = tokens[i]
+            if token.line != prev.line:
+                lineno = prev.line
+                pos = prev.pos + len(prev.value)
+                tokens.insert(i, Lexer.Token(-1, lineno, pos, 'TEXT', '\n'))
+
     def p_codeblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.block_tokens['CODE_LINE'], tokens[0].value)
         assert m
@@ -561,7 +602,11 @@ class TglyphParser(Parser):
                     text += token.value
                 prev = token
             text = self.replace_text_attrs(text)
-            code.text = text
+            texttokens = self.lexer.lex_inline_deco(text, begin=begintoken.line)
+            self._insert_linebreak(texttokens)
+            self.nodes.append(code)
+            self.p_decotext(texttokens)
+            self.nodes.pop()
         return tokens
 
     def p_customblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
@@ -651,11 +696,11 @@ class TglyphParser(Parser):
             tokens.pop(0)
         tabletexts = list()
         aligns = list()
-        header_splitter = 0
+        header_splitter = -1
         for i, line in enumerate(lines):
             rowtexts = re.split(r' *\| *', line.strip())[1:-1]
-            ms = [re.match(r'^:?-+:?$', c) for c in rowtexts]
-            if all(ms) and header_splitter == 0 and i > 0:
+            ms = [re.match(r'^[+:]?-+[+:]?$', c) for c in rowtexts]
+            if all(ms) and header_splitter == -1:
                 for m in ms:
                     assert m
                     mg = m.group(0)
@@ -663,11 +708,15 @@ class TglyphParser(Parser):
                         aligns.append('c')
                     elif mg[-1] == ':':
                         aligns.append('r')
+                    elif mg[0] == '+':
+                        aligns.append('x')
                     else:
                         aligns.append('l')
                 header_splitter = i
             else:
                 tabletexts.append(rowtexts)
+        if header_splitter < 0:
+            header_splitter = 0
         # table.type = opts.get('type', 'normal')
         if len(aligns) == 0:
             aligns = ['c' for i in range(len(tabletexts[0]))]
@@ -784,7 +833,7 @@ class TglyphParser(Parser):
         paragraph = nd.ParagraphNode()
         self.nodes[-1].add(paragraph)
         text = str()
-        prev = tokens[0]
+        prev = begintoken = tokens[0]
         while tokens:
             if tokens[0].key != 'STR_LINE':
                 break
@@ -795,7 +844,7 @@ class TglyphParser(Parser):
                 text += tokens[0].value
             prev = tokens.pop(0)
         text = self.replace_text_attrs(text)
-        texttokens = self.lexer.lex_inline(text)
+        texttokens = self.lexer.lex_inline(text, begintoken.line)
         self.nodes.append(paragraph)
         self.p_inlinemarkup(texttokens)
         self.nodes.pop()
@@ -857,7 +906,13 @@ class TglyphParser(Parser):
             with open(path, 'r', encoding=self.reader.encoding) as f:
                 text.text = f.read().rstrip()
             block.text = text.text
+        elif os.path.exists(path) and isinstance(block, nd.CodeBlockNode):
+            text = nd.TextNode()
+            with open(path, 'r', encoding=self.reader.encoding) as f:
+                text.text = f.read().rstrip()
+            block.add(text)
         else:
+            logger.warn('include file cannot found: {}'.format(path))
             text = nd.TextNode(role.value)
             block.add(text)
         return tokens

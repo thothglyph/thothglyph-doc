@@ -32,16 +32,22 @@ class LatexWriter(Writer):
         'SUP': ('\\textsuperscript{', '}'),
         'SUB': ('\\textsubscript{', '}'),
     }
-    lang_table: Dict[str, str] = {
-        'c': 'C',
-        'c++': 'C++',
-        'shell': 'sh',
+    code_decoration_table: Dict[str, Tuple[str, str]] = {
+        'EMPHASIS': '<?tg:I?>',
+        'STRONG': '<?tg:S?>',
+        'MARKED': '<?tg:U?>',
+        'STRIKE': '<?tg:SO?>',
+        'VAR': '<?tg:VAR?>',
+        'CODE': '',
+        'SUP': '',
+        'SUB': '',
     }
     bp_scale: float = 72.0 / 150.0
 
     def __init__(self):
         super().__init__()
         self.tmpdirname: Optional[str] = None
+        self.contentphase: str = 'before'  # before, main, after
 
     def parse(self, node) -> None:
         super().parse(node)
@@ -58,6 +64,8 @@ class LatexWriter(Writer):
         self.data = t.format(doc=self.template_docdata)
 
     def write(self, fpath: str, node: nd.ASTNode) -> None:
+        clsname = self.__class__.__name__
+        logger.info('{}: write document'.format(clsname))
         self.rootnode = node
         with tempfile.TemporaryDirectory() as tmpdirname:
             self.tmpdirname = tmpdirname
@@ -65,6 +73,10 @@ class LatexWriter(Writer):
             with open(fpath, 'w', encoding=self.encoding) as f:
                 f.write(self.data)
         self.tmpdirname = None
+
+    def visit_document(self, node: nd.ASTNode) -> None:
+        self.data += '\\setcounter{page}{0}\n'
+        self.data += '\\pagenumbering{arabic}\\pagestyle{beforecontents}\n'
 
     def visit_section(self, node: nd.ASTNode) -> None:
         level_offset = 0
@@ -75,6 +87,9 @@ class LatexWriter(Writer):
         cmd = self.sectlevel_cmds[doctype][level]
         if node.opts['nonum']:
             cmd += '*'
+        if not node.opts['nonum'] and node.level == 1 and self.contentphase == 'before':
+            self.data += '\\pagenumbering{arabic}\\pagestyle{fancy}\n'
+            self.contentphase = 'main'
         self.data += '\\{}{{{}}}'.format(cmd, title)
         self.data += '\\label{{{}}}\n'.format(_id)
 
@@ -85,7 +100,7 @@ class LatexWriter(Writer):
         self.data += '\\tableofcontents\n'
 
     def leave_tocblock(self, node: nd.ASTNode) -> None:
-        pass
+        self.data += '\\clearpage\\setcounter{page}{0}\n'
 
     def visit_bulletlistblock(self, node: nd.ASTNode) -> None:
         self.data += '\\begin{itemize}\n'
@@ -155,14 +170,12 @@ class LatexWriter(Writer):
 
     def visit_codeblock(self, node: nd.ASTNode) -> None:
         self.data += '\\begin{lstlisting}'
-        if node.lang in self.lang_table:
-            self.data += '[language={}]'.format(self.lang_table[node.lang])
+        if node.lang:
+            self.data += '[style={}]'.format(node.lang)
         self.data += '\n'
-        self.data += node.text + '\n'
-        self.data += '\\end{lstlisting}\n'
 
     def leave_codeblock(self, node: nd.ASTNode) -> None:
-        pass
+        self.data += '\\end{lstlisting}\n'
 
     def visit_figureblock(self, node: nd.ASTNode) -> None:
         align = node.align
@@ -264,34 +277,38 @@ class LatexWriter(Writer):
             align = '{}|'.format(node.align)
         else:
             align = '{}'.format(node.align)
-        if node.idx != 0:
-            if node.mergeto is None:
+        if node.mergeto is None:
+            if node.idx != 0:
                 self.data += ' & '
-                s = node.size
-                if s.x > 1:
-                    self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
-                if s.y > 1:
-                    self.data += '\\multirow{{{}}}{{*}}{{'.format(s.y)
-            elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
+            s = node.size
+            if s.x > 1:
+                self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
+            if s.y > 1:
+                self.data += '\\multirow{{{}}}{{*}}{{'.format(s.y)
+            self.data += '\n{\\begin{varwidth}{\\linewidth}\n'
+        elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
+            # horizontal cell merging
+            if node.idx != 0:
                 self.data += ' & '
-                s = node.mergeto.size
-                if s.x > 1:
-                    self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
-        self.data += '\n{\\begin{varwidth}{\\linewidth}\n'
+            s = node.mergeto.size
+            if s.x > 1:
+                self.data += '\\multicolumn{{{}}}{{{}}}{{'.format(s.x, align)
+        else:
+            # vertical cell merging
+            pass
 
     def leave_tablecell(self, node: nd.ASTNode) -> None:
-        self.data += '\n\\end{varwidth}}\n'
-        if node.idx != 0:
-            if node.mergeto is None:
-                s = node.size
-                if s.x > 1:
-                    self.data += '}'
-                if s.y > 1:
-                    self.data += '}'
-            elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
-                s = node.mergeto.size
-                if s.x > 1:
-                    self.data += '}'
+        if node.mergeto is None:
+            self.data += '\n\\end{varwidth}}\n'
+            s = node.size
+            if s.x > 1:
+                self.data += '}'
+            if s.y > 1:
+                self.data += '}'
+        elif node.mergeto.idx == node.idx and node.mergeto.parent.idx != node.parent.idx:
+            s = node.mergeto.size
+            if s.x > 1:
+                self.data += '}'
 
     def visit_customblock(self, node: nd.ASTNode) -> None:
         if node.ext == '':
@@ -328,10 +345,16 @@ class LatexWriter(Writer):
                 self.data += '\\mbox{}\\\\ '
 
     def visit_decorationrole(self, node: nd.ASTNode) -> None:
-        self.data += self.decoration_table[node.role][0]
+        if isinstance(node.parent_block, nd.CodeBlockNode):
+            self.data += self.code_decoration_table[node.role]
+        else:
+            self.data += self.decoration_table[node.role][0]
 
     def leave_decorationrole(self, node: nd.ASTNode) -> None:
-        self.data += self.decoration_table[node.role][1]
+        if isinstance(node.parent_block, nd.CodeBlockNode):
+            self.data += self.code_decoration_table[node.role]
+        else:
+            self.data += self.decoration_table[node.role][1]
 
     def visit_role(self, node: nd.ASTNode) -> None:
         if node.role == '':
@@ -437,9 +460,14 @@ class LatexWriter(Writer):
         pass
 
     def visit_text(self, node: nd.ASTNode) -> None:
-        text = node.text
-        text = tex_escape(text)
-        self.data += text
+        if isinstance(node.parent_block, nd.CodeBlockNode):
+            text = node.text
+            for key, delim in self.code_decoration_table.items():
+                text = text.replace(key, delim)
+            self.data += text
+        else:
+            text = tex_escape(node.text)
+            self.data += text
 
     def leave_text(self, node: nd.ASTNode) -> None:
         pass
@@ -460,7 +488,7 @@ def tex_escape(text: str) -> str:
         '|': '{\\textbar}',
         '<': '{\\textless}',
         '>': '{\\textgreater}',
-        '-': '\\phantom{}-',
+        '-': '{\\phantom{}}-',
     }
     text = text.translate(str.maketrans(trans))
     return text

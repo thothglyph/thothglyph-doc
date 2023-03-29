@@ -16,7 +16,8 @@ class Reader():
     def read(self, path: str, encoding: Optional[str] = None) -> nd.ASTNode:
         if encoding:
             self.encoding = encoding
-        logger.info('{} read start.'.format(self.__class__.__name__))
+        if self.parent is None:
+            logger.info('{}: read documents'.format(self.__class__.__name__))
         self.path = path
         with open(path, 'r', encoding=self.encoding) as f:
             data = f.read()
@@ -24,7 +25,6 @@ class Reader():
         self.set_sectnums(node)
         self.set_footnote_nums(node)
         self.merge_tablecell_text(node)
-        logger.info('{} read finish.'.format(self.__class__.__name__))
         return node
 
     def set_sectnums(self, rootnode: nd.ASTNode) -> None:

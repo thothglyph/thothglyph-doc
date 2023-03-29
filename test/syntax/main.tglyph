@@ -170,6 +170,10 @@ new paragraph text text new 1.
 | data⸌21⸌ | data22 | data23 |
 | a | b | c |
 
+|:------:|-------:|+-------|
+| data11 | data12 | data13 |
+| A | B | C |
+
 | head11 | head12 | ⏴      | ⏴      |
 |--------|--------|--------|--------|
 | data11 | data12 | data13 | data14 |
@@ -189,7 +193,7 @@ new paragraph text text new 1.
 • •• data11
   •• data12
   •• data13
-• •• data23
+• •• data21
   •• data22
   •• data23
 ===|
@@ -202,7 +206,7 @@ new paragraph text text new 1.
 • •• data11
   •• data12
   •• data13
-• •• data23
+• •• data21
   •• ⏶data22
   •• data23
 ===|
@@ -294,19 +298,20 @@ new paragraph text text new 1.
 
 ▮▮ CodeBlock
 
-⸌⸌⸌
+⸌⸌⸌c
 #include <stdio.h>
 # include <stdlib.h>
 int main()
 {
   int x           = 1;
   long long int y = 2;
+  char s[100] = "Good morning!\n";
   printf("Hello World!!\n");
   exit(0);
 }
 ⸌⸌⸌
 
-  ⸌⸌⸌shell
+  ⸌⸌⸌sh
   pushd ~
   cat .bashrc
   popd
@@ -345,12 +350,25 @@ paragraph
 
 The ⁒emphasis⁒ ⋄strong⋄ ‗inserted‗ ¬deleted¬ ⋄⁒strong & emphasis⁒⋄ text.
 
-The x⏶sup⏶x x⏷sub⏷x text.
+The x⌃sup⌃x x⌄sub⌄x text.
 
 The ⫶var⫶ and ⸌code⸌ text.
 
-ᛝ-text=⁒val⁒ᛝ set ⁒val⁒ to text.
-ᛝhoge=fugaᛝ ⸌hoge = fuga⸌
+ᛝ--text=⁒val⁒ᛝ set ⁒val⁒ to text.
+ᛝ-Wl,--hoge-fuga=piyoᛝ This is ⸌-Wl,--hoge-fuga=piyo⸌
+◃
+⸌⸌⸌
+The ⁒emphasis⁒ ⋄strong⋄ ‗inserted‗ ¬deleted¬ ⋄⁒strong & emphasis⁒⋄ text.
+⸌⸌⸌
+
+⸌⸌⸌c
+__attribute__((⫶used⫶)) void _start(void)
+{
+    int ret = ⋄main⋄();
+    exit(ret);
+    // ‗no return‗
+}
+⸌⸌⸌
 
 ▮▮ Image
 
@@ -434,7 +452,11 @@ The important text. [#1] And the important text too. [#2]
 
 ▮▮ セクション1-1
 
-▮▮ セクション1-2
+本文ホンブンほんぶんText
+
+⸌⸌⸌
+本文ホンブンほんぶんText
+⸌⸌⸌
 
 ▮ Config
 
@@ -457,12 +479,12 @@ var = "⁅val⁆"
 
 ▮▮ CodeBlock indentation
 
-• ⸌⸌⸌shell
+• ⸌⸌⸌sh
   pushd ~
   cat .bashrc
   popd
   ⸌⸌⸌
-ᛝTermᛝ ⸌⸌⸌shell
+ᛝTermᛝ ⸌⸌⸌sh
        pushd ~
        cat .bashrc
        popd
@@ -483,9 +505,13 @@ The important text. [^1] And the important text too. [^2]
 
 The important text. [^a] And the important text too. [^b]
 
+This is [not] important [(text)].
+
 •[^1] This is New footnote.
 •[^2] This is New footnote too.
 •[^a] This is New footnote three.
+•[^b] This is ⸌|@#$%{^&*(})\!⸌.
+
 •[^b] This is ⸌|@#$%{^&*(})\!⸌.
 
 ▮▮ Figure numbering
@@ -503,6 +529,16 @@ The important text. [^a] And the important text too. [^b]
 | data11 | data12 | data13 |
 | data21 | data22 | data23 |
 | data31 | data32 | data33 |
+
+▮▮ Basic Table Cell Merging
+
+| Type | Size | Ptr/Align | ⏴ |
+| Int⸌byte⸌ | 1 | 4 | 4 |
+| ⏶ ⸌short⸌ | 2 | 4 | ⏴ |
+| ⏶ ⸌int⸌ | 4 | ⏶ | ⏴ |
+| ⏶ ⸌long⸌ | 8 | 4 | 4 |
+| Float | 4 | 4 | 4 |
+| ⏶   | 8 | 4 | 4 |
 
 ▮▮ Wide Table
 
