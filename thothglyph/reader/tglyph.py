@@ -36,7 +36,7 @@ class Lexer():
     }
     block_tokens: Dict[str, str] = {
         'PREPROCESSED_LINE': r'^⑇$',
-        'SECTION_TITLE_LINE': r' *((?:▮+)|(?:▯+))(\*?) +([^⟦]+) *(?:⟦([^⟧]*)⟧)?',
+        'SECTION_TITLE_LINE': r' *((?:▮+)|(?:▯+))([*+]?) +([^⟦]+) *(?:⟦([^⟧]*)⟧)?',
         'TOC_LINE': r' *¤toc(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
         'FIGURE_LINE': r' *¤figure(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
         'TABLE_LINE': r'^ *\|.+\| *$',
@@ -390,7 +390,7 @@ class TglyphParser(Parser):
             section = nd.SectionNode()
             section.level = len(m.group(1))
         else:
-            ast_section_title_token = r'(^)(?:(\*?) +)?([^⟦]+) *(?:⟦([^⟧]*)⟧)?'
+            ast_section_title_token = r'(^)(?:([*+]?) +)?([^⟦]+) *(?:⟦([^⟧]*)⟧)?'
             m = re.match(ast_section_title_token, tokens[0].value)
             assert m
             section = nd.SectionNode()
@@ -399,7 +399,8 @@ class TglyphParser(Parser):
             else:
                 section.level = 2
         section.level = level
-        section.opts['nonum'] = len(m.group(2) or '') > 0
+        section.opts['nonum'] = (m.group(2) in ('*', '+'))
+        section.opts['notoc'] = (m.group(2) == '*')
         section.title = self.replace_text_attrs(m.group(3))
         section.id = m.group(4) or ''
         if tokens[0].key == 'SECTION_TITLE_LINE':

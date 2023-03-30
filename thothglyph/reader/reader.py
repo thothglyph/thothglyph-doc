@@ -33,13 +33,27 @@ class Reader():
         for n, gofoward in rootnode.walk_depth():
             if gofoward:
                 if isinstance(n, nd.SectionNode):
-                    if not n.opts.get('nonum'):
+                    if not n.opts.get('notoc') and not n.opts.get('nonum'):
                         nums[level] += 1
                         n._sectindex = [i - 1 for i in nums[:level + 1]]
                     level += 1
             else:
                 if isinstance(n, nd.SectionNode):
-                    if not n.opts.get('nonum'):
+                    if not n.opts.get('notoc') and not n.opts.get('nonum'):
+                        nums[level] = 0
+                    level -= 1
+        nums = [0 for i in range(10)]
+        level = 0
+        for n, gofoward in rootnode.walk_depth():
+            if gofoward:
+                if isinstance(n, nd.SectionNode):
+                    if not n.opts.get('notoc') and n.opts.get('nonum'):
+                        nums[level] += 1
+                        n._sectindex = [-i - 1 for i in nums[:level + 1]]
+                    level += 1
+            else:
+                if isinstance(n, nd.SectionNode):
+                    if not n.opts.get('notoc') and n.opts.get('nonum'):
                         nums[level] = 0
                     level -= 1
 

@@ -93,7 +93,7 @@ class Writer():
                     method = getattr(self, methodname)
                     method(n)
                 except Exception as e:
-                    logger.error(e)
+                    logger.error('{}: {}'.format(methodname, e))
             if self.__continue and not prev_continue:
                 continue_node = n
             prev_continue = self.__continue

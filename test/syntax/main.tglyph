@@ -721,3 +721,11 @@ The important text. [^A] And the important text too. [^B]
      ••• abcdefg 5
      ••• abcdefg
 ===|
+
+▮+ NoNum Section
+
+No number, but list in toc.
+
+▮ After NoNum
+
+Noting.

@@ -85,12 +85,15 @@ class LatexWriter(Writer):
         doctype = 'report'
         level = min(node.level - 1, len(self.sectlevel_cmds[doctype]) - 1) + level_offset
         cmd = self.sectlevel_cmds[doctype][level]
-        if node.opts['nonum']:
-            cmd += '*'
-        if not node.opts['nonum'] and node.level == 1 and self.contentphase == 'before':
+        asterisk = ''
+        if node.opts.get('notoc') or node.opts.get('nonum'):
+            asterisk = '*'
+        if not node.opts.get('notoc') and node.level == 1 and self.contentphase == 'before':
             self.data += '\\pagenumbering{arabic}\\pagestyle{fancy}\n'
             self.contentphase = 'main'
-        self.data += '\\{}{{{}}}'.format(cmd, title)
+        self.data += '\\{}{}{{{}}}'.format(cmd, asterisk, title)
+        if not node.opts.get('notoc') and node.opts.get('nonum'):
+            self.data += '\\addcontentsline{{toc}}{{{}}}{{{}}}'.format(cmd, title)
         self.data += '\\label{{{}}}\n'.format(_id)
 
     def leave_section(self, node: nd.ASTNode) -> None:
