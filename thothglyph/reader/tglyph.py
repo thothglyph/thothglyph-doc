@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Dict, List, Optional, Tuple
+from thothglyph.error import ThothglyphError
 from thothglyph.reader.reader import Reader, Parser
 from thothglyph.node import nd
 import re
@@ -153,7 +154,7 @@ class Lexer():
                 len(rests) == len(newrests),
                 all([rests[i] == newrests[i] for i in range(len(rests))])
             ]):
-                raise Exception(lineno, line, rests)
+                raise ThothglyphError(lineno, line, rests)
             tokens.extend(linetokens)
         return tokens
 
@@ -172,7 +173,14 @@ class TglyphParser(Parser):
 
     def parse(self, data: str) -> Optional[nd.DocumentNode]:
         ppdata = self.preprocess(data)
-        self.tokens = self.lexer.lex_block(ppdata)
+        try:
+            self.tokens = self.lexer.lex_block(ppdata)
+        except ThothglyphError as e:
+            lineno, line, rests = e.args
+            lineno += 1
+            msg = 'Unknown token.'
+            msg = f'{self.reader.path}:{lineno}: {msg}'
+            raise ThothglyphError(msg)
         tokens = list() + self.tokens
         tokens = self.p_document(tokens)
         return self.rootnode
@@ -182,7 +190,14 @@ class TglyphParser(Parser):
 
     def preprocess(self, data: str) -> str:
         self._init_config()
-        tokens = self.lexer.lex_preproc(data)
+        try:
+            tokens = self.lexer.lex_preproc(data)
+        except ThothglyphError as e:
+            lineno, line, rests = e.args
+            lineno += 1
+            msg = 'Unknown token.'
+            msg = f'{self.reader.path}:{lineno}: {msg}'
+            raise ThothglyphError(msg)
         self.pplines = list()
         while tokens:
             if tokens[0].key == 'CONFIG_LINE':
@@ -226,7 +241,10 @@ class TglyphParser(Parser):
             self._line_preprocessed()
             subtokens.append(tokens.pop(0))
         else:
-            raise Exception(begintoken)
+            lineno = begintoken.line + 1
+            msg = 'Config block is not closed.'
+            msg = f'{self.reader.path}:{lineno}: {msg}'
+            raise ThothglyphError(msg)
         self._line_preprocessed()
         tokens.pop(0)
         m = re.match(Lexer.inline_tokens['ROLE'], subtokens[0].value) if subtokens else None
@@ -265,7 +283,10 @@ class TglyphParser(Parser):
             cond = eval(sentence, {}, self.rootnode.config.attrs)
             tokens = self.p_if_else(tokens, cond)
         else:
-            raise Exception('Illegal text token: {}'.format(tokens[0]))
+            lineno = tokens[0].line + 1
+            msg = 'Illegal text token.'
+            msg = f'{self.reader.path}:{lineno}: {msg}'
+            raise ThothglyphError(msg)
         return tokens
 
     def p_if_else(self, tokens: List[Lexer.Token], cond: bool) -> List[Lexer.Token]:
@@ -299,11 +320,13 @@ class TglyphParser(Parser):
         idx = len(self.nodes) - 1
         types = (nd.DocumentNode, nd.SectionNode)
         while idx >= 0:
-            if any([isinstance(self.nodes[idx], tp) for tp in types]):
+            if isinstance(self.nodes[idx], types):
                 break
             idx -= 1
         else:
-            raise Exception('Nothing document or sections.')
+            msg = 'Nothing document or sections.'
+            msg = f'{self.reader.path}: {msg}'
+            raise ThothglyphError(msg)
         return self.nodes[idx]
 
     def p_blocks(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
@@ -368,7 +391,7 @@ class TglyphParser(Parser):
     def p_section(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         # terminate
         accepted = (nd.DocumentNode, nd.SectionNode)
-        if not any([isinstance(self.nodes[-1], n) for n in accepted]):
+        if not isinstance(self.nodes[-1], accepted):
             tokens.insert(0, Lexer.Token(-1, -1, -1, 'BLOCKS_TERMINATOR', ''))
             return tokens
         if tokens[0].key == 'SECTION_TITLE_LINE':
@@ -384,6 +407,13 @@ class TglyphParser(Parser):
             tokens.insert(0, Lexer.Token(-1, -1, -1, 'SECTION_TERMINATOR', ''))
             return tokens
 
+        if level > self._lastsection.level + 1:
+            token = tokens[0]
+            msg = 'Section level {} appears suddenly.'.format(level)
+            msg += ' Section level must not be skipped.'
+            lineno = token.line + 1
+            msg = f'{self.reader.path}:{lineno}: {msg}'
+            raise ThothglyphError(msg)
         # body
         if tokens[0].key == 'SECTION_TITLE_LINE':
             assert m
@@ -417,7 +447,7 @@ class TglyphParser(Parser):
     def p_monolistitem(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         # terminate
         accepted = (nd.DocumentNode, nd.SectionNode)
-        if not any([isinstance(self.nodes[-1], n) for n in accepted]):
+        if not isinstance(self.nodes[-1], accepted):
             tokens.insert(0, Lexer.Token(-1, -1, -1, 'BLOCKS_TERMINATOR', ''))
             return tokens
         # body
@@ -425,7 +455,7 @@ class TglyphParser(Parser):
         assert m
         clstable = {'^': nd.FootnoteListBlockNode, '#': nd.ReferenceListBlockNode}
         children = self.nodes[-1].children
-        if children and any([isinstance(children[-1], c) for c in clstable.values()]):
+        if children and isinstance(children[-1], tuple(clstable.values())):
             monolist = self.nodes[-1].children[-1]
         else:
             monolist = clstable[m.group(1)]()
@@ -464,7 +494,10 @@ class TglyphParser(Parser):
             listblock.level = len(m.group(1))
             listblock.indent = len(m.group(0))
             return listblock
-        raise Exception("Not list symbol")
+        lineno = token.line + 1
+        msg = 'Not list symbol'
+        msg = f'{self.reader.path}:{lineno}: {msg}'
+        raise ThothglyphError(msg)
 
     def p_listitem(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         # terminate
@@ -542,7 +575,10 @@ class TglyphParser(Parser):
                 subtokens.append(tokens[0])
             prev = tokens.pop(0)
         else:
-            raise Exception(begintoken)
+            lineno = begintoken.line + 1
+            msg = 'Quote block is not closed.'
+            msg = f'{self.reader.path}:{lineno}: {msg}'
+            raise ThothglyphError(msg)
         subtokens.append(Lexer.Token(-1, -1, -1, 'BLOCKS_TERMINATOR', ''))
         self.nodes.append(quote)
         self.p_blocks(subtokens)
@@ -573,7 +609,10 @@ class TglyphParser(Parser):
                 break
             subtokens.append(tokens.pop(0))
         else:
-            raise Exception(begintoken)
+            lineno = begintoken.line + 1
+            msg = 'Code block is not closed.'
+            msg = f'{self.reader.path}:{lineno}: {msg}'
+            raise ThothglyphError(msg)
         tokens.pop(0)
         m = re.match(Lexer.inline_tokens['ROLE'], subtokens[0].value) if subtokens else None
         if m and m.group(1) == 'include':
@@ -595,7 +634,8 @@ class TglyphParser(Parser):
                     numspace = re.match(r' *', token.value).end()
                     if numspace < indent and not warned:
                         msg = 'code indentation is to the left of the block indentation.'
-                        msg = f'{self.reader.path}:{token.line}: {msg}'
+                        lineno = token.line + 1
+                        msg = f'{self.reader.path}:{lineno}: {msg}'
                         logger.warn(msg)
                         warned = True
                     text += token.value[indent:]
@@ -625,7 +665,10 @@ class TglyphParser(Parser):
                 break
             subtokens.append(tokens.pop(0))
         else:
-            raise Exception(begintoken)
+            lineno = begintoken.line + 1
+            msg = 'Custom block is not closed.'
+            msg = f'{self.reader.path}:{lineno}: {msg}'
+            raise ThothglyphError(msg)
         tokens.pop(0)
         m = re.match(Lexer.inline_tokens['ROLE'], subtokens[0].value) if subtokens else None
         if m and m.group(1) == 'include':
@@ -646,8 +689,9 @@ class TglyphParser(Parser):
                         text += '\n'
                     numspace = re.match(r' *', token.value).end()
                     if numspace < indent and not warned:
-                        msg = 'Code indentation is to the left of the block indentation.'
-                        logger.warn(msg + ' line:{}'.format(token.line))
+                        msg = 'code indentation is to the left of the block indentation.'
+                        lineno = token.line + 1
+                        msg = f'{self.reader.path}:{lineno}: {msg}'
                         warned = True
                     text += token.value[indent:]
                 else:
@@ -929,7 +973,7 @@ class TglyphParser(Parser):
         pathlist.insert(0, parser.reader.path)
         if path in pathlist:
             # msg = 'Detect recursive include'
-            # raise Exception("{}: {}, {}".format(msg, path, pathlist))
+            # raise ThothglyphError("{}: {}, {}".format(msg, path, pathlist))
             return False
         return True
 
@@ -1017,7 +1061,10 @@ class TglyphParser(Parser):
             elif tokens[0].key == 'ATTR':
                 tokens = self.p_text(tokens)
             else:
-                raise Exception('Illegal text token: {}'.format(tokens[0]))
+                lineno = tokens[0].line + 1
+                msg = 'Illegal text token.'
+                msg = f'{self.reader.path}:{lineno}: {msg}'
+                raise ThothglyphError(msg)
         return tokens
 
     def p_deco(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
@@ -1034,7 +1081,10 @@ class TglyphParser(Parser):
             subtokens.append(tokens[0])
             tokens.pop(0)
         else:
-            raise Exception(begintoken)
+            lineno = begintoken.line + 1
+            msg = f'Inline {deco.role} is not closed.'
+            msg = f'{self.reader.path}:{lineno}: {msg}'
+            raise ThothglyphError(msg)
         tokens.pop(0)
         self.p_decotext(subtokens)
         self.nodes.pop()

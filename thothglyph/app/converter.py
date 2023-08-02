@@ -1,16 +1,17 @@
 import sys
 import os
 import argparse
+from thothglyph.error import ThothglyphError
 from thothglyph.reader import Reader
 from thothglyph.writer import Writer
 from thothglyph.node.nd import nodeprint
 from thothglyph import __version__
 
-import logging
+from thothglyph.node import logging
 
 NAMESPACE = 'thothglyph'
 
-logger = logging.getLogger(NAMESPACE)
+logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
@@ -57,14 +58,21 @@ def main():
         output_absfpath = os.path.abspath(args.output)
 
     os.chdir(input_dirname)
-    reader = Reader(input_type)
-    node = reader.read(input_fname)
-    nodeprint(node)
+    try:
+        reader = Reader(input_type)
+        node = reader.read(input_fname)
+        nodeprint(node)
 
-    writer = Writer(output_type)
-    odir, ofbname, ofext = writer.make_output_fpath(input_absfpath, output_absfpath, node)
-    output_fpath = os.path.join(odir, '{}.{}'.format(ofbname, ofext))
-    writer.write(output_fpath, node)
+        writer = Writer(output_type)
+        odir, ofbname, ofext = writer.make_output_fpath(input_absfpath, output_absfpath, node)
+        output_fpath = os.path.join(odir, '{}.{}'.format(ofbname, ofext))
+        writer.write(output_fpath, node)
+    except Exception as e:
+        if isinstance(e, ThothglyphError):
+            logger.error(e)
+        else:
+            logger.exception(e)
+        sys.exit(1)
 
 
 if __name__ == '__main__':

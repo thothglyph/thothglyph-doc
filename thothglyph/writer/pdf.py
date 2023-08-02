@@ -5,6 +5,7 @@ import os
 import subprocess
 import tempfile
 import cairosvg
+from thothglyph.error import ThothglyphError
 from thothglyph.writer.latex import LatexWriter
 from thothglyph.node import nd
 from thothglyph.node import logging
@@ -50,7 +51,8 @@ class PdfWriter(LatexWriter):
                         latex_cmds, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
                     )
                     if p.returncode != 0:
-                        raise Exception(p.returncode)
+                        msg = 'lualatex command exit with code {}.'.format(p.returncode)
+                        raise ThothglyphError(msg)
                 mv_cmd = ['mv', '-f', '{}/{}.pdf'.format(tmpdirname, fbname), dirname]
                 subprocess.run(mv_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             except Exception as e:

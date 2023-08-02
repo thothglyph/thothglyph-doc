@@ -6,6 +6,7 @@ import os
 import re
 import tempfile
 from PIL import Image
+from thothglyph.error import ThothglyphError
 from thothglyph.writer.writer import Writer
 from thothglyph.node import nd
 from thothglyph.node import logging
@@ -56,7 +57,7 @@ class LatexWriter(Writer):
         theme = self.theme()
         template_path = os.path.join(template_dir, target, theme, 'document-ja.tex')
         if not os.path.exists(template_path):
-            raise Exception('template not found: {}'.format(template_path))
+            raise ThothglyphError('template not found: {}'.format(template_path))
         with open(template_path, 'r', encoding=self.encoding) as f:
             template = f.read()
         t = template.replace('{', '{{').replace('}', '}}')
