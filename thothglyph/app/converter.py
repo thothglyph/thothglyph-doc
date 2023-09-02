@@ -2,8 +2,8 @@ import sys
 import os
 import argparse
 from thothglyph.error import ThothglyphError
-from thothglyph.reader import Reader
-from thothglyph.writer import Writer
+from thothglyph.reader import ReaderClass
+from thothglyph.writer import WriterClass
 from thothglyph.node.nd import nodeprint
 from thothglyph import __version__
 
@@ -30,6 +30,9 @@ def main():
         '--output', '-o', metavar='FILE', default=None,
         help='output file')
     argparser.add_argument(
+        '--from', '-f', metavar='TYPE', default=None,
+        help='input file type')
+    argparser.add_argument(
         'input',
         help='input file')
     args = argparser.parse_args()
@@ -40,6 +43,11 @@ def main():
     input_type = default_from
     input_dirname, input_fname = os.path.split(os.path.abspath(args.input))
     input_name, input_ext = os.path.splitext(input_fname)
+    input_ext = input_ext[1:]
+    if args.__dict__['from']:
+        input_type = args.__dict__['from']
+    else:
+        input_type = input_ext
 
     if args.to:
         output_type = args.to
@@ -59,11 +67,11 @@ def main():
 
     os.chdir(input_dirname)
     try:
-        reader = Reader(input_type)
+        reader = ReaderClass(input_type)()
         node = reader.read(input_fname)
         nodeprint(node)
 
-        writer = Writer(output_type)
+        writer = WriterClass(output_type)()
         odir, ofbname, ofext = writer.make_output_fpath(input_absfpath, output_absfpath, node)
         output_fpath = os.path.join(odir, '{}.{}'.format(ofbname, ofext))
         writer.write(output_fpath, node)

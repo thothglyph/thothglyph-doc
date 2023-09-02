@@ -13,9 +13,10 @@ packages = [
 thothglyph = "thothglyph.app.converter:main"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 pillow = "^9.2.0"
 cairosvg = "^2.5.2"
+markdown-it-py = {extras = ["plugins"], version = "^3.0.0"}
 
 
 [tool.poetry.group.dev.dependencies]

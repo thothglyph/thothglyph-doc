@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Dict, List, Optional, Tuple
 from thothglyph.error import ThothglyphError
+from thothglyph.reader import ReaderClass
 from thothglyph.reader.reader import Reader, Parser
 from thothglyph.node import nd
 import re
@@ -163,7 +164,6 @@ class Lexer():
 class TglyphParser(Parser):
     def __init__(self, reader: Reader):
         super().__init__(reader)
-        self.config: Optional[nd.ConfigNode] = None
         self.pplines: List[str] = list()
         self.rootnode: Optional[nd.DocumentNode] = None
         self.nodes: List[nd.ASTNode] = list()
@@ -218,7 +218,6 @@ class TglyphParser(Parser):
     def _init_config(self) -> None:
         config = nd.ConfigNode()
         if self.reader.parent:
-            assert isinstance(self.reader.parent.parser, TglyphParser)
             pconfig = self.reader.parent.parser.rootnode.config
             pattrs = dict(pconfig.__dict__)
             for key in ('parent', 'children', 'id'):
@@ -755,6 +754,16 @@ class TglyphParser(Parser):
         self.nodes.pop()
         return tokens
 
+    def _extract_tablecell_merge_hmarker(self, text: str):
+        if text.startswith('⏴'):
+            return '⏴'
+        return ''
+
+    def _extract_tablecell_merge_vmarker(self, text: str):
+        if text.startswith('⏶'):
+            return '⏶'
+        return ''
+
     def p_basictableblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         table = nd.TableBlockNode()
         self.nodes[-1].add(table)
@@ -789,12 +798,12 @@ class TglyphParser(Parser):
         if header_splitter < 0:
             header_splitter = 0
         # table.type = opts.get('type', 'normal')
-        if len(aligns) == 0:
-            aligns = ['c' for i in range(len(tabletexts[0]))]
-        table.aligns = aligns
         table.row = len(tabletexts)
         table.col = len(tabletexts[0])
         table.headers = header_splitter
+        if len(aligns) == 0:
+            aligns = ['c' for i in range(table.col)]
+        table.aligns = aligns
         for r, rowtexts in enumerate(tabletexts):
             row = nd.TableRowNode()
             row.idx = r
@@ -863,11 +872,11 @@ class TglyphParser(Parser):
             len(item.children[0].children) == len(rowitems[0].children[0].children)
             for item in rowitems
         ]):
-            print(
-                isinstance(header_rowlist, nd.BulletListBlockNode),
-                isinstance(data_rowlist, nd.BulletListBlockNode),
-                len(rowitems) <= 2, len(rowitems),
-            )
+            # print(
+            #     isinstance(header_rowlist, nd.BulletListBlockNode),
+            #     isinstance(data_rowlist, nd.BulletListBlockNode),
+            #     len(rowitems) <= 2, len(rowitems),
+            # )
             lineno = begintoken.line + 1
             msg = 'ListTable data must be two-dimensional BulletList.'
             msg = f'{self.reader.path}:{lineno}: {msg}'
@@ -907,25 +916,6 @@ class TglyphParser(Parser):
                 text = self._tablecell_merge(table, cell, r, c, text)
                 cell.children[0].children[0].text = text
         return tokens
-
-    def _tablecell_merge(
-        self, table: nd.TableBlockNode, cell: nd.TableCellNode, r: int, c: int, text: str
-    ) -> str:
-        if text.startswith('⏴'):
-            text = text[1:]
-            to = table.cell(r, c - 1)
-            to = to.mergeto if to.mergeto else to
-            if to.parent.idx == cell.parent.idx:
-                to.size.x += 1
-            cell.mergeto = to
-        elif text.startswith('⏶'):
-            text = text[1:]
-            to = table.cell(r - 1, c)
-            to = to.mergeto if to.mergeto else to
-            to.size.y += 1
-            if to.idx == cell.idx:
-                cell.mergeto = to
-        return text
 
     def p_paragraph(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         paragraph = nd.ParagraphNode()
@@ -1015,26 +1005,13 @@ class TglyphParser(Parser):
             block.add(text)
         return tokens
 
-    def _check_recursive_include(self, path: str) -> bool:
-        if not os.path.exists(path):
-            return False
-        pathlist: List[str] = list()
-        parser: Parser = self
-        while parser.reader.parent:
-            pathlist.insert(0, parser.reader.path)
-            parser = parser.reader.parent.parser
-        pathlist.insert(0, parser.reader.path)
-        if path in pathlist:
-            # msg = 'Detect recursive include'
-            # raise ThothglyphError("{}: {}, {}".format(msg, path, pathlist))
-            return False
-        return True
-
     def p_include(self, tokens: List[Lexer.Token], role: nd.RoleNode) -> List[Lexer.Token]:
         tokens.pop(0)
         path = role.value
         if self._check_recursive_include(path):
-            reader: Reader = TglyphReader(parent=self.reader)
+            _, ext = os.path.splitext(path)
+            reader: Reader = ReaderClass(ext[1:])(parent=self.reader)
+            # reader: Reader = TglyphReader(parent=self.reader)
             subdoc = reader.read(path)
             lastsection = self._lastsection
             for node, gofoward in subdoc.walk_depth():
@@ -1181,6 +1158,9 @@ class TglyphParser(Parser):
 
 
 class TglyphReader(Reader):
+    target = 'tglyph'
+    ext = 'pdf'
+
     def __init__(self, parent: Optional[Reader] = None):
         super().__init__(parent=parent)
         self.parser: TglyphParser = TglyphParser(self)
