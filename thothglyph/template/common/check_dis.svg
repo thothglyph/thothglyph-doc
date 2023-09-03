@@ -7,5 +7,4 @@
     </linearGradient>
   </defs>
   <rect style="stroke: rgb(0, 0, 0); stroke-width: 0.5px; fill: url(#gradient-0);" x="1" y="1" width="14" height="14" rx="2" ry="2"/>
-  <path style="stroke: rgb(0, 0, 0); fill: none; stroke-width: 1.5px;" d="M 3.906 8.651 L 6.845 11.413 L 12.192 4.185"/>
 </svg>

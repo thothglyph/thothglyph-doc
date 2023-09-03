@@ -6,7 +6,7 @@ A Documentation converter and language for Engineers
 
 ## Requirements
 
-* python >= 3.7
+* python >= 3.8
 * pillow
 * cairosvg
 
@@ -45,9 +45,9 @@ pip install wavedrom
 thothglyph -t html document.tglyph
 ```
 
-## Thothglyph Language
+## Languages
 
-See [quick-reference.ja.md](doc/language/quick-reference.ja.md)
+See [documents](https://thothglyph-doc.readthedocs.io/en/latest/index.html)
 
 ## Tools
 

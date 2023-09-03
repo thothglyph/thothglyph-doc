@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Optional, List
 import os
 import re
+from thothglyph.error import ThothglyphError
 from thothglyph.node import nd
 from thothglyph.node import logging
 
@@ -93,7 +94,7 @@ class Writer():
                     method = getattr(self, methodname)
                     method(n)
                 except Exception as e:
-                    logger.error(e)
+                    logger.error('{}: {}'.format(methodname, e))
             if self.__continue and not prev_continue:
                 continue_node = n
             prev_continue = self.__continue
@@ -102,10 +103,14 @@ class Writer():
         self.__continue = True
 
     def visit_other(self, node) -> None:
-        raise Exception()
+        nodename = re.sub(r'Node$', r'', node.__class__.__name__).lower()
+        msg = 'Not implemented: vist_{}().'.format(nodename)
+        raise ThothglyphError(msg)
 
     def leave_other(self, node) -> None:
-        raise Exception()
+        nodename = re.sub(r'Node$', r'', node.__class__.__name__).lower()
+        msg = 'Not implemented: leave_{}().'.format(nodename)
+        raise ThothglyphError(msg)
 
     def make_output_fpath(
         self, infpath: str, outfpath: Optional[str], node: nd.ASTNode

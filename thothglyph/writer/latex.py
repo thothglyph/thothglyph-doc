@@ -6,6 +6,7 @@ import os
 import re
 import tempfile
 from PIL import Image
+from thothglyph.error import ThothglyphError
 from thothglyph.writer.writer import Writer
 from thothglyph.node import nd
 from thothglyph.node import logging
@@ -56,7 +57,7 @@ class LatexWriter(Writer):
         theme = self.theme()
         template_path = os.path.join(template_dir, target, theme, 'document-ja.tex')
         if not os.path.exists(template_path):
-            raise Exception('template not found: {}'.format(template_path))
+            raise ThothglyphError('template not found: {}'.format(template_path))
         with open(template_path, 'r', encoding=self.encoding) as f:
             template = f.read()
         t = template.replace('{', '{{').replace('}', '}}')
@@ -85,12 +86,15 @@ class LatexWriter(Writer):
         doctype = 'report'
         level = min(node.level - 1, len(self.sectlevel_cmds[doctype]) - 1) + level_offset
         cmd = self.sectlevel_cmds[doctype][level]
-        if node.opts['nonum']:
-            cmd += '*'
-        if not node.opts['nonum'] and node.level == 1 and self.contentphase == 'before':
+        asterisk = ''
+        if node.opts.get('notoc') or node.opts.get('nonum'):
+            asterisk = '*'
+        if not node.opts.get('notoc') and node.level == 1 and self.contentphase == 'before':
             self.data += '\\pagenumbering{arabic}\\pagestyle{fancy}\n'
             self.contentphase = 'main'
-        self.data += '\\{}{{{}}}'.format(cmd, title)
+        self.data += '\\{}{}{{{}}}'.format(cmd, asterisk, title)
+        if not node.opts.get('notoc') and node.opts.get('nonum'):
+            self.data += '\\addcontentsline{{toc}}{{{}}}{{{}}}'.format(cmd, title)
         self.data += '\\label{{{}}}\n'.format(_id)
 
     def leave_section(self, node: nd.ASTNode) -> None:

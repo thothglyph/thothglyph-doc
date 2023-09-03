@@ -2,11 +2,15 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 from thothglyph.node import nd
 from thothglyph.node import logging
+import os
 
 logger = logging.getLogger(__file__)
 
 
 class Reader():
+    target: str = 'unknown'
+    ext: str = 'unknown'
+
     def __init__(self, parent: Optional[Reader] = None):
         self.encoding: str = 'utf-8'
         self.parent: Optional[Reader] = parent
@@ -33,13 +37,27 @@ class Reader():
         for n, gofoward in rootnode.walk_depth():
             if gofoward:
                 if isinstance(n, nd.SectionNode):
-                    if not n.opts.get('nonum'):
+                    if not n.opts.get('notoc') and not n.opts.get('nonum'):
                         nums[level] += 1
                         n._sectindex = [i - 1 for i in nums[:level + 1]]
                     level += 1
             else:
                 if isinstance(n, nd.SectionNode):
-                    if not n.opts.get('nonum'):
+                    if not n.opts.get('notoc') and not n.opts.get('nonum'):
+                        nums[level] = 0
+                    level -= 1
+        nums = [0 for i in range(10)]
+        level = 0
+        for n, gofoward in rootnode.walk_depth():
+            if gofoward:
+                if isinstance(n, nd.SectionNode):
+                    if not n.opts.get('notoc') and n.opts.get('nonum'):
+                        nums[level] += 1
+                        n._sectindex = [-i - 1 for i in nums[:level + 1]]
+                    level += 1
+            else:
+                if isinstance(n, nd.SectionNode):
+                    if not n.opts.get('notoc') and n.opts.get('nonum'):
                         nums[level] = 0
                     level -= 1
 
@@ -121,3 +139,45 @@ class Parser():
 
     def parse(self, data: str) -> nd.ASTNode:
         return nd.ASTNode()
+
+    def _check_recursive_include(self, path: str) -> bool:
+        if not os.path.exists(path):
+            return False
+        pathlist: List[str] = list()
+        parser: Parser = self
+        while parser.reader.parent:
+            pathlist.insert(0, parser.reader.path)
+            parser = parser.reader.parent.parser
+        pathlist.insert(0, parser.reader.path)
+        if path in pathlist:
+            # msg = 'Detect recursive include'
+            # raise ThothglyphError("{}: {}, {}".format(msg, path, pathlist))
+            return False
+        return True
+
+    def _extract_tablecell_merge_hmarker(self, text: str):
+        return ''
+
+    def _extract_tablecell_merge_vmarker(self, text: str):
+        return ''
+
+    def _tablecell_merge(
+        self, table: nd.TableBlockNode, cell: nd.TableCellNode, r: int, c: int, text: str
+    ) -> str:
+        hmarker = self._extract_tablecell_merge_hmarker(text)
+        vmarker = self._extract_tablecell_merge_vmarker(text)
+        if len(hmarker) > 0:
+            text = text[len(hmarker):]
+            to = table.cell(r, c - 1)
+            to = to.mergeto if to.mergeto else to
+            if to.parent.idx == cell.parent.idx:
+                to.size.x += 1
+            cell.mergeto = to
+        elif len(vmarker) > 0:
+            text = text[len(vmarker):]
+            to = table.cell(r - 1, c)
+            to = to.mergeto if to.mergeto else to
+            to.size.y += 1
+            if to.idx == cell.idx:
+                cell.mergeto = to
+        return text

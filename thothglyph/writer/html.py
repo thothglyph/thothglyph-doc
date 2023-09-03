@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import tempfile
+from thothglyph.error import ThothglyphError
 from thothglyph.writer.writer import Writer
 from thothglyph.node import nd
 from thothglyph.node import logging
@@ -40,7 +41,7 @@ class HtmlWriter(Writer):
         theme = self.theme()
         template_path = os.path.join(template_dir, target, theme, 'index.html')
         if not os.path.exists(template_path):
-            raise Exception('template not found: {}'.format(template_path))
+            raise ThothglyphError('template not found: {}'.format(template_path))
         with open(template_path, 'r', encoding=self.encoding) as f:
             template = f.read()
         t = template.replace('{', '{{').replace('}', '}}')
@@ -101,9 +102,13 @@ class HtmlWriter(Writer):
             title = node.title
         else:
             title = '{}. {}'.format(node.sectnum, node.title)
+        if node.opts.get('notoc'):
+            toc = 'class="notoc"'
+        else:
+            toc = ''
         if node.level < 7:
-            tag = '<h{0} id="{2}">{1}</h{0}>\n'
-            self.data += tag.format(node.level, title, _id)
+            tag = '<h{0} {3} id="{2}">{1}</h{0}>\n'
+            self.data += tag.format(node.level, title, _id, toc)
         else:
             tag = '<div class="section h{0}" id="{2}">{1}</div>\n'
             self.data += tag.format(node.level, title, _id)
@@ -115,15 +120,19 @@ class HtmlWriter(Writer):
         self.data += '<div>\n'
         maxlevel = int(node.opts.get('level', '100'))
         for n, gofoward in node.walk_sections():
-            if n.opts.get('nonum'):
+            if n.opts.get('notoc'):
                 continue
             if gofoward and n.level <= maxlevel:
-                if n.sectindex()[-1] == 0:
+                bros = [s for s in n.parent.children if isinstance(n, nd.SectionNode)]
+                if bros.index(n) == 0:
                     self.data += '<ul>\n'
-                title = '{}. {}'.format(n.sectnum, n.title)
+                if n.opts.get('nonum'):
+                    title = '{}'.format(n.title)
+                else:
+                    title = '{}. {}'.format(n.sectnum, n.title)
                 _id = n.id or n.title.replace(' ', '_')
                 self.data += '<li><a href="#{}">{}</a></li>\n'.format(_id, title)
-                if n.sectindex()[-1] == len(n.parent.children) - 1:
+                if bros.index(n) == len(bros) - 1:
                     self.data += '</ul>\n'
         self.data += '</div>\n'
 

@@ -1,0 +1,2 @@
+class ThothglyphError(Exception):
+    pass

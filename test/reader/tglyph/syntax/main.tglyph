@@ -283,6 +283,8 @@ new paragraph text text new 1.
 
 ▮▮ LiteralBlock
 
+Unsupported
+
 ▮▮ AdmonitionBlock
 
 !NOTE! This is a note.
@@ -393,6 +395,12 @@ Image in paragraph like ¤image⸨./tglyph.svg⸩.
 ¤include⸨./sub1.tglyph⸩
 
 ==End of include 2nd==
+
+==Start of include 3rd : other type document ==
+
+¤include⸨./sub2.md⸩
+
+==End of include 3rd ==
 
 ▮▮ Keyboard / Button / Menu
 
@@ -721,3 +729,11 @@ The important text. [^A] And the important text too. [^B]
      ••• abcdefg 5
      ••• abcdefg
 ===|
+
+▮+ NoNum Section
+
+No number, but list in toc.
+
+▮ After NoNum
+
+Noting.

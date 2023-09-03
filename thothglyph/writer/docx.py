@@ -10,6 +10,7 @@ from docx.enum.text import WD_BREAK
 from docx.text.paragraph import Paragraph
 # from docx.enum.text import WD_TAB_ALIGNMENT
 # from docx.enum.text import WD_TAB_LEADER
+from thothglyph.error import ThothglyphError
 from thothglyph.writer.writer import Writer
 from thothglyph.node import nd
 from thothglyph.node import logging
@@ -121,7 +122,7 @@ class DocxWriter(Writer):
         theme = self.theme()
         template_path = os.path.join(template_dir, target, theme, 'style.docx')
         if not os.path.exists(template_path):
-            raise Exception('template not found: {}'.format(template_path))
+            raise ThothglyphError('template not found: {}'.format(template_path))
         # t = template.replace('{', '{{').replace('}', '}}')
         # t = re.sub(r'\$\{\{([^}]+)\}\}', r'{\1}', t)
         # self.data = t.format(doc=self.template_docdata)

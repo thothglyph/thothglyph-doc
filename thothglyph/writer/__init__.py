@@ -9,9 +9,9 @@ writerclass = {
 }
 
 
-def Writer(target: str):
+def WriterClass(target: str):
     modname = target
     clsname = writerclass[target]
     modpath = 'thothglyph.writer.{}'.format(modname)
     module = importlib.import_module(modpath)
-    return getattr(module, clsname)()
+    return getattr(module, clsname)
