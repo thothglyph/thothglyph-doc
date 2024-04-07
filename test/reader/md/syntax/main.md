@@ -395,6 +395,12 @@ The ⫶var⫶ and `code` text.
 
 Image in paragraph like ![](./tglyph_64.png).
 
+Image in paragraph like ![Alt Text](./tglyph_64.png){w=150px}.
+
+Image in paragraph like ![Alt Text](./tglyph_64.png){w="20%"}.
+
+Image in paragraph like ![](./tglyph.svg){w=150px}.
+
 ## Include
 
 ==Start of include 1st==
