@@ -45,12 +45,12 @@ class Lexer():
         'TABLE_LINE': r'^ *\|.+\| *$',
         'LISTTABLE_BEGIN_LINE': r'^ *\|=== *(?:⟦([^⟧]*)⟧)? *$',
         'LISTTABLE_END_LINE': r'^ *===\| *$',
-        'FOOTNOTE_LIST_SYMBOL': r' *•\[\^(.+)\] +',
-        'REFERENCE_LIST_SYMBOL': r' *•\[\#(.+)\] +',
-        'CHECK_LIST_SYMBOL': r' *(•+)(\[[ x-]\]) +',
-        'BULLET_LIST_SYMBOL': r' *(•+) +',
-        'ORDERED_LIST_SYMBOL': r' *(꓾+) +',
-        'DESC_LIST_SYMBOL': r' *(ᛝ+)([^ᛝ]+)ᛝ(?: +)?',
+        'FOOTNOTE_LIST_SYMBOL': r' *•\[\^(.+)\](?: +|$)',
+        'REFERENCE_LIST_SYMBOL': r' *•\[\#(.+)\](?: +|$)',
+        'CHECK_LIST_SYMBOL': r' *(•+)(\[[ x-]\])(?: +|$)',
+        'BULLET_LIST_SYMBOL': r' *(•+)(?: +|$)',
+        'ORDERED_LIST_SYMBOL': r' *(꓾+)(?: +|$)',
+        'DESC_LIST_SYMBOL': r' *(ᛝ+)([^ᛝ]+)ᛝ(?: +|$)',
         'LIST_TERMINATOR_SYMBOL': r' *(◃+) *$',
         'CUSTOM_LINE': r'( *)¤¤¤(.*)',
         'CODE_LINE': r'( *)⸌⸌⸌(.*)',
@@ -513,7 +513,7 @@ class TglyphParser(Parser):
         }
         if token.key in table:
             listblock = table[token.key]()
-            m = re.match(r' *([•꓾ᛝ]+)([^ ]*)( +)', token.value)
+            m = re.match(r' *([•꓾ᛝ]+)([^ ]*)( +|$)', token.value)
             assert m
             listblock.level = len(m.group(1))
             listblock.indent = len(m.group(0))
