@@ -51,5 +51,5 @@ See [documents](https://thothglyph-doc.readthedocs.io/en/latest/index.html)
 
 ## Tools
 
-* [vim-thothglyph](https://github.com/nakandev/vim-thothglyph)
-* [vscode-thothglyph](https://github.com/nakandev/vscode-thothglyph)
+* [vim-thothglyph](https://github.com/thothglyph/vim-thothglyph)
+* [vscode-thothglyph](https://github.com/thothglyph/vscode-thothglyph)
