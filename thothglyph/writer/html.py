@@ -67,6 +67,8 @@ class HtmlWriter(Writer):
 
     def _copy_template(self, fpath: str) -> None:
         commondir = os.path.join(self.template_dir(), 'common')
+        if not os.path.exists(commondir):
+            commondir = os.path.join(self.pkg_template_dir(), 'common')
         newcommondir = os.path.join(self.tmpdirname, 'template', 'common')
         shutil.copytree(commondir, newcommondir, dirs_exist_ok=True)
 
@@ -432,6 +434,12 @@ class HtmlWriter(Writer):
         self.data += '[<a href="{}">{}</a>]'.format(url, text)
 
     def leave_reference(self, node: nd.ASTNode) -> None:
+        pass
+
+    def visit_linebreak(self, node: nd.ASTNode) -> None:
+        self.data += '<br />'
+
+    def leave_linebreak(self, node: nd.ASTNode) -> None:
         pass
 
     def visit_text(self, node: nd.ASTNode) -> None:

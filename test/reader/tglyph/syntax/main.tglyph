@@ -43,10 +43,16 @@ Section Lv.1?2? invalid
 ▮▮ Paragraph
 
 Paragraph text text text.
-New line but ignoreed breakline code.
+New line but ignoreed linebreak code.
 
 Next paragraph text text text.
 paragraph separated by empty line.
+
+Third paragraph with paragraph terminater.⊹
+New line as fourth paragraph.
+
+Paragraph with linebreak symbol.↲
+New line.
 
 ▮▮ BulletList ⟦blist⟧
 • List item 1
@@ -154,6 +160,19 @@ new paragraph text text new 1.
 ꓾꓾ List item 1-2
 •••[x] List item 1-2-1
 •••[ ] List item 1-2-2
+• List item 2
+
+▮▮ Scoped Block
+
+• ⦃List item 1
+  • List item 1-1
+  • ⦃List item 1-2
+    ꓾ List item 1-2-1
+    ꓾ List item 1-2-2
+  ⦄
+  ᛝAᛝ ⦃List item 1-3-1⦄⦃new paragraph⦄
+  ᛝBᛝ List item 1-3-2
+⦄
 • List item 2
 
 ▮▮ Table

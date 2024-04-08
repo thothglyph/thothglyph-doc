@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "thothglyph-doc"
-version = "0.2.1"
+version = "0.2.2"
 description = "A Documentation converter and language for Engineers"
 authors = ["nakandev <nakandev.s@gmail.com>"]
 license = "MIT"
