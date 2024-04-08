@@ -448,6 +448,11 @@ class TextNode(InlineNode):
         self.text: str = str() if text is None else text
 
 
+class LinebreakNode(InlineNode):
+    def __init__(self):
+        super().__init__()
+
+
 class RoleNode(InlineNode):
     attrkey = ('role', 'args', 'opts', 'value')
 

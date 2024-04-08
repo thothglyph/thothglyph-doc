@@ -463,6 +463,12 @@ class LatexWriter(Writer):
     def leave_reference(self, node: nd.ASTNode) -> None:
         pass
 
+    def visit_linebreak(self, node: nd.ASTNode) -> None:
+        self.data += '{\\newline}'
+
+    def leave_linebreak(self, node: nd.ASTNode) -> None:
+        pass
+
     def visit_text(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent_block, nd.CodeBlockNode):
             text = node.text

@@ -436,6 +436,12 @@ class HtmlWriter(Writer):
     def leave_reference(self, node: nd.ASTNode) -> None:
         pass
 
+    def visit_linebreak(self, node: nd.ASTNode) -> None:
+        self.data += '<br />'
+
+    def leave_linebreak(self, node: nd.ASTNode) -> None:
+        pass
+
     def visit_text(self, node: nd.ASTNode) -> None:
         self.data += node.text
 

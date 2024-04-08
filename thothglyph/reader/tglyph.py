@@ -56,7 +56,7 @@ class Lexer():
         'CODE_LINE': r'( *)⸌⸌⸌(.*)',
         'QUOTE_SYMBOL': r'^ *> ',
         'HR_LINE': r'^ *(?:(={4,})|(-{4,}))$',
-        'BREAK_LINE': r' *↲',
+        'BREAK_PARAGRAPH': r' *⊹',
         'STR_LINE': r'.+',
         'EMPTY_LINE': r'^$',
     }
@@ -87,6 +87,7 @@ class Lexer():
         'FOOTNOTE': r'\[\^([\w\-.]+)\]',
         'REFERENCE': r'\[\#([\w\-.]+)\]',
         'BRACKET': r'\[[^\]]+\]',
+        'LINEBREAK': r'↲',
     } | inline_deco_tokens
 
     def __init__(self):
@@ -349,7 +350,7 @@ class TglyphParser(Parser):
 
     def p_blocks(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         while tokens:
-            if tokens[0].key == 'BREAK_LINE':
+            if tokens[0].key == 'BREAK_PARAGRAPH':
                 tokens.pop(0)
             elif tokens[0].key == 'BLOCKS_TERMINATOR':
                 tokens.pop(0)
@@ -950,6 +951,8 @@ class TglyphParser(Parser):
                 tokens = self.p_reference(tokens)
             elif tokens[0].key in Lexer.deco_keys:
                 tokens = self.p_deco(tokens)
+            elif tokens[0].key in 'LINEBREAK':
+                tokens = self.p_linebreak(tokens)
             else:
                 tokens = self.p_text(tokens)
         return tokens
@@ -1136,12 +1139,15 @@ class TglyphParser(Parser):
         )
         return newtext
 
+    def p_linebreak(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
+        lb = nd.LinebreakNode()
+        self.nodes[-1].add(lb)
+        tokens.pop(0)
+        return tokens
+
     def p_text(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
-        if len(self.nodes[-1].children) == 0:
-            text = nd.TextNode()
-            self.nodes[-1].add(text)
-            text.text += tokens[0].value
-        elif not isinstance(self.nodes[-1].children[-1], nd.TextNode):
+        last_children = self.nodes[-1].children
+        if len(last_children) == 0 or not isinstance(last_children, nd.TextNode):
             text = nd.TextNode()
             self.nodes[-1].add(text)
             text.text += tokens[0].value
