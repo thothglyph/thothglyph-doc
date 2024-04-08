@@ -67,6 +67,8 @@ class HtmlWriter(Writer):
 
     def _copy_template(self, fpath: str) -> None:
         commondir = os.path.join(self.template_dir(), 'common')
+        if not os.path.exists(commondir):
+            commondir = os.path.join(self.pkg_template_dir(), 'common')
         newcommondir = os.path.join(self.tmpdirname, 'template', 'common')
         shutil.copytree(commondir, newcommondir, dirs_exist_ok=True)
 

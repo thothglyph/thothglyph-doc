@@ -36,14 +36,18 @@ class Writer():
         self.rootnode: Optional[nd.DocumentNode] = None
         self.__continue: bool = False
 
+    def pkg_template_dir(self) -> str:
+        libdir = os.path.join(os.path.dirname(__file__), '..')
+        template_dir = os.path.join(libdir, 'template')
+        return template_dir
+
     def template_dir(self) -> str:
         assert isinstance(self.rootnode, nd.DocumentNode)
         config = self.rootnode.config
         if hasattr(config, 'templatedir'):
             template_dir = config.templatedir
         else:
-            libdir = os.path.join(os.path.dirname(__file__), '..')
-            template_dir = os.path.join(libdir, 'template')
+            template_dir = self.pkg_template_dir()
         return template_dir
 
     def theme(self, target: Optional[str] = None) -> str:
