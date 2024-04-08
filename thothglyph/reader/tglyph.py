@@ -47,6 +47,9 @@ class Lexer():
         'LISTTABLE_END_LINE': r'^ *===\| *$',
         'FOOTNOTE_LIST_SYMBOL': r' *•\[\^(.+)\](?: +|$)',
         'REFERENCE_LIST_SYMBOL': r' *•\[\#(.+)\](?: +|$)',
+        # 'SCOPE_BEGIN_SYMBOL': r' *([•꓾]?)⦃',
+        'SCOPE_BEGIN_SYMBOL': r' *⦃',
+        'SCOPE_END_SYMBOL': r'⦄',
         'CHECK_LIST_SYMBOL': r' *(•+)(\[[ x-]\])(?: +|$)',
         'BULLET_LIST_SYMBOL': r' *(•+)(?: +|$)',
         'ORDERED_LIST_SYMBOL': r' *(꓾+)(?: +|$)',
@@ -366,6 +369,8 @@ class TglyphParser(Parser):
     def p_block(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         if tokens[0].key == 'SECTION_TITLE_LINE':
             tokens = self.p_section(tokens)
+        elif tokens[0].key == 'SCOPE_BEGIN_SYMBOL':
+            tokens = self.p_scoped_blocks(tokens)
         elif tokens[0].key == 'TOC_LINE':
             tokens = self.p_tocblock(tokens)
         elif tokens[0].key == 'FIGURE_LINE':
@@ -503,6 +508,55 @@ class TglyphParser(Parser):
         self.nodes.append(item)
         self.p_inlinemarkup(texttokens)
         self.nodes.pop()
+        return tokens
+
+    def p_scoped_blocks(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
+        begintoken = tokens[0]
+        tokens.pop(0)
+        nested = 1
+        subtokens = list()
+        while tokens:
+            if tokens[0].key == 'SCOPE_BEGIN_SYMBOL':
+                nested += 1
+            if tokens[0].key == 'SCOPE_END_SYMBOL':
+                nested -= 1
+                if nested == 0:
+                    break
+            subtokens.append(tokens.pop(0))
+        else:
+            lineno = begintoken.line + 1
+            msg = 'Scoped block is not closed.'
+            msg = f'{self.reader.path}:{lineno}: {msg}'
+            raise ThothglyphError(msg)
+        tokens.pop(0)
+
+        dummylistblock = nd.ListBlockNode()
+        self.nodes.append(dummylistblock)
+        while subtokens:
+            if subtokens[0].key == 'BREAK_PARAGRAPH':
+                subtokens.pop(0)
+            elif subtokens[0].key == 'BLOCKS_TERMINATOR':
+                subtokens.pop(0)
+                break
+            elif subtokens[0].key == 'SECTION_TERMINATOR':
+                subtokens.pop(0)
+                break
+            else:
+                subtokens = self.p_block(subtokens)
+            subtokens = self.p_ignore_emptylines(subtokens)
+        self.nodes.pop()
+
+        lastnode = self.nodes[-1]
+        if isinstance(lastnode, nd.ListBlockNode):
+            item = nd.ListItemNode()
+            item.level = len(self.nodes) - self.nodes[-2].parent.level - 1
+            item.indent = 0
+            for child in dummylistblock.children:
+                item.add(child)
+            lastnode.add(item)
+        else:
+            for child in dummylistblock.children:
+                self.nodes[-1].add(child)
         return tokens
 
     def _get_listblock_by_token(self, token: Lexer.Token) -> List[nd.ListBlockNode]:
@@ -1174,7 +1228,14 @@ class TglyphReader(Reader):
     def read(self, path: str, encoding: Optional[str] = None) -> nd.ASTNode:
         try:
             return super().read(path, encoding)
-        except Exception as e:
-            _, errormsg = e.args
-            msg = 'File cannot found: {}'.format(e.filename)
+        except ThothglyphError as e:
+            msg = e.args[-1]
+            raise ThothglyphError(msg)
+        except OSError as e:
+            msg = '{}: {}'.format(e.strerror, e.filename)
+            raise ThothglyphError(msg)
+        except Exception:
+            exc_type, exc_msg, exc_tb = sys.exc_info()
+            tbinfo = 'file {}, line {}'.format(exc_tb.tb_frame.f_code.co_filename, exc_tb.tb_lineno)
+            msg = '{} ({})'.format(exc_msg, tbinfo)
             raise ThothglyphError(msg)
