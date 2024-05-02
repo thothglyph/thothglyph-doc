@@ -175,6 +175,20 @@ new paragraph text text new 1.
 ⦄
 • List item 2
 
+◃
+    ⦃Paragraph 1.⦄⦃Paragraph 2.⦄
+
+    • ⦃List item 1
+      ꓾ ⦃List item 1-1
+        ᛝAᛝ List item 1-1-1
+        ᛝBᛝ List item 1-1-2
+        ⦄
+      ꓾ ⦃List item 1-2
+        •[x] List item 1-2-1
+        •[ ] List item 1-2-2
+        ⦄⦄
+    • List item 2
+
 ▮▮ Table
 
 ▮▮▮ BasicTable
@@ -400,6 +414,8 @@ Image in paragraph like ¤image⟦alt="Alt Text" w="150px"⟧⸨./tglyph_64.png�
 Image in paragraph like ¤image⟦alt="Alt Text" w="20%"⟧⸨./tglyph_64.png⸩.
 
 Image in paragraph like ¤image⟦w="150px"⟧⸨./tglyph.svg⸩.
+
+Image in paragraph like ¤image⟦w="150px"⟧⸨./tglyph.drawio.svg⸩.
 
 ▮▮ Include
 

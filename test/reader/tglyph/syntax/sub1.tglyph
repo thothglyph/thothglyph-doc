@@ -40,6 +40,72 @@ fugafuga
 piyopiyo
 ⑇end
 
+▮▮ if-elif-end: inner flow
+
+⑇if sub1 == 'a'
+  ⑇if sub2 == 'x'
+    ⑇if sub3 == 'm'
+      text a, x, m⊹
+    ⑇else
+      text a, x, !m⊹
+    ⑇end
+  ⑇else
+    ⑇if sub3 == 'm'
+      text a, !x, m⊹
+    ⑇else
+      text a, !x, !m⊹
+    ⑇end
+  ⑇end
+⑇else
+  text !a⊹
+  ⑇if sub2 == 'x'
+    text !a, x⊹
+  ⑇else
+    ⑇if sub3 == 'm'
+      text !a, !x, m⊹
+    ⑇else
+      text !a, !x, !m⊹
+    ⑇end
+  ⑇end
+⑇end
+
+
+▮▮ if-elif-end: 1-liner
+
+⑇if subauthor == 'Hoge Fuga'⑇ Hoge-Fuga. ⑇elif subauthor == 'Foo Bar'⑇ Foo-Bar.⑇end
+
+▮▮ if-elif-end: Table
+
+⑇if subauthor == 'Hoge Fuga'
+|--|--|
+|a|b|
+|c|d|
+⑇elif subauthor == 'Foo Bar'
+|--|--|
+|A|B|
+|C|D|
+⑇end
+
+▮▮ if-elif-end: Code
+
+⑇if subauthor == 'Hoge Fuga'
+
+Text text.
+
+⸌⸌⸌
+Here
+⸌⸌⸌
+
+  ⑇elif subauthor == 'Foo Bar'
+
+  Text text.
+
+  ⸌⸌⸌
+  ¤include⸨example.c⸩
+  ⸌⸌⸌
+  ⑇end
+
+
 ▮▮ Recursive include
 
 ¤include⸨./sub1.tglyph⸩

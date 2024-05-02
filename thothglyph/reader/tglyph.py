@@ -7,6 +7,7 @@ from thothglyph.node import nd
 import re
 import os
 import sys
+import traceback
 
 from thothglyph.node import logging
 
@@ -32,13 +33,13 @@ class Lexer():
         'end',
     )
     preproc_tokens: Dict[str, str] = {
-        'CONFIG_LINE': r'⑇⑇⑇$',
-        'COMMENT': r'⑇⑇(.+)',
-        'CONTROL_FLOW': r'⑇(\w+)(.*)',
+        'CONFIG_LINE': r'^⑇⑇⑇$',
+        'COMMENT': r'⑇⑇(.+)$',
+        'CONTROL_FLOW': r'^ *⑇(\w+)([^⑇]*)⑇?',
         'TEXT': r'[^⑇]*',
     }
     block_tokens: Dict[str, str] = {
-        'PREPROCESSED_LINE': r'^⑇$',
+        'PREPROCESSED_SYMBOL': r'⑇+',
         'SECTION_TITLE_LINE': r' *((?:▮+)|(?:▯+))([*+]?) +([^⟦]+) *(?:⟦([^⟧]*)⟧)?',
         'TOC_LINE': r' *¤toc(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
         'FIGURE_LINE': r' *¤figure(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
@@ -186,6 +187,7 @@ class TglyphParser(Parser):
             msg = 'Unknown token.'
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
+        self._remove_preprocessed_tokens()
         tokens = list() + self.tokens
         tokens = self.p_document(tokens)
         return self.rootnode
@@ -196,7 +198,7 @@ class TglyphParser(Parser):
     def preprocess(self, data: str) -> str:
         self._init_config()
         try:
-            tokens = self.lexer.lex_preproc(data)
+            self.tokens = self.lexer.lex_preproc(data)
         except ThothglyphError as e:
             lineno, line, rests = e.args
             lineno += 1
@@ -204,12 +206,13 @@ class TglyphParser(Parser):
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
         self.pplines = list()
+        tokens = list() + self.tokens
         while tokens:
             if tokens[0].key == 'CONFIG_LINE':
                 tokens = self.p_configblock(tokens)
             elif tokens[0].key == 'COMMENT':
                 if tokens[0].pos == 0:
-                    self._line_preprocessed()
+                    self._line_preprocessed(tokens[0])
                 tokens.pop(0)
             elif tokens[0].key == 'CONTROL_FLOW':
                 tokens = self.p_controlflow(tokens)
@@ -230,26 +233,32 @@ class TglyphParser(Parser):
                 setattr(config, key, pattrs[key])
         self.rootnode.config = config
 
-    def _line_preprocessed(self):
-        self.pplines.append('⑇')
+    def _line_preprocessed(self, token: Lexer.Token) -> None:
+        is_head = (token.pos == 0)
+        is_tail = token == self.tokens[-1] or \
+            token.line + 1 == self._tokens(token, +1).line
+        if is_head and is_tail:
+            self.pplines.append('⑇' * len(token.value))
+        else:
+            self.pplines[-1] += '⑇' * len(token.value)
 
     def p_configblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         config = self.rootnode.config
         begintoken = tokens[0]
-        self._line_preprocessed()
+        self._line_preprocessed(tokens[0])
         tokens.pop(0)
         subtokens = list()
         while tokens:
             if tokens[0].key == 'CONFIG_LINE':
                 break
-            self._line_preprocessed()
+            self._line_preprocessed(tokens[0])
             subtokens.append(tokens.pop(0))
         else:
             lineno = begintoken.line + 1
             msg = 'Config block is not closed.'
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
-        self._line_preprocessed()
+        self._line_preprocessed(tokens[0])
         tokens.pop(0)
         m = re.match(Lexer.inline_tokens['ROLE'], subtokens[0].value) if subtokens else None
         if m and m.group(1) == 'include':
@@ -300,36 +309,68 @@ class TglyphParser(Parser):
         assert match
         keyword, sentence = match.group(1), match.group(2)
         if keyword == 'if':
-            self._line_preprocessed()
+            self._line_preprocessed(tokens[0])
             tokens.pop(0)
             cond = eval(sentence, {}, self.rootnode.config.attrs)
-            tokens = self.p_if_else(tokens, cond)
+            tokens = self.p_if_else(tokens, [cond])
         else:
             lineno = tokens[0].line + 1
-            msg = 'Illegal text token.'
+            msg = 'Illegal ControlFlow token.'
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
         return tokens
 
-    def p_if_else(self, tokens: List[Lexer.Token], cond: bool) -> List[Lexer.Token]:
+    def p_if_else(self, tokens: List[Lexer.Token], conds: List[bool]) -> List[Lexer.Token]:
+        firstflowtoken = self._tokens(tokens[0], -1)
+        lastflowtoken = tokens[0]
+        lasttoken = tokens[0]
         while tokens:
-            if tokens[0].key == 'TEXT' and cond:
+            if tokens[0].key == 'TEXT' and all(conds):
                 self.pplines.append(tokens[0].value)
+                lasttoken = tokens.pop(0)
             elif tokens[0].key == 'CONTROL_FLOW':
                 match = re.match(Lexer.preproc_tokens['CONTROL_FLOW'], tokens[0].value)
                 assert match
+                lastflowtoken = tokens[0]
                 keyword, sentence = match.group(1), match.group(2)
                 if keyword == 'end':
                     break
+                elif keyword == 'if':
+                    self._line_preprocessed(tokens[0])
+                    tokens.pop(0)
+                    conds += [all(conds) and eval(sentence, {}, self.rootnode.config.attrs)]
+                    tokens = self.p_if_else(tokens, conds)
+                    lasttoken = tokens[0]
+                    conds.pop()
                 elif keyword == 'elif':
-                    cond = not cond and eval(sentence, {}, self.rootnode.config.attrs)
+                    conds[-1] = not all(conds) and eval(sentence, {}, self.rootnode.config.attrs)
+                    self._line_preprocessed(tokens[0])
+                    lasttoken = tokens.pop(0)
                 elif keyword == 'else':
-                    cond = not cond
-            self._line_preprocessed()
-            tokens.pop(0)
-        self._line_preprocessed()
+                    conds[-1] = not all(conds)
+                    self._line_preprocessed(tokens[0])
+                    lasttoken = tokens.pop(0)
+                else:
+                    lineno = lastflowtoken.line + 1
+                    msg = f'Unknown ControlFlow keyword: "{keyword}".'
+                    msg = f'{self.reader.path}:{lineno}: {msg}'
+                    raise ThothglyphError(msg)
+            else:
+                self._line_preprocessed(tokens[0])
+                lasttoken = tokens.pop(0)
+        else:
+            lineno0 = firstflowtoken.line + 1
+            # lineno1 = lastflowtoken.line + 1
+            lineno1 = lasttoken.line + 1
+            msg = 'ControlFlow is not closed.'
+            msg = f'{self.reader.path}:{lineno0}-{lineno1}: {msg}'
+            raise ThothglyphError(msg)
+        self._line_preprocessed(tokens[0])
         tokens.pop(0)
         return tokens
+
+    def _remove_preprocessed_tokens(self) -> None:
+        self.tokens = [t for t in self.tokens if t.key != 'PREPROCESSED_SYMBOL']
 
     def p_document(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         tokens = self.p_ignore_emptylines(tokens)
@@ -1234,8 +1275,11 @@ class TglyphReader(Reader):
         except OSError as e:
             msg = '{}: {}'.format(e.strerror, e.filename)
             raise ThothglyphError(msg)
-        except Exception:
-            exc_type, exc_msg, exc_tb = sys.exc_info()
-            tbinfo = 'file {}, line {}'.format(exc_tb.tb_frame.f_code.co_filename, exc_tb.tb_lineno)
-            msg = '{} ({})'.format(exc_msg, tbinfo)
+        except Exception as e:
+            te = traceback.TracebackException.from_exception(e)
+            exc_msg = str(te)
+            tbinfo = 'file {}, line {}'.format(
+                te.stack[-1].filename, te.stack[-1].lineno
+            )
+            msg = 'inner error: {} ({})'.format(exc_msg, tbinfo)
             raise ThothglyphError(msg)
