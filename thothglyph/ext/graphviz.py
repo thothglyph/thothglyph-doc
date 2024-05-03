@@ -1,7 +1,7 @@
 import os
 import re
-import cairosvg
 import graphviz
+from thothglyph.util.svg import svg2pdf
 from thothglyph.node import logging
 
 logger = logging.getLogger(__file__)
@@ -23,7 +23,7 @@ def customblock_write_latex(self, node):
     graph = graphviz.Source(text)  # type: ignore
     svgstr = graph.pipe(format='svg')
     fname = os.path.join(self.tmpdirname, node.treeid() + '.pdf')
-    cairosvg.svg2pdf(bytestring=svgstr, write_to=fname)
+    svg2pdf(bytestring=svgstr, write_to=fname)
     m = re.match(
         r'.+<svg width="(.+)pt" height="(.+)pt"', svgstr.decode(),
         flags=re.MULTILINE | re.DOTALL
