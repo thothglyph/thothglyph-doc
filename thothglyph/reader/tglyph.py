@@ -734,12 +734,19 @@ class TglyphParser(Parser):
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
         tokens.pop(0)
-        m = re.match(Lexer.inline_tokens['ROLE'], subtokens[0].value) if subtokens else None
-        if m and m.group(1) == 'include':
+        roleline_pat = r'( *)' + Lexer.inline_tokens['ROLE']
+        m = re.match(roleline_pat, subtokens[0].value) if subtokens else None
+        if m and m.group(2) == 'include':
+            numspace = len(m.group(1))
+            if numspace < indent:
+                msg = 'Code indentation is to the left of the block indentation.'
+                lineno = subtokens[0].line + 1
+                msg = f'{self.reader.path}:{lineno}: {msg}'
+                logger.warn(msg)
             role = nd.RoleNode()
-            role.role = m.group(1)
-            role.opts = m.group(2).split(',') if m.group(2) is not None else ['']
-            role.value = self.replace_text_attrs(m.group(3))
+            role.role = m.group(2)
+            role.opts = m.group(3).split(',') if m.group(3) is not None else ['']
+            role.value = self.replace_text_attrs(m.group(4))
             self.nodes.append(code)
             self.p_plaininclude(subtokens, role)
             self.nodes.pop()
@@ -790,12 +797,19 @@ class TglyphParser(Parser):
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
         tokens.pop(0)
-        m = re.match(Lexer.inline_tokens['ROLE'], subtokens[0].value) if subtokens else None
-        if m and m.group(1) == 'include':
+        roleline_pat = r'( *)' + Lexer.inline_tokens['ROLE']
+        m = re.match(roleline_pat, subtokens[0].value) if subtokens else None
+        if m and m.group(2) == 'include':
+            numspace = len(m.group(1))
+            if numspace < indent:
+                msg = 'Custom indentation is to the left of the block indentation.'
+                lineno = subtokens[0].line + 1
+                msg = f'{self.reader.path}:{lineno}: {msg}'
+                logger.warn(msg)
             role = nd.RoleNode()
-            role.role = m.group(1)
-            role.opts = m.group(2).split(',') if m.group(2) is not None else ['']
-            role.value = self.replace_text_attrs(m.group(3))
+            role.role = m.group(2)
+            role.opts = m.group(3).split(',') if m.group(3) is not None else ['']
+            role.value = self.replace_text_attrs(m.group(4))
             self.nodes.append(custom)
             self.p_plaininclude(subtokens, role)
             self.nodes.pop()
