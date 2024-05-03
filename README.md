@@ -35,6 +35,8 @@ sudo apt install graphviz
 pip install graphviz
 # blockdiag
 pip install blockdiag actdiag seqdiag nwdiag
+# mermaid
+npm install -g @mermaid-js/mermaid-cli
 # wavedrom
 pip install wavedrom
 ```
