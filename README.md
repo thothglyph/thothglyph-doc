@@ -34,6 +34,8 @@ pip install python-docx
 sudo apt install graphviz
 pip install graphviz
 # blockdiag
+sudo apt install plantuml
+# blockdiag
 pip install blockdiag actdiag seqdiag nwdiag
 # mermaid
 npm install -g @mermaid-js/mermaid-cli

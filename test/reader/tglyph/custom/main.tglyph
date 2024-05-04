@@ -39,6 +39,10 @@ graph my_graph {
 
 UML図をテキストベースで作成できる。Java製。
 
+⸌⸌⸌
+sudo apt install plantuml
+⸌⸌⸌
+
 ¤¤¤plantuml
 @startuml
 Object <|-- ArrayList
