@@ -1,6 +1,5 @@
 import os
 import re
-import cairosvg
 import blockdiag.parser
 import blockdiag.builder
 import blockdiag.drawer
@@ -19,6 +18,7 @@ import rackdiag.drawer
 import packetdiag.parser
 import packetdiag.builder
 import packetdiag.drawer
+from thothglyph.util.svg import svg2pdf
 from thothglyph.node import logging
 
 logger = logging.getLogger(__file__)
@@ -85,7 +85,7 @@ def customblock_write_latex(self, node):
     svgstr, w, h = _get_svgstr(text)
     w, h = int(w), int(h)
     fname = os.path.join(self.tmpdirname, node.treeid() + '.pdf')
-    cairosvg.svg2pdf(bytestring=svgstr, write_to=fname)
+    svg2pdf(bytestring=svgstr, write_to=fname)
     w = '{}bp'.format(int(w * self.bp_scale))
     self.data += '\\tgincludegraphics[{}]{{{}}}\n\n'.format(w, fname)
 

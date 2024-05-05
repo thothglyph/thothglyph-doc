@@ -39,6 +39,10 @@ graph my_graph {
 
 UML図をテキストベースで作成できる。Java製。
 
+⸌⸌⸌
+sudo apt install plantuml
+⸌⸌⸌
+
 ¤¤¤plantuml
 @startuml
 Object <|-- ArrayList
@@ -147,6 +151,10 @@ packetdiag {
 
 ▮▮ Mermaid
 
+⸌⸌⸌
+npm install -g @mermaid-js/mermaid-cli
+⸌⸌⸌
+
 ¤¤¤mermaid
 flowchart LR
 
@@ -154,6 +162,35 @@ A[Hard] -->|Text| B(Round)
 B --> C{Decision}
 C -->|One| D[Result 1]
 C -->|Two| E[Result 2]
+¤¤¤
+
+¤¤¤mermaid
+gantt
+    title A Gantt Diagram
+    dateFormat YYYY-MM-DD
+    section Section
+        A task          :a1, 2014-01-01, 30d
+        Another task    :after a1, 20d
+    section Another
+        Task in Another :2014-01-12, 12d
+        another task    :24d
+¤¤¤
+
+¤¤¤mermaid
+---
+title: Example Git diagram
+---
+gitGraph
+   commit
+   commit
+   branch develop
+   checkout develop
+   commit
+   commit
+   checkout main
+   merge develop
+   commit
+   commit
 ¤¤¤
 
 ▮▮ WaveDrom

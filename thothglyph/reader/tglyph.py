@@ -7,6 +7,7 @@ from thothglyph.node import nd
 import re
 import os
 import sys
+import traceback
 
 from thothglyph.node import logging
 
@@ -32,13 +33,13 @@ class Lexer():
         'end',
     )
     preproc_tokens: Dict[str, str] = {
-        'CONFIG_LINE': r'⑇⑇⑇$',
-        'COMMENT': r'⑇⑇(.+)',
-        'CONTROL_FLOW': r'⑇(\w+)(.*)',
+        'CONFIG_LINE': r'^⑇⑇⑇$',
+        'COMMENT': r'⑇⑇(.+)$',
+        'CONTROL_FLOW': r'^ *⑇(\w+)([^⑇]*)⑇?',
         'TEXT': r'[^⑇]*',
     }
     block_tokens: Dict[str, str] = {
-        'PREPROCESSED_LINE': r'^⑇$',
+        'PREPROCESSED_SYMBOL': r'⑇+',
         'SECTION_TITLE_LINE': r' *((?:▮+)|(?:▯+))([*+]?) +([^⟦]+) *(?:⟦([^⟧]*)⟧)?',
         'TOC_LINE': r' *¤toc(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
         'FIGURE_LINE': r' *¤figure(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
@@ -59,6 +60,7 @@ class Lexer():
         'CODE_LINE': r'( *)⸌⸌⸌(.*)',
         'QUOTE_SYMBOL': r'^ *> ',
         'HR_LINE': r'^ *(?:(={4,})|(-{4,}))$',
+        'OPTION_LINE': r'^ *⟦([^⟧]*)⟧',
         'BREAK_PARAGRAPH': r' *⊹',
         'STR_LINE': r'.+',
         'EMPTY_LINE': r'^$',
@@ -186,17 +188,20 @@ class TglyphParser(Parser):
             msg = 'Unknown token.'
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
+        self._remove_preprocessed_tokens()
         tokens = list() + self.tokens
         tokens = self.p_document(tokens)
         return self.rootnode
 
     def _tokens(self, token: Lexer.Token, offset: int) -> Lexer.Token:
-        return self.tokens[token.no + offset]
+        if token.no + offset >= len(self.tokens):
+            return None
+        return self.tokens[self.tokens.index(token) + offset]
 
     def preprocess(self, data: str) -> str:
         self._init_config()
         try:
-            tokens = self.lexer.lex_preproc(data)
+            self.tokens = self.lexer.lex_preproc(data)
         except ThothglyphError as e:
             lineno, line, rests = e.args
             lineno += 1
@@ -204,12 +209,13 @@ class TglyphParser(Parser):
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
         self.pplines = list()
+        tokens = list() + self.tokens
         while tokens:
             if tokens[0].key == 'CONFIG_LINE':
                 tokens = self.p_configblock(tokens)
             elif tokens[0].key == 'COMMENT':
                 if tokens[0].pos == 0:
-                    self._line_preprocessed()
+                    self._line_preprocessed(tokens[0])
                 tokens.pop(0)
             elif tokens[0].key == 'CONTROL_FLOW':
                 tokens = self.p_controlflow(tokens)
@@ -230,26 +236,32 @@ class TglyphParser(Parser):
                 setattr(config, key, pattrs[key])
         self.rootnode.config = config
 
-    def _line_preprocessed(self):
-        self.pplines.append('⑇')
+    def _line_preprocessed(self, token: Lexer.Token) -> None:
+        is_head = (token.pos == 0)
+        is_tail = token == self.tokens[-1] or \
+            token.line + 1 == self._tokens(token, +1).line
+        if is_head and is_tail:
+            self.pplines.append('⑇' * len(token.value))
+        else:
+            self.pplines[-1] += '⑇' * len(token.value)
 
     def p_configblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         config = self.rootnode.config
         begintoken = tokens[0]
-        self._line_preprocessed()
+        self._line_preprocessed(tokens[0])
         tokens.pop(0)
         subtokens = list()
         while tokens:
             if tokens[0].key == 'CONFIG_LINE':
                 break
-            self._line_preprocessed()
+            self._line_preprocessed(tokens[0])
             subtokens.append(tokens.pop(0))
         else:
             lineno = begintoken.line + 1
             msg = 'Config block is not closed.'
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
-        self._line_preprocessed()
+        self._line_preprocessed(tokens[0])
         tokens.pop(0)
         m = re.match(Lexer.inline_tokens['ROLE'], subtokens[0].value) if subtokens else None
         if m and m.group(1) == 'include':
@@ -300,36 +312,68 @@ class TglyphParser(Parser):
         assert match
         keyword, sentence = match.group(1), match.group(2)
         if keyword == 'if':
-            self._line_preprocessed()
+            self._line_preprocessed(tokens[0])
             tokens.pop(0)
             cond = eval(sentence, {}, self.rootnode.config.attrs)
-            tokens = self.p_if_else(tokens, cond)
+            tokens = self.p_if_else(tokens, [cond])
         else:
             lineno = tokens[0].line + 1
-            msg = 'Illegal text token.'
+            msg = 'Illegal ControlFlow token.'
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
         return tokens
 
-    def p_if_else(self, tokens: List[Lexer.Token], cond: bool) -> List[Lexer.Token]:
+    def p_if_else(self, tokens: List[Lexer.Token], conds: List[bool]) -> List[Lexer.Token]:
+        firstflowtoken = self._tokens(tokens[0], -1)
+        lastflowtoken = tokens[0]
+        lasttoken = tokens[0]
         while tokens:
-            if tokens[0].key == 'TEXT' and cond:
+            if tokens[0].key == 'TEXT' and all(conds):
                 self.pplines.append(tokens[0].value)
+                lasttoken = tokens.pop(0)
             elif tokens[0].key == 'CONTROL_FLOW':
                 match = re.match(Lexer.preproc_tokens['CONTROL_FLOW'], tokens[0].value)
                 assert match
+                lastflowtoken = tokens[0]
                 keyword, sentence = match.group(1), match.group(2)
                 if keyword == 'end':
                     break
+                elif keyword == 'if':
+                    self._line_preprocessed(tokens[0])
+                    tokens.pop(0)
+                    conds += [all(conds) and eval(sentence, {}, self.rootnode.config.attrs)]
+                    tokens = self.p_if_else(tokens, conds)
+                    lasttoken = tokens[0]
+                    conds.pop()
                 elif keyword == 'elif':
-                    cond = not cond and eval(sentence, {}, self.rootnode.config.attrs)
+                    conds[-1] = not all(conds) and eval(sentence, {}, self.rootnode.config.attrs)
+                    self._line_preprocessed(tokens[0])
+                    lasttoken = tokens.pop(0)
                 elif keyword == 'else':
-                    cond = not cond
-            self._line_preprocessed()
-            tokens.pop(0)
-        self._line_preprocessed()
+                    conds[-1] = not all(conds)
+                    self._line_preprocessed(tokens[0])
+                    lasttoken = tokens.pop(0)
+                else:
+                    lineno = lastflowtoken.line + 1
+                    msg = f'Unknown ControlFlow keyword: "{keyword}".'
+                    msg = f'{self.reader.path}:{lineno}: {msg}'
+                    raise ThothglyphError(msg)
+            else:
+                self._line_preprocessed(tokens[0])
+                lasttoken = tokens.pop(0)
+        else:
+            lineno0 = firstflowtoken.line + 1
+            # lineno1 = lastflowtoken.line + 1
+            lineno1 = lasttoken.line + 1
+            msg = 'ControlFlow is not closed.'
+            msg = f'{self.reader.path}:{lineno0}-{lineno1}: {msg}'
+            raise ThothglyphError(msg)
+        self._line_preprocessed(tokens[0])
         tokens.pop(0)
         return tokens
+
+    def _remove_preprocessed_tokens(self) -> None:
+        self.tokens = [t for t in self.tokens if t.key != 'PREPROCESSED_SYMBOL']
 
     def p_document(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         tokens = self.p_ignore_emptylines(tokens)
@@ -693,12 +737,19 @@ class TglyphParser(Parser):
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
         tokens.pop(0)
-        m = re.match(Lexer.inline_tokens['ROLE'], subtokens[0].value) if subtokens else None
-        if m and m.group(1) == 'include':
+        roleline_pat = r'( *)' + Lexer.inline_tokens['ROLE']
+        m = re.match(roleline_pat, subtokens[0].value) if subtokens else None
+        if m and m.group(2) == 'include':
+            numspace = len(m.group(1))
+            if numspace < indent:
+                msg = 'Code indentation is to the left of the block indentation.'
+                lineno = subtokens[0].line + 1
+                msg = f'{self.reader.path}:{lineno}: {msg}'
+                logger.warn(msg)
             role = nd.RoleNode()
-            role.role = m.group(1)
-            role.opts = m.group(2).split(',') if m.group(2) is not None else ['']
-            role.value = self.replace_text_attrs(m.group(3))
+            role.role = m.group(2)
+            role.opts = m.group(3).split(',') if m.group(3) is not None else ['']
+            role.value = self.replace_text_attrs(m.group(4))
             self.nodes.append(code)
             self.p_plaininclude(subtokens, role)
             self.nodes.pop()
@@ -749,12 +800,19 @@ class TglyphParser(Parser):
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
         tokens.pop(0)
-        m = re.match(Lexer.inline_tokens['ROLE'], subtokens[0].value) if subtokens else None
-        if m and m.group(1) == 'include':
+        roleline_pat = r'( *)' + Lexer.inline_tokens['ROLE']
+        m = re.match(roleline_pat, subtokens[0].value) if subtokens else None
+        if m and m.group(2) == 'include':
+            numspace = len(m.group(1))
+            if numspace < indent:
+                msg = 'Custom indentation is to the left of the block indentation.'
+                lineno = subtokens[0].line + 1
+                msg = f'{self.reader.path}:{lineno}: {msg}'
+                logger.warn(msg)
             role = nd.RoleNode()
-            role.role = m.group(1)
-            role.opts = m.group(2).split(',') if m.group(2) is not None else ['']
-            role.value = self.replace_text_attrs(m.group(3))
+            role.role = m.group(2)
+            role.opts = m.group(3).split(',') if m.group(3) is not None else ['']
+            role.value = self.replace_text_attrs(m.group(4))
             self.nodes.append(custom)
             self.p_plaininclude(subtokens, role)
             self.nodes.pop()
@@ -819,7 +877,35 @@ class TglyphParser(Parser):
             return '⏶'
         return ''
 
+    def _parse_table_optargs(self, argstr: str) -> Dict[str, str]:
+        opts = nd.parse_optargs(argstr)
+        newopts: Dict[str, str] = dict()
+        newopts['type'] = opts.get('type', 'normal')
+        newopts['w'] = opts.get('w', '')
+        for k, v in opts.items():
+            if k == 'align':
+                newopts['align'] = [c for c in v]
+            elif k == 'widths':
+                newopts['widths'] = [int(x.strip()) for x in v.split(',')]
+            elif k == 'colspec':
+                colspec_ptn = r'(-1|[1-9]|[1-9][0-9]+)?([lcrx])'
+                colmatchs = [re.match(colspec_ptn, x.strip()) for x in v.split(',')]
+                if not all(colmatchs):
+                    pass  # logger.warn()
+                newopts['align'] = list()
+                newopts['widths'] = list()
+                for m in colmatchs:
+                    newopts['widths'].append(m.group(1) or 1)
+                    newopts['align'].append(m.group(2))
+        return newopts
+
     def p_basictableblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
+        prevtoken = self._tokens(tokens[0], -1)
+        opts: Dict[str, str] = dict()
+        if prevtoken and prevtoken.key == 'OPTION_LINE':
+            m = re.match(Lexer.block_tokens['OPTION_LINE'], prevtoken.value)
+            assert m
+            opts = self._parse_table_optargs(m.group(1))
         table = nd.TableBlockNode()
         self.nodes[-1].add(table)
         lines = list()
@@ -830,12 +916,13 @@ class TglyphParser(Parser):
             lines.append(tokens[0].value)
             tokens.pop(0)
         tabletexts = list()
-        aligns = list()
+        aligns = opts.get('align', list())
         header_splitter = -1
         for i, line in enumerate(lines):
             rowtexts = re.split(r' *\| *', line.strip())[1:-1]
             ms = [re.match(r'^[+:]?-+[+:]?$', c) for c in rowtexts]
             if all(ms) and header_splitter == -1:
+                aligns = list()
                 for m in ms:
                     assert m
                     mg = m.group(0)
@@ -852,13 +939,15 @@ class TglyphParser(Parser):
                 tabletexts.append(rowtexts)
         if header_splitter < 0:
             header_splitter = 0
-        # table.type = opts.get('type', 'normal')
+        table.type = opts.get('type', 'normal')
         table.row = len(tabletexts)
         table.col = len(tabletexts[0])
         table.headers = header_splitter
         if len(aligns) == 0:
             aligns = ['c' for i in range(table.col)]
         table.aligns = aligns
+        table.widths = opts.get('widths', [0 for i in range(table.col)])
+        table.width = opts.get('w')
         for r, rowtexts in enumerate(tabletexts):
             row = nd.TableRowNode()
             row.idx = r
@@ -877,6 +966,7 @@ class TglyphParser(Parser):
                 row.add(cell)
                 cell.idx = c
                 cell.align = table.aligns[c]
+                cell.width = table.widths[c]
                 text = self.replace_text_attrs(celltext)
                 text = self._tablecell_merge(table, cell, r, c, text)
                 try:
@@ -891,7 +981,8 @@ class TglyphParser(Parser):
     def p_listtableblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.block_tokens['LISTTABLE_BEGIN_LINE'], tokens[0].value)
         assert m
-        opts = nd.parse_optargs(m.group(1))
+        # opts = nd.parse_optargs(m.group(1))
+        opts = self._parse_table_optargs(m.group(1))
         begintoken = tokens[0]
         tokens.pop(0)
         nested = 1
@@ -945,6 +1036,8 @@ class TglyphParser(Parser):
         table.row = len(rowitems)
         table.col = len(rowitems[0].children[0].children)
         table.headers = len(header_rowlist.children)
+        table.widths = opts.get('widths', [0 for i in range(table.col)])
+        table.width = opts.get('w')
         for r, rowitem in enumerate(rowitems):
             row = nd.TableRowNode()
             row.idx = r
@@ -960,6 +1053,7 @@ class TglyphParser(Parser):
                 row.add(cell)
                 cell.idx = c
                 cell.align = table.aligns[c]
+                cell.width = table.widths[c]
                 if not (all([
                     cell.children,
                     isinstance(cell.children[0], nd.ParagraphNode),
@@ -1234,8 +1328,11 @@ class TglyphReader(Reader):
         except OSError as e:
             msg = '{}: {}'.format(e.strerror, e.filename)
             raise ThothglyphError(msg)
-        except Exception:
-            exc_type, exc_msg, exc_tb = sys.exc_info()
-            tbinfo = 'file {}, line {}'.format(exc_tb.tb_frame.f_code.co_filename, exc_tb.tb_lineno)
-            msg = '{} ({})'.format(exc_msg, tbinfo)
+        except Exception as e:
+            te = traceback.TracebackException.from_exception(e)
+            exc_msg = str(te)
+            tbinfo = 'file {}, line {}'.format(
+                te.stack[-1].filename, te.stack[-1].lineno
+            )
+            msg = 'inner error: {} ({})'.format(exc_msg, tbinfo)
             raise ThothglyphError(msg)

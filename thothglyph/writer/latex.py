@@ -213,11 +213,18 @@ class LatexWriter(Writer):
             'r': 'raggedleft',
         }
         aligns = node.aligns[:]
+        widths = [int(v) for v in node.widths]
         for i, a in enumerate(aligns):
             if a == 'x':
-                aligns[i] = 'X[l]'
+                if widths[i]:
+                    aligns[i] = 'X[{},l]'.format(widths[i])
+                else:
+                    aligns[i] = 'X[l]'
             else:
-                aligns[i] = a
+                if widths[i]:
+                    aligns[i] = 'X[{},{}]'.format(widths[i], a)
+                else:
+                    aligns[i] = a
         if self.style_gridtable:
             col_aligns = '|{}|'.format('|'.join(aligns))
         else:
@@ -236,6 +243,13 @@ class LatexWriter(Writer):
         else:
             self.data += '\\begin{tblr}\n'
         self.data += '{'
+        if node.width:
+            w = node.width
+            if w.endswith('px'):
+                w = '{}bp'.format(int(float(w[0:-2]) * self.bp_scale))
+            elif w.endswith('%'):
+                w = '{}\\linewidth'.format(float(w[0:-1]) * 0.01)
+            self.data += 'width = {} ,'.format(w)
         self.data += 'colspec = {{{}}}, '.format(col_aligns)
         self.data += 'hlines, vlines, '
         self.data += 'measure = vbox, '

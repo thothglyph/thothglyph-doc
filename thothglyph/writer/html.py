@@ -253,13 +253,29 @@ class HtmlWriter(Writer):
         align = node.align
         if isinstance(node.parent, nd.FigureBlockNode):
             align = node.parent.align
+        styles = []
+        style = ''
         if align == 'l':
-            style = 'style="margin-right:auto;"'
+            styles += ['margin-right:auto']
         elif align == 'c':
-            style = 'style="margin-left:auto;margin-right:auto;"'
+            styles += ['margin-left:auto;margin-right:auto']
         elif align == 'r':
-            style = 'style="margin-left:auto;"'
+            styles += ['margin-left:auto']
+        if node.width:
+            styles += ['width:{}'.format(node.width)]
+        if len(styles) > 0:
+            style = 'style="{}"'.format(';'.join(styles))
         self.data += '<table {}>\n'.format(style)
+        self._normalize_table_widths(node)
+
+    def _normalize_table_widths(self, node: nd.ASTNode) -> None:
+        sum_widths = sum([int(v) for v in node.widths if int(v) > 0])
+        if sum_widths > 0:
+            for row in node.children:
+                for cell in row.children:
+                    if int(cell.width) <= 0:
+                        continue
+                    cell.width = int(int(cell.width) / sum_widths * 100)
 
     def leave_tableblock(self, node: nd.ASTNode) -> None:
         self.data += '</table>\n'
@@ -277,7 +293,10 @@ class HtmlWriter(Writer):
         if node.mergeto is None:
             s = node.size
             align = {'l': 'left', 'c': 'center', 'r': 'right', 'x': 'left'}
-            attrs = ['style="text-align:{}"'.format(align[node.align])]
+            styles = ['text-align:{}'.format(align[node.align])]
+            if int(node.width) > 0:
+                styles += ['width:{}%'.format(node.width)]
+            attrs = ['style="{}"'.format(';'.join(styles))]
             attrs += ['colspan="{}"'.format(s.x), 'rowspan="{}"'.format(s.y)]
             self.data += '<{} {}>'.format(tagname, ' '.join(attrs))
         else:

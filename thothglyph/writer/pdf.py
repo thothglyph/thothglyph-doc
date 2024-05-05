@@ -4,8 +4,8 @@ import importlib
 import os
 import subprocess
 import tempfile
-import cairosvg
 from thothglyph.error import ThothglyphError
+from thothglyph.util.svg import svg2pdf
 from thothglyph.writer.latex import LatexWriter
 from thothglyph.node import nd
 from thothglyph.node import logging
@@ -110,7 +110,7 @@ class PdfWriter(LatexWriter):
         if ext == '.svg':
             assert self.tmpdirname
             imgpath = os.path.join(self.tmpdirname, node.value)
-            cairosvg.svg2pdf(url=node.value, write_to='{}.pdf'.format(imgpath))
+            svg2pdf(url=node.value, write_to=imgpath)
         else:
             pass
 
