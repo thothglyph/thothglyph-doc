@@ -33,7 +33,7 @@ pip install python-docx
 # graphviz
 sudo apt install graphviz
 pip install graphviz
-# blockdiag
+# plantuml
 sudo apt install plantuml
 # blockdiag
 pip install blockdiag actdiag seqdiag nwdiag
