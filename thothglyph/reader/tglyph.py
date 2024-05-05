@@ -60,6 +60,7 @@ class Lexer():
         'CODE_LINE': r'( *)⸌⸌⸌(.*)',
         'QUOTE_SYMBOL': r'^ *> ',
         'HR_LINE': r'^ *(?:(={4,})|(-{4,}))$',
+        'OPTION_LINE': r'^ *⟦([^⟧]*)⟧',
         'BREAK_PARAGRAPH': r' *⊹',
         'STR_LINE': r'.+',
         'EMPTY_LINE': r'^$',
@@ -193,7 +194,9 @@ class TglyphParser(Parser):
         return self.rootnode
 
     def _tokens(self, token: Lexer.Token, offset: int) -> Lexer.Token:
-        return self.tokens[token.no + offset]
+        if token.no + offset >= len(self.tokens):
+            return None
+        return self.tokens[self.tokens.index(token) + offset]
 
     def preprocess(self, data: str) -> str:
         self._init_config()
@@ -874,7 +877,35 @@ class TglyphParser(Parser):
             return '⏶'
         return ''
 
+    def _parse_table_optargs(self, argstr: str) -> Dict[str, str]:
+        opts = nd.parse_optargs(argstr)
+        newopts: Dict[str, str] = dict()
+        newopts['type'] = opts.get('type', 'normal')
+        newopts['w'] = opts.get('w', '')
+        for k, v in opts.items():
+            if k == 'align':
+                newopts['align'] = [c for c in v]
+            elif k == 'widths':
+                newopts['widths'] = [int(x.strip()) for x in v.split(',')]
+            elif k == 'colspec':
+                colspec_ptn = r'(-1|[1-9]|[1-9][0-9]+)?([lcrx])'
+                colmatchs = [re.match(colspec_ptn, x.strip()) for x in v.split(',')]
+                if not all(colmatchs):
+                    pass  # logger.warn()
+                newopts['align'] = list()
+                newopts['widths'] = list()
+                for m in colmatchs:
+                    newopts['widths'].append(m.group(1) or 1)
+                    newopts['align'].append(m.group(2))
+        return newopts
+
     def p_basictableblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
+        prevtoken = self._tokens(tokens[0], -1)
+        opts: Dict[str, str] = dict()
+        if prevtoken and prevtoken.key == 'OPTION_LINE':
+            m = re.match(Lexer.block_tokens['OPTION_LINE'], prevtoken.value)
+            assert m
+            opts = self._parse_table_optargs(m.group(1))
         table = nd.TableBlockNode()
         self.nodes[-1].add(table)
         lines = list()
@@ -885,12 +916,13 @@ class TglyphParser(Parser):
             lines.append(tokens[0].value)
             tokens.pop(0)
         tabletexts = list()
-        aligns = list()
+        aligns = opts.get('align', list())
         header_splitter = -1
         for i, line in enumerate(lines):
             rowtexts = re.split(r' *\| *', line.strip())[1:-1]
             ms = [re.match(r'^[+:]?-+[+:]?$', c) for c in rowtexts]
             if all(ms) and header_splitter == -1:
+                aligns = list()
                 for m in ms:
                     assert m
                     mg = m.group(0)
@@ -907,13 +939,15 @@ class TglyphParser(Parser):
                 tabletexts.append(rowtexts)
         if header_splitter < 0:
             header_splitter = 0
-        # table.type = opts.get('type', 'normal')
+        table.type = opts.get('type', 'normal')
         table.row = len(tabletexts)
         table.col = len(tabletexts[0])
         table.headers = header_splitter
         if len(aligns) == 0:
             aligns = ['c' for i in range(table.col)]
         table.aligns = aligns
+        table.widths = opts.get('widths', [0 for i in range(table.col)])
+        table.width = opts.get('w')
         for r, rowtexts in enumerate(tabletexts):
             row = nd.TableRowNode()
             row.idx = r
@@ -932,6 +966,7 @@ class TglyphParser(Parser):
                 row.add(cell)
                 cell.idx = c
                 cell.align = table.aligns[c]
+                cell.width = table.widths[c]
                 text = self.replace_text_attrs(celltext)
                 text = self._tablecell_merge(table, cell, r, c, text)
                 try:
@@ -946,7 +981,8 @@ class TglyphParser(Parser):
     def p_listtableblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         m = re.match(Lexer.block_tokens['LISTTABLE_BEGIN_LINE'], tokens[0].value)
         assert m
-        opts = nd.parse_optargs(m.group(1))
+        # opts = nd.parse_optargs(m.group(1))
+        opts = self._parse_table_optargs(m.group(1))
         begintoken = tokens[0]
         tokens.pop(0)
         nested = 1
@@ -1000,6 +1036,8 @@ class TglyphParser(Parser):
         table.row = len(rowitems)
         table.col = len(rowitems[0].children[0].children)
         table.headers = len(header_rowlist.children)
+        table.widths = opts.get('widths', [0 for i in range(table.col)])
+        table.width = opts.get('w')
         for r, rowitem in enumerate(rowitems):
             row = nd.TableRowNode()
             row.idx = r
@@ -1015,6 +1053,7 @@ class TglyphParser(Parser):
                 row.add(cell)
                 cell.idx = c
                 cell.align = table.aligns[c]
+                cell.width = table.widths[c]
                 if not (all([
                     cell.children,
                     isinstance(cell.children[0], nd.ParagraphNode),
