@@ -7,22 +7,33 @@ from thothglyph.error import ThothglyphError
 
 
 def svg2pdf(**kwargs) -> None:
+    svg2xxx('pdf', **kwargs)
+
+
+def svg2png(**kwargs) -> None:
+    svg2xxx('png', **kwargs)
+
+
+def svg2xxx(target, **kwargs) -> None:
     inpath = None
     indata = None
     outpath = None
+    scale = 1.0
     if 'url' in kwargs and kwargs['url']:
         inpath = kwargs['url']
     elif 'bytestring' in kwargs and kwargs['bytestring']:
         indata = kwargs['bytestring']
     else:
-        msg = 'svg2pdf(): input not found.'
+        msg = 'svg2{}(): input not found.'.format(target)
         raise ThothglyphError(msg)
 
     if 'write_to' in kwargs and kwargs['write_to']:
         outpath = kwargs['write_to']
     else:
-        msg = 'svg2pdf(): output not found.'
+        msg = 'svg2{}(): output not found.'.format(target)
         raise ThothglyphError(msg)
+    if 'scale' in kwargs:
+        scale = kwargs['scale']
 
     if inpath:
         with open(inpath, 'rb') as f:
@@ -37,7 +48,7 @@ def svg2pdf(**kwargs) -> None:
     rsvg_convert = shutil.which('rsvg-convert')
     if rsvg_convert:
         rsvg_cmd = [
-            'rsvg-convert', '-f', 'pdf', '-o', '{}.pdf'.format(outpath)
+            'rsvg-convert', '-f', target, '-o', outpath, '-z', str(scale)
         ]
         p = subprocess.Popen(
             rsvg_cmd,
@@ -50,4 +61,15 @@ def svg2pdf(**kwargs) -> None:
             msg = '{} command exit with code {}.'.format(rsvg_cmd[0], p.returncode)
             raise ThothglyphError(msg)
     else:
-        cairosvg.svg2pdf(bytestring=indata, write_to='{}.pdf'.format(outpath))
+        if target == 'pdf':
+            cairosvg.svg2pdf(
+                bytestring=indata,
+                write_to=outpath,
+                scale=scale
+            )
+        elif target == 'png':
+            cairosvg.svg2png(
+                bytestring=indata,
+                write_to=outpath,
+                scale=scale
+            )

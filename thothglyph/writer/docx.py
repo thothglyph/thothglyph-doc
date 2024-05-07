@@ -12,6 +12,7 @@ from docx.text.paragraph import Paragraph
 # from docx.enum.text import WD_TAB_LEADER
 from thothglyph.error import ThothglyphError
 from thothglyph.writer.writer import Writer
+from thothglyph.util.svg import svg2png
 from thothglyph.node import nd
 from thothglyph.node import logging
 
@@ -344,6 +345,10 @@ class DocxWriter(Writer):
                 tcW = c.tcPr.tcW
                 tcW.type = 'auto'
                 tcW.w = 0
+        self.tables.append(table)
+
+    def leave_tableblock(self, node):
+        table = self.tables[-1]
         if node.headers == 0:
             table.style = self.stylename['table_normal']
         else:
@@ -351,9 +356,6 @@ class DocxWriter(Writer):
             for i in range(node.headers):
                 trPr = table.rows[i]._tr.get_or_add_trPr()
                 trPr.get_or_add_tblHeader()
-        self.tables.append(table)
-
-    def leave_tableblock(self, node):
         self.tables.pop()
 
     def visit_tablerow(self, node):
@@ -408,21 +410,19 @@ class DocxWriter(Writer):
             is_first_paragraph = item.children.index(node) == 0
             if is_first_paragraph and self.numIds:
                 self._multilevel_list_numbering(self.p, item.level - 1, self.numIds[-1])
+            elif item.titlebreak:
+                self._multilevel_list_numbering(self.p, item.level, 15)
             else:
                 self._multilevel_list_numbering(self.p, item.level - 1, 15)
             self.is_first_list_item = False
             if isinstance(item.parent, nd.CheckListBlockNode):
-                r_style = self.stylename['strong']
                 assert self.tmpdirname
                 if item.marker == 'x':
                     checkbox = os.path.join(self.tmpdirname, 'check_en.png')
-                    # self.r = self._add_run('[v] ', r_style)
                 elif item.marker == '-':
                     checkbox = os.path.join(self.tmpdirname, 'check_im.png')
-                    # self.r = self._add_run('[-] ', r_style)
                 else:
                     checkbox = os.path.join(self.tmpdirname, 'check_dis.png')
-                    # self.r = self._add_run('[ ] ', r_style)
                 self.r = self._add_run('')
                 self.r.add_picture(checkbox)
                 self.r = self._add_run(' ')
@@ -435,12 +435,17 @@ class DocxWriter(Writer):
     def visit_title(self, node):
         if not self.p:
             self.p = self._add_paragraph()
-        if isinstance(node.parent, nd.DescriptionListBlockNode):
+        if isinstance(node.parent, nd.ListItemNode):
+            item = node.parent
+            self._multilevel_list_numbering(self.p, item.level - 1, 15)
             self.r_style = self.stylename['strong']
 
     def leave_title(self, node):
         self.r_style = None
         self.r = self._add_run(' ')
+        if node.parent.titlebreak:
+            self.p = self._add_paragraph()
+            self.r = self._add_run('')
 
     def visit_decorationrole(self, node):
         stylekey = self.decoration_table[node.role]
@@ -476,8 +481,8 @@ class DocxWriter(Writer):
         fname, ext = os.path.splitext(image_fullpath)
         if ext == '.svg':
             assert self.tmpdirname
-            tmpimage_path = os.path.join(self.tmpdirname, f'{fname}.png')
-            cairosvg.svg2png(
+            tmpimage_path = os.path.join(self.tmpdirname, '{}.png'.format(node.value))
+            svg2png(
                 url=image_fullpath,
                 write_to=tmpimage_path,
                 scale=0.625,

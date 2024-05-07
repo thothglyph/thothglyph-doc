@@ -3,6 +3,7 @@ import re
 import subprocess
 
 from thothglyph.error import ThothglyphError
+from thothglyph.util.svg import svg2png
 from thothglyph.node import logging
 
 logger = logging.getLogger(__file__)
@@ -42,8 +43,8 @@ def customblock_write_latex(self, node):
     svgname = os.path.join(self.tmpdirname, node.treeid() + '.svg')
     pdfname = os.path.join(self.tmpdirname, node.treeid() + '.pdf')
     cmds = [
-        ['mmdc', '-o', '{}'.format(svgname)],
-        ['mmdc', '-o', '{}'.format(pdfname), '--pdfFit'],
+        ['mmdc', '-i', '-', '-o', '{}'.format(svgname)],
+        ['mmdc', '-i', '-', '-o', '{}'.format(pdfname), '--pdfFit'],
     ]
     for cmd in cmds:
         p = subprocess.Popen(
@@ -67,3 +68,29 @@ def customblock_write_latex(self, node):
 
 def customblock_write_pdf(self, node):
     customblock_write_latex(self, node)
+
+def customblock_write_docx(self, node):
+    indata = node.text
+    if isinstance(indata, str):
+        indata = indata.encode()
+    svgname = os.path.join(self.tmpdirname, node.treeid() + '.svg')
+    pngname = os.path.join(self.tmpdirname, node.treeid() + '.png')
+    cmds = [
+        ['mmdc', '-i', '-', '-o', '{}'.format(svgname)],
+    ]
+    for cmd in cmds:
+        p = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        p.communicate(input=indata)
+        if p.returncode != 0:
+            msg = '{} command exit with code {}.'.format(cmd[0], p.returncode)
+            raise ThothglyphError(msg)
+    svg2png(url=svgname, write_to=pngname, scale=0.625)
+    p = self._add_paragraph()
+    if p:
+        r = p.add_run()
+        r.add_picture(pngname)

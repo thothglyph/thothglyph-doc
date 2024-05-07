@@ -109,7 +109,7 @@ class PdfWriter(LatexWriter):
         fname, ext = os.path.splitext(node.value)
         if ext == '.svg':
             assert self.tmpdirname
-            imgpath = os.path.join(self.tmpdirname, node.value)
+            imgpath = os.path.join(self.tmpdirname, '{}.pdf'.format(node.value))
             svg2pdf(url=node.value, write_to=imgpath)
         else:
             pass

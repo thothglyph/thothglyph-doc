@@ -18,7 +18,7 @@ import rackdiag.drawer
 import packetdiag.parser
 import packetdiag.builder
 import packetdiag.drawer
-from thothglyph.util.svg import svg2pdf
+from thothglyph.util.svg import svg2pdf, svg2png
 from thothglyph.node import logging
 
 logger = logging.getLogger(__file__)
@@ -91,3 +91,14 @@ def customblock_write_latex(self, node):
 
 def customblock_write_pdf(self, node):
     customblock_write_latex(self, node)
+
+def customblock_write_docx(self, node):
+    text = node.text
+    svgstr, w, h = _get_svgstr(text)
+    w, h = int(w), int(h)
+    fname = os.path.join(self.tmpdirname, node.treeid() + '.png')
+    svg2png(bytestring=svgstr, write_to=fname, scale=0.625)
+    p = self._add_paragraph()
+    if p:
+        r = p.add_run()
+        r.add_picture(fname)
