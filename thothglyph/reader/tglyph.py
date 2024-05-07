@@ -762,7 +762,7 @@ class TglyphParser(Parser):
                     if prev.key != 'CODE_LINE':
                         text += '\n'
                     numspace = re.match(r' *', token.value).end()
-                    if numspace < indent and not warned:
+                    if 0 < numspace < indent and not warned:
                         msg = 'Code indentation is to the left of the block indentation.'
                         lineno = token.line + 1
                         msg = f'{self.reader.path}:{lineno}: {msg}'
@@ -825,7 +825,7 @@ class TglyphParser(Parser):
                     if prev.key != 'CUSTOM_LINE':
                         text += '\n'
                     numspace = re.match(r' *', token.value).end()
-                    if numspace < indent and not warned:
+                    if 0 < numspace < indent and not warned:
                         msg = 'Code indentation is to the left of the block indentation.'
                         lineno = token.line + 1
                         msg = f'{self.reader.path}:{lineno}: {msg}'

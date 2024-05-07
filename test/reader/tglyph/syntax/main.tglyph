@@ -356,19 +356,23 @@ Unsupported
 ⸌⸌⸌c
 #include <stdio.h>
 # include <stdlib.h>
+
 int main()
 {
   int x           = 1;
   long long int y = 2;
   char s[100] = "Good morning!\n";
   printf("Hello World!!\n");
+
   exit(0);
 }
 ⸌⸌⸌
 
   ⸌⸌⸌sh
   pushd ~
+
   cat .bashrc
+
   popd
   ⸌⸌⸌
 
