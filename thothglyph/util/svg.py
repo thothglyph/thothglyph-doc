@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 import shutil
 import subprocess
 import cairosvg
@@ -28,6 +29,10 @@ def svg2pdf(**kwargs) -> None:
             indata = f.read()
     if isinstance(indata, str):
         indata = indata.encode()
+
+    outdir = os.path.dirname(os.path.abspath(outpath))
+    if not os.path.exists(outdir):
+        os.makedirs(outdir, exist_ok=True)
 
     rsvg_convert = shutil.which('rsvg-convert')
     if rsvg_convert:
