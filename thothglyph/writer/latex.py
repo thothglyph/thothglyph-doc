@@ -43,7 +43,7 @@ class LatexWriter(Writer):
         'SUP': '',
         'SUB': '',
     }
-    bp_scale: float = 72.0 / 150.0
+    bp_scale: float = 0.625
 
     def __init__(self):
         super().__init__()
