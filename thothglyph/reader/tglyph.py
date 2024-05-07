@@ -194,7 +194,7 @@ class TglyphParser(Parser):
         return self.rootnode
 
     def _tokens(self, token: Lexer.Token, offset: int) -> Lexer.Token:
-        if token.no + offset >= len(self.tokens):
+        if self.tokens.index(token) + offset >= len(self.tokens):
             return None
         return self.tokens[self.tokens.index(token) + offset]
 
@@ -324,7 +324,7 @@ class TglyphParser(Parser):
         return tokens
 
     def p_if_else(self, tokens: List[Lexer.Token], conds: List[bool]) -> List[Lexer.Token]:
-        firstflowtoken = self._tokens(tokens[0], -1)
+        firstflowtoken = self._tokens(tokens[0], -1) or tokens[0]
         lastflowtoken = tokens[0]
         lasttoken = tokens[0]
         while tokens:
