@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 
-from thothglyph.util.svg import svg2pdf
+from thothglyph.util.svg import svg2pdf, svg2png
 from thothglyph.error import ThothglyphError
 from thothglyph.node import logging
 
@@ -69,3 +69,29 @@ def customblock_write_latex(self, node):
 
 def customblock_write_pdf(self, node):
     customblock_write_latex(self, node)
+
+def customblock_write_docx(self, node):
+    indata = node.text
+    if isinstance(indata, str):
+        indata = indata.encode()
+    umlname = os.path.join(self.tmpdirname, node.treeid() + '.uml')
+    svgname = os.path.join(self.tmpdirname, node.treeid() + '.svg')
+    pngname = os.path.join(self.tmpdirname, node.treeid() + '.png')
+    with open(umlname, 'wb') as f:
+        f.write(indata)
+    cmd = ['plantuml', '-tsvg', umlname]
+    p = subprocess.Popen(
+        cmd,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    )
+    p.communicate()
+    if p.returncode != 0:
+        msg = '{} command exit with code {}.'.format(cmd[0], p.returncode)
+        raise ThothglyphError(msg)
+    svg2png(url=svgname, write_to=pngname, scale=0.625)
+    p = self._add_paragraph()
+    if p:
+        r = p.add_run()
+        r.add_picture(pngname)

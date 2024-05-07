@@ -2,7 +2,7 @@ import os
 import re
 import wavedrom
 
-from thothglyph.util.svg import svg2pdf
+from thothglyph.util.svg import svg2pdf, svg2png
 from thothglyph.node import logging
 
 logger = logging.getLogger(__file__)
@@ -41,3 +41,13 @@ def customblock_write_pdf(self, node):
 #     drawing = svg2rlg(svg_io)
 #     fname = os.path.join(self.tmpdirname, node.treeid() + '.pdf')
 #     renderPDF.drawToFile(drawing, fname)
+
+def customblock_write_docx(self, node):
+    text = node.text
+    svg = wavedrom.render(text)  # type: ignore
+    fname = os.path.join(self.tmpdirname, node.treeid() + '.pdf')
+    svg2png(bytestring=svg._repr_svg_(), write_to=fname, scale=0.625)
+    p = self._add_paragraph()
+    if p:
+        r = p.add_run()
+        r.add_picture(fname)

@@ -128,7 +128,11 @@ new paragraph text text new 1.
 ᛝListᛝ item new 1
 ◃
 ᛝTerm 1◃ᛝ List item 1
+
+next paragraph.
 ᛝᛝTerm 1-1◃ᛝ List item 1-1
+
+next paragraph.
 ᛝᛝᛝTerm 1-1-1◃ᛝ List item 1-1-1
 ᛝᛝᛝTerm 1-1-2◃ᛝ List item 1-1-2
 ᛝᛝTerm 1-2◃ᛝ List item 1-2
@@ -356,19 +360,23 @@ Unsupported
 ⸌⸌⸌c
 #include <stdio.h>
 # include <stdlib.h>
+
 int main()
 {
   int x           = 1;
   long long int y = 2;
   char s[100] = "Good morning!\n";
   printf("Hello World!!\n");
+
   exit(0);
 }
 ⸌⸌⸌
 
   ⸌⸌⸌sh
   pushd ~
+
   cat .bashrc
+
   popd
   ⸌⸌⸌
 
@@ -433,7 +441,9 @@ Image in paragraph like ¤image⟦alt="Alt Text" w="150px"⟧⸨./tglyph_64.png�
 
 Image in paragraph like ¤image⟦alt="Alt Text" w="20%"⟧⸨./tglyph_64.png⸩.
 
-Image in paragraph like ¤image⟦w="150px"⟧⸨./tglyph.svg⸩.
+Image in paragraph like ¤image⟦w="150px"⟧⸨img/tglyph.png⸩.
+
+Image in paragraph like ¤image⟦w="150px"⟧⸨./img/tglyph.svg⸩.
 
 Image in paragraph like ¤image⟦w="180px"⟧⸨./tglyph.drawio.svg⸩.
 

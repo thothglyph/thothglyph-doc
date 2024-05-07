@@ -194,7 +194,7 @@ class TglyphParser(Parser):
         return self.rootnode
 
     def _tokens(self, token: Lexer.Token, offset: int) -> Lexer.Token:
-        if token.no + offset >= len(self.tokens):
+        if self.tokens.index(token) + offset >= len(self.tokens):
             return None
         return self.tokens[self.tokens.index(token) + offset]
 
@@ -324,7 +324,7 @@ class TglyphParser(Parser):
         return tokens
 
     def p_if_else(self, tokens: List[Lexer.Token], conds: List[bool]) -> List[Lexer.Token]:
-        firstflowtoken = self._tokens(tokens[0], -1)
+        firstflowtoken = self._tokens(tokens[0], -1) or tokens[0]
         lastflowtoken = tokens[0]
         lasttoken = tokens[0]
         while tokens:
@@ -762,7 +762,7 @@ class TglyphParser(Parser):
                     if prev.key != 'CODE_LINE':
                         text += '\n'
                     numspace = re.match(r' *', token.value).end()
-                    if numspace < indent and not warned:
+                    if 0 < numspace < indent and not warned:
                         msg = 'Code indentation is to the left of the block indentation.'
                         lineno = token.line + 1
                         msg = f'{self.reader.path}:{lineno}: {msg}'
@@ -825,7 +825,7 @@ class TglyphParser(Parser):
                     if prev.key != 'CUSTOM_LINE':
                         text += '\n'
                     numspace = re.match(r' *', token.value).end()
-                    if numspace < indent and not warned:
+                    if 0 < numspace < indent and not warned:
                         msg = 'Code indentation is to the left of the block indentation.'
                         lineno = token.line + 1
                         msg = f'{self.reader.path}:{lineno}: {msg}'
