@@ -464,6 +464,8 @@ class MdParser(Parser):
         if len(aligns) == 0:
             aligns = ['c' for i in range(table.col)]
         table.aligns = aligns
+        table.widths = [0 for i in range(table.col)]
+        table.width = 0
         for r, row_mdnode in enumerate(trows):
             row = nd.TableRowNode()
             row.idx = r
@@ -474,6 +476,7 @@ class MdParser(Parser):
                 cell = nd.TableCellNode()
                 cell.idx = c
                 cell.align = table.aligns[c]
+                cell.width = table.widths[c]
                 style = col_mdnode.attrs.get('style', '')
                 m = re.search(r'text-align:(\w+)', style)
                 if m:
@@ -510,6 +513,8 @@ class MdParser(Parser):
         if len(aligns) == 0:
             aligns = ['c' for i in range(table.col)]
         table.aligns = aligns
+        table.widths = [0 for i in range(table.col)]
+        table.width = 0
         for r, row_mdnode in enumerate(child_mdnodes.children[0].children):
             row = nd.TableRowNode()
             row.idx = r
@@ -521,6 +526,7 @@ class MdParser(Parser):
                 row.add(cell)
                 cell.idx = c
                 cell.align = table.aligns[c]
+                cell.width = table.widths[c]
                 self.nodes.append(cell)
                 self.p_blocks(col_mdnode.children)
                 self.nodes.pop()

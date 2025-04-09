@@ -320,7 +320,7 @@ class TableBlockNode(BlockNode):
         self.caption: Optional[str] = None
         self.align: str = 'l'  # table align
         self.aligns: List[str] = list()  # column alings
-        self.width: str = str()
+        self.width: int = 0
         self.widths: List[int] = list()  # column widths
 
     def cell(self, row: int, col: int) -> ASTNode:
@@ -382,7 +382,7 @@ class TableCellNode(ASTNode):
         super().__init__()
         self.idx: int = -1
         self.align: str = 'c'
-        self.width: str = str()
+        self.width: int = 0
         self.mergeto: Optional[TableCellNode] = None
         self.size: TableCellNode.Size = TableCellNode.Size(1, 1)
 
