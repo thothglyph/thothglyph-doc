@@ -365,7 +365,7 @@ int main()
 
 ## CustomBlock
 
-``` {graphviz}
+```graphviz
 digraph graph_name {
   alpha;
   beta;

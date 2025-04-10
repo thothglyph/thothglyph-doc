@@ -289,12 +289,24 @@ class MdParser(Parser):
             tp, args = m.group(1), m.group(2)
             self.p_directive(mdnode, tp, args)
             return
+        m = re.match(r'([a-zA-Z0-9_-]*)(?: +(.+))?', mdnode.info.strip())
+        if m:
+            ext, args = m.group(1), m.group(2)
+            self.p_customblock(mdnode, ext, args)
+            return
         self.p_codeblock(mdnode)
+
+    def p_customblock(self, mdnode: SyntaxTreeNode, ext: str, args: str) -> None:
+        custom = nd.CustomBlockNode()
+        custom.ext = ext
+        self.nodes[-1].add(custom)
+        text = self.replace_text_attrs(mdnode.content[:-1])
+        custom.text = text
 
     def p_codeblock(self, mdnode: SyntaxTreeNode) -> None:
         code = nd.CodeBlockNode()
         self.nodes[-1].add(code)
-        text = self.replace_text_attrs(mdnode.content)
+        text = self.replace_text_attrs(mdnode.content[:-1])
         text = nd.TextNode(text)
         code.add(text)
 
