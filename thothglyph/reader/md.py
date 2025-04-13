@@ -470,6 +470,7 @@ class MdParser(Parser):
         trows = mdnode.children[0].children
         if len(mdnode.children) > 1:
             trows += mdnode.children[1].children
+        table.type = 'normal'
         table.row = len(trows)
         table.col = len(trows[0].children)
         table.headers = header_splitter
@@ -516,6 +517,7 @@ class MdParser(Parser):
         if opts.get('align'):
             for c in opts.get('align'):
                 aligns.append(c)
+        table.type = opts.get('type', 'normal')
         table.row = len(child_mdnodes.children[0].children)
         table.col = len(child_mdnodes.children[0].children[0].children[0].children)
         try:
@@ -545,7 +547,8 @@ class MdParser(Parser):
                 try:
                     text_mdnode = col_mdnode.children[0].children[0].children[0]
                     if text_mdnode.type == 'text':
-                        self._tablecell_merge(table, cell, r, c, text_mdnode.content)
+                        text = self._tablecell_merge(table, cell, r, c, text_mdnode.content)
+                        # cell.children[0].children[0].text = text
                 except Exception:
                     pass
 
@@ -689,12 +692,12 @@ class MdParser(Parser):
         text = nd.TextNode()
         content = mdnode.content
         try:
-            if mdnode.parent.parent.parent.type == 'list_item':
-                m = re.match(r'^\[[ x-]\] ', mdnode.content)
-                if m:
-                    content = mdnode.content[4:]
-            elif any([
-                isinstance(self.nodes[-1], nd.TableCellNode),
+            if any([
+                isinstance(self.nodes[-1], nd.TableCellNode),  # BasicTable
+                all([  # ListTable
+                    isinstance(self.nodes[-1], nd.ParagraphNode),
+                    isinstance(self.nodes[-2], nd.TableCellNode),
+                ]),
             ]) and mdnode.previous_sibling is None:
                 hmarker = self._extract_tablecell_merge_hmarker(content)
                 vmarker = self._extract_tablecell_merge_vmarker(content)
@@ -702,6 +705,10 @@ class MdParser(Parser):
                     content = content[len(hmarker):]
                 elif vmarker:
                     content = content[len(vmarker):]
+            elif mdnode.parent.parent.parent.type == 'list_item':
+                m = re.match(r'^\[[ x-]\] ', mdnode.content)
+                if m:
+                    content = mdnode.content[4:]
         except Exception:
             pass
         text.text = self.replace_text_attrs(content)
