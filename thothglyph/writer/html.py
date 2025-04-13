@@ -318,6 +318,8 @@ class HtmlWriter(Writer):
             self.data += '</code></pre>\n'
         else:
             try:
+                if node.ext not in self.exts:
+                    raise Exception()
                 extpath = 'thothglyph.ext.{}'.format(node.ext)
                 extmodule = importlib.import_module(extpath)
                 extmodule.customblock_write_html(self, node)
