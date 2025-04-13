@@ -160,6 +160,13 @@ class MdParser(Parser):
             raise ThothglyphError(msg)
         return self.nodes[idx]
 
+    def _get_plain_text(self, mdnode: SyntaxTreeNode) -> str:
+        text = str()
+        for node in mdnode.walk():
+            if node.type == 'text':
+                text += node.content
+        return text
+
     def p_section(self, mdnode: SyntaxTreeNode) -> None:
         m = re.match(r'h(\d+)', mdnode.tag)
         level = int(m.group(1))
@@ -167,7 +174,7 @@ class MdParser(Parser):
         accepted = (nd.DocumentNode, nd.SectionNode)
         if not isinstance(self.nodes[-1], accepted):
             symbol = '#' * level
-            title = mdnode.children[0].children[0].content
+            title = self._get_plain_text(mdnode.children[0])
             text = f'{symbol} {title}'
             text = nd.TextNode(text)
             self.nodes[-1].add(text)
@@ -188,7 +195,7 @@ class MdParser(Parser):
         notoc = bool(mdnode.attrs.get('notoc', ''))
         section.opts['nonum'] = nonum or notoc
         section.opts['notoc'] = notoc
-        section.title = mdnode.children[0].children[0].content
+        section.title = self._get_plain_text(mdnode.children[0])
         prevnode = mdnode.previous_sibling
         if prevnode and prevnode.type == 'myst_target':
             section.id = prevnode.content
