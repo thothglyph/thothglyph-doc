@@ -99,7 +99,7 @@ class HtmlWriter(Writer):
 
     def visit_section(self, node: nd.ASTNode) -> None:
         self.data += '<section>'
-        _id = node.id or node.title.replace(' ', '_')
+        _id = node.id or node.auto_id
         if node.opts.get('nonum'):
             title = node.title
         else:
@@ -132,7 +132,7 @@ class HtmlWriter(Writer):
                     title = '{}'.format(n.title)
                 else:
                     title = '{}. {}'.format(n.sectnum, n.title)
-                _id = n.id or n.title.replace(' ', '_')
+                _id = n.id or n.auto_id
                 self.data += '<li><a href="#{}">{}</a></li>\n'.format(_id, title)
                 if bros.index(n) == len(bros) - 1:
                     self.data += '</ul>\n'

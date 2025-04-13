@@ -149,12 +149,14 @@ class ConfigNode(ASTNode):
 
 
 class SectionNode(ASTNode):
-    attrkey = ('level', 'title', 'opts')
+    attrkey = ('level', 'title', 'id', 'auto_id', 'opts')
 
     def __init__(self):
         super().__init__()
         self.level: int = 0
         self.title: str = str()
+        self.id: str = str()
+        self.auto_id: str = str()
         self.opts: Dict[str, Any] = dict()
         self._sectindex: List[int] = list()
 
@@ -513,6 +515,8 @@ class LinkNode(InlineNode):
             if gofoward and isinstance(n, SectionNode):
                 if n.id == self.value:
                     return n.id
+                if not n.id and n.auto_id == self.value:
+                    return n.auto_id
         return self.value.replace(' ', '_')
 
     @property

@@ -445,6 +445,24 @@ Block markup section: [](Block-markup)!
 
 「[](セクション1-1)」のようにIDには多言語文字が使えます。
 
+タイトルから自動で割り振られるIDが重複する場合、2つ目以降は連番が振られます：
+
+* [Section Name](section-name)
+* [Section Name (1)](section-name-1)
+* [Section Name (2)](section-name-2)
+
+### Section Name
+
+aaa
+
+### Section Name
+
+bbb
+
+### Section Name
+
+ccc
+
 ## Footnote
 
 The important text. {footnote}`1` And the important text too. {footnote}`2`

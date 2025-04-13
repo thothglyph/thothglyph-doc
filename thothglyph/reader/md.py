@@ -732,8 +732,46 @@ class MdReader(Reader):
 
     def read(self, path: str, encoding: Optional[str] = None) -> nd.ASTNode:
         try:
-            return super().read(path, encoding)
+            node = super().read(path, encoding)
+            self._convert_link_slug(node)
+            return node
         except Exception as e:
             _, errormsg = e.args
             msg = 'File cannot found: {}'.format(e.filename)
             raise ThothglyphError(msg)
+
+    def _slugify(self, text):
+        slug = re.sub(r'[^\w\- ]', '', text)
+        slug = re.sub(r' ', '-', slug)
+        slug = slug.lower()
+        return slug
+
+    def _convert_link_slug(self, node: nd.ASTNode) -> None:
+        slug_sections = list()
+        for n, gofoward in node.walk_depth():
+            if not gofoward:
+                continue
+            if isinstance(n, nd.SectionNode) and not n.id:
+                slug = self._slugify(n.title)
+                slug_sections.append([n, slug])
+        slug_sections.sort(key=lambda x: x[1])
+        if len(slug_sections) > 1:
+            prev_slug = slug_sections[0][1]
+            count = 0
+            for i, (n, slug) in enumerate(slug_sections[1:]):
+                if slug != prev_slug:
+                    count = 0
+                else:
+                    count += 1
+                    new_slug = slug + '-' + str(count)
+                    slug_sections[i + 1][1] = new_slug
+                prev_slug = slug
+        slug_table = dict([(x[1], x[0]) for x in slug_sections])
+        for n, gofoward in node.walk_depth():
+            if not gofoward:
+                continue
+            if isinstance(n, nd.LinkNode):
+                if '://' in n.value:
+                    continue
+                if n.target_id in slug_table:
+                    n.value = slug_table[n.target_id].auto_id

@@ -495,6 +495,24 @@ Block markup section: ⸨Block-markup⸩!
 
 「⟦⟧⸨セクション1-1⸩」のようにIDには多言語文字が使えます。
 
+タイトルから自動で割り振られるIDが重複する場合、2つ目以降のIDには連番が振られます：
+
+• ⟦Section Name⟧⸨Section_Name⸩
+• ⟦Section Name (1)⟧⸨Section_Name-1⸩
+• ⟦Section Name (2)⟧⸨Section_Name-2⸩
+
+▮▮▮ Section Name
+
+aaa
+
+▮▮▮ Section Name
+
+bbb
+
+▮▮▮ Section Name
+
+ccc
+
 ▮▮ Footnote
 
 The important text. [^1] And the important text too. [^2]

@@ -60,7 +60,7 @@ class Lexer():
         'CODE_LINE': r'( *)⸌⸌⸌(.*)',
         'QUOTE_SYMBOL': r'^ *> ',
         'HR_LINE': r'^ *(?:(={4,})|(-{4,}))$',
-        'OPTION_LINE': r'^ *⟦([^⟧]*)⟧',
+        'OPTION_LINE': r'^ *⟦([^⟧]*)⟧ *$',
         'BREAK_PARAGRAPH': r' *⊹',
         'STR_LINE': r'.+',
         'EMPTY_LINE': r'^$',

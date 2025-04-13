@@ -81,7 +81,7 @@ class LatexWriter(Writer):
 
     def visit_section(self, node: nd.ASTNode) -> None:
         level_offset = 0
-        _id = node.id or node.title.replace(' ', '_')
+        _id = node.id or node.auto_id
         title = tex_escape(node.title)
         doctype = 'report'
         level = min(node.level - 1, len(self.sectlevel_cmds[doctype]) - 1) + level_offset
@@ -448,10 +448,13 @@ class LatexWriter(Writer):
             text = tex_escape(text)
             self.data += '\\href{{{}}}{{{}}}'.format(url, text)
         else:
-            url = node.target_id or node.value.replace(' ', '_')
-            text = node.opts[0] if node.opts[0] else node.target_title
-            text = tex_escape(text)
-            self.data += '\\nameref{{{}}}'.format(url)
+            url = node.target_id
+            if node.opts[0]:
+                text = node.opts[0]
+                text = tex_escape(text)
+                self.data += '\\hyperref[{}]{{{}}}'.format(url, text)
+            else:
+                self.data += '\\nameref{{{}}}'.format(url)
 
     def leave_link(self, node: nd.ASTNode) -> None:
         pass
