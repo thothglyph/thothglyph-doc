@@ -79,9 +79,14 @@ class LatexWriter(Writer):
         self.data += '\\setcounter{page}{0}\n'
         self.data += '\\pagenumbering{arabic}\\pagestyle{beforecontents}\n'
 
+    def _label_normalize(self, label: str) -> str:
+        label = re.sub(r'[!"#\$%&\'\(\)\-=^~|\{\}\[\]]', '-', label)
+        return label
+
     def visit_section(self, node: nd.ASTNode) -> None:
         level_offset = 0
         _id = node.id or node.auto_id
+        _id = self._label_normalize(_id)
         title = tex_escape(node.title)
         doctype = 'report'
         level = min(node.level - 1, len(self.sectlevel_cmds[doctype]) - 1) + level_offset
@@ -448,7 +453,7 @@ class LatexWriter(Writer):
             text = tex_escape(text)
             self.data += '\\href{{{}}}{{{}}}'.format(url, text)
         else:
-            url = node.target_id
+            url = self._label_normalize(node.target_id)
             if node.opts[0]:
                 text = node.opts[0]
                 text = tex_escape(text)
