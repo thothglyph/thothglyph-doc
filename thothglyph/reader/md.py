@@ -505,9 +505,10 @@ class MdParser(Parser):
                     if alignkey in align_table.keys():
                         cell.align = align_table[alignkey]
                 row.add(cell)
-                text_mdnode = col_mdnode.children[0].children[0]
-                if text_mdnode.type == 'text':
-                    self._tablecell_merge(table, cell, r, c, text_mdnode.content)
+                if len(col_mdnode.children[0].children) > 0:
+                    text_mdnode = col_mdnode.children[0].children[0]
+                    if text_mdnode.type == 'text':
+                        self._tablecell_merge(table, cell, r, c, text_mdnode.content)
                 self.nodes.append(cell)
                 self.p_inlinemarkup(col_mdnode.children[0])
                 self.nodes.pop()
