@@ -743,7 +743,7 @@ class MdReader(Reader):
     def _slugify(self, text):
         slug = re.sub(r'[^\w\- ]', '', text)
         slug = re.sub(r' ', '-', slug)
-        slug = slug.lower()
+        slug = '#' + slug.lower()
         return slug
 
     def _convert_link_slug(self, node: nd.ASTNode) -> None:
