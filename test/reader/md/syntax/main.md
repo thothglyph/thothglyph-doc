@@ -195,9 +195,6 @@ Term3
 | data`21` | data22 | data23 |
 | a | b | c |
 
-* No-header table is unsupported.
-* Multi-row-header table is unsupported.
-
 | head11 | head12 | :<     | :<     |
 |--------|--------|--------|--------|
 | data11 | data12 | data13 | data14 |
@@ -206,6 +203,21 @@ Term3
 | data41 | data42 | :<      | data44 |
 | data51 | data52 | data53 |:<data54 |
 | data61 |:^data62 |:^data63 |:<data64 |
+
+```{table}
+| head11 | head12 | head13 |
+| head21 | head22 | head23 |
+|:-------|:------:|-------:|
+| data11 | data12 | data13 |
+| data`21` | data22 | data23 |
+| a | b | c |
+```
+
+```{table}
+|:------:|-------:|+-------|
+| data11 | data12 | data13 |
+| A | B | C |
+```
 
 ### ListTable
 

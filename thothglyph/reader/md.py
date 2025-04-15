@@ -330,11 +330,14 @@ class MdParser(Parser):
             self.p_literalinclude(mdnode, tp, args)
         elif tp == 'include':
             self.p_include(mdnode, tp, args)
+        elif tp == 'table':
+            self.p_basictable2(mdnode, tp, args)
         elif tp == 'list-table':
             self.p_listtable(mdnode, tp, args)
         else:
             msg = '"{}" directive is not supported.'.format(tp)
             logger.warn(msg)
+            self.p_codeblock(mdnode)
 
     def _parse_directive(self, text):
         opts = {}
@@ -512,6 +515,79 @@ class MdParser(Parser):
                 self.nodes.append(cell)
                 self.p_inlinemarkup(col_mdnode.children[0])
                 self.nodes.pop()
+
+    def p_basictable2(self, mdnode: SyntaxTreeNode, tp: str, args: str) -> None:
+        text = self.replace_text_attrs(mdnode.content)
+        opts, data = self._parse_directive(text)
+
+        table = nd.TableBlockNode()
+        self.nodes[-1].add(table)
+        lines = data.splitlines()
+        tabletexts = list()
+        aligns = list()
+        header_splitter = -1
+        for i, line in enumerate(lines):
+            rowtexts = re.split(r' *\| *', line.strip())[1:-1]
+            ms = [re.match(r'^[+:]?-+[+:]?$', c) for c in rowtexts]
+            if all(ms) and header_splitter == -1:
+                aligns = list()
+                for m in ms:
+                    assert m
+                    mg = m.group(0)
+                    if mg[0] == mg[-1] == ':':
+                        aligns.append('c')
+                    elif mg[-1] == ':':
+                        aligns.append('r')
+                    elif mg[0] == '+':
+                        aligns.append('x')
+                    else:
+                        aligns.append('l')
+                header_splitter = i
+            else:
+                tabletexts.append(rowtexts)
+        if header_splitter < 0:
+            header_splitter = 0
+        table.type = opts.get('type', 'normal')
+        table.row = len(tabletexts)
+        table.col = len(tabletexts[0])
+        table.headers = header_splitter
+        if len(aligns) == 0:
+            aligns = ['c' for i in range(table.col)]
+        table.aligns = aligns
+        table.widths = opts.get('widths', [0 for i in range(table.col)])
+        table.width = opts.get('w')
+        for r, rowtexts in enumerate(tabletexts):
+            row = nd.TableRowNode()
+            row.idx = r
+            if r < table.headers:
+                row.tp = 'header'
+            table.add(row)
+            if len(rowtexts) != table.col or len(table.aligns) != table.col:
+                # lineno = begintoken.line + 1 + r
+                lineno = mdnode.map[0]
+                if 0 < table.headers < lineno:
+                    lineno += 1
+                msg = 'Table rows have different sizes.'
+                msg = f'{self.reader.path}:{lineno}: {msg}'
+                raise ThothglyphError(msg)
+            for c, celltext in enumerate(rowtexts):
+                cell = nd.TableCellNode()
+                row.add(cell)
+                cell.idx = c
+                cell.align = table.aligns[c]
+                cell.width = table.widths[c]
+                text = self.replace_text_attrs(celltext)
+                text = self._tablecell_merge(table, cell, r, c, text)
+                try:
+                    text_tokens = mdit.parse(text)
+                    text_mdnodes = SyntaxTreeNode(text_tokens)
+                    if len(text_mdnodes.children) > 0:
+                        self.nodes.append(cell)
+                        self.p_inlinemarkup(text_mdnodes.children[0].children[0])
+                        self.nodes.pop()
+                except Exception as e:
+                    print(e)
+                    cell.add(nd.TextNode(text))
 
     def p_listtable(self, mdnode: SyntaxTreeNode, tp: str, args: str) -> None:
         text = self.replace_text_attrs(mdnode.content)
