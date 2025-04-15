@@ -489,6 +489,7 @@ class MdParser(Parser):
         table.aligns = aligns
         table.widths = [0 for i in range(table.col)]
         table.width = 0
+        table.fontsize = ''
         for r, row_mdnode in enumerate(trows):
             row = nd.TableRowNode()
             row.idx = r
@@ -556,6 +557,7 @@ class MdParser(Parser):
         table.aligns = aligns
         table.widths = opts.get('widths', [0 for i in range(table.col)])
         table.width = opts.get('w')
+        table.fontsize = opts.get('fontsize', '')
         for r, rowtexts in enumerate(tabletexts):
             row = nd.TableRowNode()
             row.idx = r
@@ -611,8 +613,9 @@ class MdParser(Parser):
         if len(aligns) == 0:
             aligns = ['c' for i in range(table.col)]
         table.aligns = aligns
-        table.widths = [0 for i in range(table.col)]
-        table.width = 0
+        table.widths = opts.get('widths', [0 for i in range(table.col)])
+        table.width = opts.get('w')
+        table.fontsize = opts.get('fontsize', '')
         for r, row_mdnode in enumerate(child_mdnodes.children[0].children):
             row = nd.TableRowNode()
             row.idx = r

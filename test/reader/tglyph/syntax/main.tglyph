@@ -633,7 +633,8 @@ This is [not] important [(text)].
 
 ▮▮ Basic Table Cell Merging
 
-| Type | Size | Ptr/Align | ⏴ |
+| Type | Size | Ptr / Align | ⏴ |
+|---|---|---|---|
 | Int⸌byte⸌ | 1 | 4 | 4 |
 | ⏶ ⸌short⸌ | 2 | 4 | ⏴ |
 | ⏶ ⸌int⸌ | 4 | ⏶ | ⏴ |
@@ -648,6 +649,70 @@ This is [not] important [(text)].
   •• abcdefg
   •• The ⸌long_long_long_long code⸌ and ⸌longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong code⸌ text.
 ===|
+
+▮▮ Merged Wide Table
+
+⟦type="adjust"⟧
+| head11 | head12 | head13 | head14 | head15 | head16 | head17 | head18 | head19 | ⏴      |
+| head21 | ⏴      | ⏴      | head24 | ⏶      | head26 | head27 | head28 | head29 | head2a |
+|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|
+| data11 | data12 | data13 | data14 | data15 | data16 | data17 | data18 | data19 | data1a |
+| data21 | data22 | data23 | data24 | data25 | data26 | data27 | data28 | data29 | data2a |
+| data31 | data32 longlong longlong text | ⏴      | data34 | data35 | data36 | data37 | data38 | data39 | data3a |
+| data41 | data42 | data43 | data44 | data45 | data46 | data47 | data48 | data49 | data4a |
+
+⟦type="long" fontsize="small"⟧
+| head11 | head12 | head13 | head14 | head15 | head16 | head17 | head18 | head19 | ⏴      |
+| head21 | ⏴      | ⏴      | head24 | ⏶      | head26 | head27 | head28 | head29 | head2a |
+|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|
+| data11 | data12 | data13 | data14 | data15 | data16 | data17 | data18 | data19 | data1a |
+| data21 | data22 | data23 | data24 | data25 | data26 | data27 | data28 | data29 | data2a |
+| data31 | data32 longlong longlong text | ⏴      | data34 | data35 | data36 | data37 | data38 | data39 | data3a |
+| data41 | data42 | data43 | data44 | data45 | data46 | data47 | data48 | data49 | data4a |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datax1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
+| datay1 | datax2 | datax3 | datax4 | datax5 | datax6 | datax7 | datax8 | datax9 | dataxa |
 
 ▮▮ Footnote within Table
 

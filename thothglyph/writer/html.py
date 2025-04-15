@@ -298,12 +298,19 @@ class HtmlWriter(Writer):
         tagname = 'td'
         if node.parent.tp == 'header':
             tagname = 'th'
+        table_fontsize = [
+            'x-small',
+            'small',
+            'medium',
+        ]
         if node.mergeto is None:
             s = node.size
             align = {'l': 'left', 'c': 'center', 'r': 'right', 'x': 'left'}
             styles = ['text-align:{}'.format(align[node.align])]
             if int(node.width) > 0:
                 styles += ['width:{}%'.format(node.width)]
+            if node.parent.parent.fontsize in table_fontsize:
+                styles += ['font-size:{}'.format(node.parent.parent.fontsize)]
             attrs = ['style="{}"'.format(';'.join(styles))]
             attrs += ['colspan="{}"'.format(s.x), 'rowspan="{}"'.format(s.y)]
             self.data += '<{} {}>'.format(tagname, ' '.join(attrs))

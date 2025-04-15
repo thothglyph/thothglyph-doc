@@ -311,7 +311,7 @@ class FigureBlockNode(BlockNode):
 
 
 class TableBlockNode(BlockNode):
-    attrkey = ('row', 'col', 'headers')
+    attrkey = ('row', 'col', 'headers', 'fontsize')
 
     def __init__(self):
         super().__init__()
@@ -324,6 +324,7 @@ class TableBlockNode(BlockNode):
         self.aligns: List[str] = list()  # column alings
         self.width: int = 0
         self.widths: List[int] = list()  # column widths
+        self.fontsize: str = ''
 
     def cell(self, row: int, col: int) -> ASTNode:
         return self.children[row].children[col]

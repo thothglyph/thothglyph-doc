@@ -242,7 +242,7 @@ class LatexWriter(Writer):
         else:
             col_aligns = '{}'.format(' '.join(aligns))
         if not node._parent_table():
-            self.data += '\\{}'.format(table_align_cmd[align])
+            self.data += '\\{}\n'.format(table_align_cmd[align])
             if node.type == 'long':
                 self.data += '\\begin{longtblr}\n'
             # elif isinstance(node.parent, nd.FigureBlockNode):
@@ -260,11 +260,28 @@ class LatexWriter(Writer):
             if w.endswith('px'):
                 w = '{}bp'.format(int(float(w[0:-2]) * self.bp_scale))
             elif w.endswith('%'):
-                w = '{}\\linewidth'.format(float(w[0:-1]) * 0.01)
+                w = '{}\\whatsleft'.format(float(w[0:-1]) * 0.01)
+            else:
+                w = '{}\\whatsleft'.format(float(w[0:-1]) * 0.01)
             self.data += 'width = {} ,'.format(w)
         self.data += 'colspec = {{{}}}, '.format(col_aligns)
         self.data += 'hlines, vlines, '
-        self.data += 'measure = vbox, '
+        self.data += 'hspan = minimal, '
+        self.data += 'measure = vbox ,'
+        self.data += 'rows = {tgtdrowcolor}, '
+        table_fontsize_table = {
+            'x-small': '\\scriptsize',
+            'small': '\\footnotesize',
+            'medium': '\\normalsize',
+        }
+        # self.data += 'rows = \\tgtdrowcolor, '
+        if node.headers > 0:
+            self.data += 'rowhead = {} ,'.format(node.headers)
+            self.data += 'row{{1-{}}} = {{tgthrowcolor}}, '.format(node.headers)
+        if node.fontsize in table_fontsize_table:
+            self.data += 'cells = {{font = {}}} ,'.format(
+                table_fontsize_table[node.fontsize]
+            )
         self.data += '}\n'
 
     def leave_tableblock(self, node: nd.ASTNode) -> None:

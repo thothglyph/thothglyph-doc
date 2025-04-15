@@ -898,6 +898,7 @@ class TglyphParser(Parser):
         newopts: Dict[str, str] = dict()
         newopts['type'] = opts.get('type', 'normal')
         newopts['w'] = opts.get('w', '')
+        newopts['fontsize'] = opts.get('fontsize', '')
         for k, v in opts.items():
             if k == 'align':
                 newopts['align'] = [c for c in v]
@@ -964,6 +965,7 @@ class TglyphParser(Parser):
         table.aligns = aligns
         table.widths = opts.get('widths', [0 for i in range(table.col)])
         table.width = opts.get('w')
+        table.fontsize = opts.get('fontsize', '')
         for r, rowtexts in enumerate(tabletexts):
             row = nd.TableRowNode()
             row.idx = r
@@ -1054,6 +1056,7 @@ class TglyphParser(Parser):
         table.headers = len(header_rowlist.children)
         table.widths = opts.get('widths', [0 for i in range(table.col)])
         table.width = opts.get('w')
+        table.fontsize = opts.get('fontsize', '')
         for r, rowitem in enumerate(rowitems):
             row = nd.TableRowNode()
             row.idx = r
