@@ -1276,8 +1276,9 @@ class TglyphParser(Parser):
         cur_deco = [deco.role]
         while tokens:
             if tokens[0].key != cur_deco[-1] and tokens[0].key in Lexer.all_deco_keys:
-                cur_deco.append(tokens[0].key)
-                depth += 1
+                if deco.role != 'CODE':
+                    cur_deco.append(tokens[0].key)
+                    depth += 1
             elif tokens[0].key in (cur_deco[-1], 'DECO_END'):
                 if depth == 0:
                     break
@@ -1290,6 +1291,9 @@ class TglyphParser(Parser):
             msg = f'Inline {deco.role} is not closed.'
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
+        if deco.role == 'CODE':
+            for token in subtokens:
+                token.key = 'TEXT'
         tokens.pop(0)
         self.p_decotext(subtokens)
         self.nodes.pop()
