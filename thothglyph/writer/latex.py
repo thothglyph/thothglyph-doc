@@ -33,7 +33,14 @@ class LatexWriter(Writer):
         'SUP': ('\\textsuperscript{', '}'),
         'SUB': ('\\textsubscript{', '}'),
     }
-    code_decoration_table: Dict[str, Tuple[str, str]] = {
+    color_decoration_table: Dict[str, Tuple[str, str]] = {
+        'COLOR1': ('\\decocolorA{', '}'),
+        'COLOR2': ('\\decocolorB{', '}'),
+        'COLOR3': ('\\decocolorC{', '}'),
+        'COLOR4': ('\\decocolorD{', '}'),
+        'COLOR5': ('\\decocolorE{', '}'),
+    }
+    code_decoration_table: Dict[str, str] = {
         'EMPHASIS': '<?tg:I?>',
         'STRONG': '<?tg:S?>',
         'MARKED': '<?tg:U?>',
@@ -369,15 +376,23 @@ class LatexWriter(Writer):
 
     def visit_decorationrole(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent_block, nd.CodeBlockNode):
-            self.data += self.code_decoration_table[node.role]
+            if node.role in self.code_decoration_table:
+                self.data += self.code_decoration_table[node.role]
         else:
-            self.data += self.decoration_table[node.role][0]
+            if node.role in self.code_decoration_table:
+                self.data += self.decoration_table[node.role][0]
+            else:
+                self.data += self.color_decoration_table[node.role][0]
 
     def leave_decorationrole(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent_block, nd.CodeBlockNode):
-            self.data += self.code_decoration_table[node.role]
+            if node.role in self.code_decoration_table:
+                self.data += self.code_decoration_table[node.role]
         else:
-            self.data += self.decoration_table[node.role][1]
+            if node.role in self.code_decoration_table:
+                self.data += self.decoration_table[node.role][1]
+            else:
+                self.data += self.color_decoration_table[node.role][1]
 
     def visit_role(self, node: nd.ASTNode) -> None:
         if node.role == '':

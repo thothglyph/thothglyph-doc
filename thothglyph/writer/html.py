@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, List, Optional
+from typing import Dict, Tuple, List, Optional
 import html
 import importlib
 import os
@@ -28,6 +28,14 @@ class HtmlWriter(Writer):
         'SUP': 'sup',
         'SUB': 'sub',
     }
+
+    color_decoration_list: Tuple[str, str] = (
+        'COLOR1',
+        'COLOR2',
+        'COLOR3',
+        'COLOR4',
+        'COLOR5',
+    )
 
     def __init__(self):
         super().__init__()
@@ -362,10 +370,16 @@ class HtmlWriter(Writer):
             self.data += '</dt><dd>'
 
     def visit_decorationrole(self, node: nd.ASTNode) -> None:
-        self.data += '<{}>'.format(self.decoration_table[node.role])
+        if node.role in self.color_decoration_list:
+            self.data += '<span class="deco_{}">'.format(node.role.lower())
+        else:
+            self.data += '<{}>'.format(self.decoration_table[node.role])
 
     def leave_decorationrole(self, node: nd.ASTNode) -> None:
-        self.data += '</{}>'.format(self.decoration_table[node.role])
+        if node.role in self.color_decoration_list:
+            self.data += '</span>'
+        else:
+            self.data += '</{}>'.format(self.decoration_table[node.role])
 
     def visit_role(self, node: nd.ASTNode) -> None:
         if node.role == '':

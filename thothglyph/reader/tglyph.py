@@ -72,6 +72,14 @@ class Lexer():
         'CHECK_LIST_SYMBOL',
     )
 
+    inline_color_deco_tokens: Dict[str, str] = {
+        'COLOR1': r'🔴',
+        'COLOR2': r'🟡',
+        'COLOR3': r'🟢',
+        'COLOR4': r'🔵',
+        'COLOR5': r'🟣',
+    }
+
     inline_deco_tokens: Dict[str, str] = {
         'EMPHASIS': r'⁒',
         'STRONG': r'⋄',
@@ -84,6 +92,9 @@ class Lexer():
         'TEXT': r'.*',
     }
     deco_keys: Tuple[str, ...] = tuple(inline_deco_tokens.keys())[:-1]
+    all_deco_keys: Tuple[str, ...] = tuple(
+        list(inline_color_deco_tokens.keys()) + list(inline_deco_tokens.keys())
+    )[:-1]
 
     inline_tokens: Dict[str, str] = {
         'ATTR': r'⁅([A-Za-z0-9_\-]+)⁆',
@@ -92,8 +103,9 @@ class Lexer():
         'FOOTNOTE': r'\[\^([\w\-.]+)\]',
         'REFERENCE': r'\[\#([\w\-.]+)\]',
         'BRACKET': r'\[[^\]]+\]',
+        'DECO_END': r'⟠',
         'LINEBREAK': r'↲',
-    } | inline_deco_tokens
+    } | inline_color_deco_tokens | inline_deco_tokens
 
     def __init__(self):
         self._preproc_tokens: Dict[str, re.Pattern] = {
@@ -101,6 +113,9 @@ class Lexer():
         }
         self._block_tokens: Dict[str, re.Pattern] = {
             k: re.compile(v) for k, v in self.block_tokens.items()
+        }
+        self._inline_color_deco_tokens: Dict[str, re.Pattern] = {
+            k: re.compile(v) for k, v in self.inline_color_deco_tokens.items()
         }
         self._inline_deco_tokens: Dict[str, re.Pattern] = {
             k: re.compile(v) for k, v in self.inline_deco_tokens.items()
@@ -116,7 +131,8 @@ class Lexer():
         return self.lex_pattern(self._block_tokens, data)
 
     def lex_inline_deco(self, data: str, begin=1) -> List[Lexer.Token]:
-        return self.lex_pattern(self._inline_deco_tokens, data, begin=begin)
+        deco_tokens = self._inline_color_deco_tokens | self._inline_deco_tokens
+        return self.lex_pattern(deco_tokens, data, begin=begin)
 
     def lex_inline(self, data: str, begin=1) -> List[Lexer.Token]:
         return self.lex_pattern(self._inline_tokens, data, begin=begin)
@@ -1097,7 +1113,7 @@ class TglyphParser(Parser):
                 tokens = self.p_footnote(tokens)
             elif tokens[0].key == 'REFERENCE':
                 tokens = self.p_reference(tokens)
-            elif tokens[0].key in Lexer.deco_keys:
+            elif tokens[0].key in Lexer.all_deco_keys:
                 tokens = self.p_deco(tokens)
             elif tokens[0].key in 'LINEBREAK':
                 tokens = self.p_linebreak(tokens)
@@ -1235,7 +1251,7 @@ class TglyphParser(Parser):
 
     def p_decotext(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         while tokens:
-            if tokens[0].key in Lexer.deco_keys:
+            if tokens[0].key in Lexer.all_deco_keys:
                 tokens = self.p_deco(tokens)
             elif tokens[0].key == 'TEXT':
                 tokens = self.p_text(tokens)
@@ -1256,9 +1272,17 @@ class TglyphParser(Parser):
         self.nodes[-1].add(deco)
         self.nodes.append(deco)
         subtokens = list()
+        depth = 0
+        cur_deco = [deco.role]
         while tokens:
-            if tokens[0].key == deco.role:
-                break
+            if tokens[0].key != cur_deco[-1] and tokens[0].key in Lexer.all_deco_keys:
+                cur_deco.append(tokens[0].key)
+                depth += 1
+            elif tokens[0].key in (cur_deco[-1], 'DECO_END'):
+                if depth == 0:
+                    break
+                cur_deco.pop()
+                depth -= 1
             subtokens.append(tokens[0])
             tokens.pop(0)
         else:
