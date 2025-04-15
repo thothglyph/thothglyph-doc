@@ -163,7 +163,7 @@ class MdParser(Parser):
     def _get_plain_text(self, mdnode: SyntaxTreeNode) -> str:
         text = str()
         for node in mdnode.walk():
-            if node.type == 'text':
+            if node.type in ('text', 'code_inline'):
                 text += node.content
         return text
 
