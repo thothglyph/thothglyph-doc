@@ -33,7 +33,14 @@ class LatexWriter(Writer):
         'SUP': ('\\textsuperscript{', '}'),
         'SUB': ('\\textsubscript{', '}'),
     }
-    code_decoration_table: Dict[str, Tuple[str, str]] = {
+    color_decoration_table: Dict[str, Tuple[str, str]] = {
+        'COLOR1': ('\\decocolorA{', '}'),
+        'COLOR2': ('\\decocolorB{', '}'),
+        'COLOR3': ('\\decocolorC{', '}'),
+        'COLOR4': ('\\decocolorD{', '}'),
+        'COLOR5': ('\\decocolorE{', '}'),
+    }
+    code_decoration_table: Dict[str, str] = {
         'EMPHASIS': '<?tg:I?>',
         'STRONG': '<?tg:S?>',
         'MARKED': '<?tg:U?>',
@@ -79,9 +86,14 @@ class LatexWriter(Writer):
         self.data += '\\setcounter{page}{0}\n'
         self.data += '\\pagenumbering{arabic}\\pagestyle{beforecontents}\n'
 
+    def _label_normalize(self, label: str) -> str:
+        label = re.sub(r'[!"#\$%&\'\(\)\-=^~|\{\}\[\]]', '-', label)
+        return label
+
     def visit_section(self, node: nd.ASTNode) -> None:
         level_offset = 0
-        _id = node.id or node.title.replace(' ', '_')
+        _id = node.id or node.auto_id
+        _id = self._label_normalize(_id)
         title = tex_escape(node.title)
         doctype = 'report'
         level = min(node.level - 1, len(self.sectlevel_cmds[doctype]) - 1) + level_offset
@@ -230,7 +242,7 @@ class LatexWriter(Writer):
         else:
             col_aligns = '{}'.format(' '.join(aligns))
         if not node._parent_table():
-            self.data += '\\{}'.format(table_align_cmd[align])
+            self.data += '\\{}\n'.format(table_align_cmd[align])
             if node.type == 'long':
                 self.data += '\\begin{longtblr}\n'
             # elif isinstance(node.parent, nd.FigureBlockNode):
@@ -248,11 +260,28 @@ class LatexWriter(Writer):
             if w.endswith('px'):
                 w = '{}bp'.format(int(float(w[0:-2]) * self.bp_scale))
             elif w.endswith('%'):
-                w = '{}\\linewidth'.format(float(w[0:-1]) * 0.01)
+                w = '{}\\whatsleft'.format(float(w[0:-1]) * 0.01)
+            else:
+                w = '{}\\whatsleft'.format(float(w[0:-1]) * 0.01)
             self.data += 'width = {} ,'.format(w)
         self.data += 'colspec = {{{}}}, '.format(col_aligns)
         self.data += 'hlines, vlines, '
-        self.data += 'measure = vbox, '
+        self.data += 'hspan = minimal, '
+        self.data += 'measure = vbox ,'
+        self.data += 'rows = {tgtdrowcolor}, '
+        table_fontsize_table = {
+            'x-small': '\\scriptsize',
+            'small': '\\footnotesize',
+            'medium': '\\normalsize',
+        }
+        # self.data += 'rows = \\tgtdrowcolor, '
+        if node.headers > 0:
+            self.data += 'rowhead = {} ,'.format(node.headers)
+            self.data += 'row{{1-{}}} = {{tgthrowcolor}}, '.format(node.headers)
+        if node.fontsize in table_fontsize_table:
+            self.data += 'cells = {{font = {}}} ,'.format(
+                table_fontsize_table[node.fontsize]
+            )
         self.data += '}\n'
 
     def leave_tableblock(self, node: nd.ASTNode) -> None:
@@ -364,15 +393,23 @@ class LatexWriter(Writer):
 
     def visit_decorationrole(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent_block, nd.CodeBlockNode):
-            self.data += self.code_decoration_table[node.role]
+            if node.role in self.code_decoration_table:
+                self.data += self.code_decoration_table[node.role]
         else:
-            self.data += self.decoration_table[node.role][0]
+            if node.role in self.code_decoration_table:
+                self.data += self.decoration_table[node.role][0]
+            else:
+                self.data += self.color_decoration_table[node.role][0]
 
     def leave_decorationrole(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent_block, nd.CodeBlockNode):
-            self.data += self.code_decoration_table[node.role]
+            if node.role in self.code_decoration_table:
+                self.data += self.code_decoration_table[node.role]
         else:
-            self.data += self.decoration_table[node.role][1]
+            if node.role in self.code_decoration_table:
+                self.data += self.decoration_table[node.role][1]
+            else:
+                self.data += self.color_decoration_table[node.role][1]
 
     def visit_role(self, node: nd.ASTNode) -> None:
         if node.role == '':
@@ -448,10 +485,13 @@ class LatexWriter(Writer):
             text = tex_escape(text)
             self.data += '\\href{{{}}}{{{}}}'.format(url, text)
         else:
-            url = node.target_id or node.value.replace(' ', '_')
-            text = node.opts[0] if node.opts[0] else node.target_title
-            text = tex_escape(text)
-            self.data += '\\nameref{{{}}}'.format(url)
+            url = self._label_normalize(node.target_id)
+            if node.opts[0]:
+                text = node.opts[0]
+                text = tex_escape(text)
+                self.data += '\\hyperref[{}]{{{}}}'.format(url, text)
+            else:
+                self.data += '\\nameref{{{}}}'.format(url)
 
     def leave_link(self, node: nd.ASTNode) -> None:
         pass

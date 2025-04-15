@@ -34,7 +34,17 @@ class Writer():
         self.encoding: str = 'utf-8'
         self.data: str = str()
         self.rootnode: Optional[nd.DocumentNode] = None
+        self.exts: List[str] = self._init_exts()
         self.__continue: bool = False
+
+    def _init_exts(self):
+        extdir = os.path.join(os.path.dirname(__file__), '..', 'ext')
+        files = os.listdir(extdir)
+        exts = list()
+        for file in files:
+            if file.endswith('.py'):
+                exts.append(file[:-3])
+        return exts
 
     def pkg_template_dir(self) -> str:
         libdir = os.path.join(os.path.dirname(__file__), '..')

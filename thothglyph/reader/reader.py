@@ -26,10 +26,34 @@ class Reader():
         with open(path, 'r', encoding=self.encoding) as f:
             data = f.read()
         node = self.parser.parse(data)
+        self.set_sect_auto_id(node)
         self.set_sectnums(node)
         self.set_footnote_nums(node)
         self.merge_tablecell_text(node)
         return node
+
+    def set_sect_auto_id(self, rootnode: nd.ASTNode) -> None:
+        auto_id_sections = list()
+        for n, gofoward in rootnode.walk_depth():
+            if not gofoward:
+                continue
+            if isinstance(n, nd.SectionNode):
+                if not n.id:
+                    auto_id = n.title.replace(' ', '_')
+                    auto_id_sections.append([n, auto_id])
+        auto_id_sections.sort(key=lambda x: x[1])
+        if len(auto_id_sections) > 1:
+            prev_auto_id = auto_id_sections[0][1]
+            count = 0
+            for i, (n, auto_id) in enumerate(auto_id_sections[1:]):
+                if auto_id != prev_auto_id:
+                    count = 0
+                    n.auto_id = auto_id
+                else:
+                    count += 1
+                    new_auto_id = auto_id + '-' + str(count)
+                    n.auto_id = new_auto_id
+                prev_auto_id = auto_id
 
     def set_sectnums(self, rootnode: nd.ASTNode) -> None:
         nums: List[int] = [0 for i in range(10)]

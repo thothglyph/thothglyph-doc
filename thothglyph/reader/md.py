@@ -160,6 +160,13 @@ class MdParser(Parser):
             raise ThothglyphError(msg)
         return self.nodes[idx]
 
+    def _get_plain_text(self, mdnode: SyntaxTreeNode) -> str:
+        text = str()
+        for node in mdnode.walk():
+            if node.type in ('text', 'code_inline'):
+                text += node.content
+        return text
+
     def p_section(self, mdnode: SyntaxTreeNode) -> None:
         m = re.match(r'h(\d+)', mdnode.tag)
         level = int(m.group(1))
@@ -167,7 +174,7 @@ class MdParser(Parser):
         accepted = (nd.DocumentNode, nd.SectionNode)
         if not isinstance(self.nodes[-1], accepted):
             symbol = '#' * level
-            title = mdnode.children[0].children[0].content
+            title = self._get_plain_text(mdnode.children[0])
             text = f'{symbol} {title}'
             text = nd.TextNode(text)
             self.nodes[-1].add(text)
@@ -188,7 +195,7 @@ class MdParser(Parser):
         notoc = bool(mdnode.attrs.get('notoc', ''))
         section.opts['nonum'] = nonum or notoc
         section.opts['notoc'] = notoc
-        section.title = mdnode.children[0].children[0].content
+        section.title = self._get_plain_text(mdnode.children[0])
         prevnode = mdnode.previous_sibling
         if prevnode and prevnode.type == 'myst_target':
             section.id = prevnode.content
@@ -289,12 +296,24 @@ class MdParser(Parser):
             tp, args = m.group(1), m.group(2)
             self.p_directive(mdnode, tp, args)
             return
+        m = re.match(r'([a-zA-Z0-9_-]*)(?: +(.+))?', mdnode.info.strip())
+        if m:
+            ext, args = m.group(1), m.group(2)
+            self.p_customblock(mdnode, ext, args)
+            return
         self.p_codeblock(mdnode)
+
+    def p_customblock(self, mdnode: SyntaxTreeNode, ext: str, args: str) -> None:
+        custom = nd.CustomBlockNode()
+        custom.ext = ext
+        self.nodes[-1].add(custom)
+        text = self.replace_text_attrs(mdnode.content[:-1])
+        custom.text = text
 
     def p_codeblock(self, mdnode: SyntaxTreeNode) -> None:
         code = nd.CodeBlockNode()
         self.nodes[-1].add(code)
-        text = self.replace_text_attrs(mdnode.content)
+        text = self.replace_text_attrs(mdnode.content[:-1])
         text = nd.TextNode(text)
         code.add(text)
 
@@ -311,11 +330,14 @@ class MdParser(Parser):
             self.p_literalinclude(mdnode, tp, args)
         elif tp == 'include':
             self.p_include(mdnode, tp, args)
+        elif tp == 'table':
+            self.p_basictable2(mdnode, tp, args)
         elif tp == 'list-table':
             self.p_listtable(mdnode, tp, args)
         else:
             msg = '"{}" directive is not supported.'.format(tp)
             logger.warn(msg)
+            self.p_codeblock(mdnode)
 
     def _parse_directive(self, text):
         opts = {}
@@ -458,12 +480,16 @@ class MdParser(Parser):
         trows = mdnode.children[0].children
         if len(mdnode.children) > 1:
             trows += mdnode.children[1].children
+        table.type = 'normal'
         table.row = len(trows)
         table.col = len(trows[0].children)
         table.headers = header_splitter
         if len(aligns) == 0:
             aligns = ['c' for i in range(table.col)]
         table.aligns = aligns
+        table.widths = [0 for i in range(table.col)]
+        table.width = 0
+        table.fontsize = ''
         for r, row_mdnode in enumerate(trows):
             row = nd.TableRowNode()
             row.idx = r
@@ -474,6 +500,7 @@ class MdParser(Parser):
                 cell = nd.TableCellNode()
                 cell.idx = c
                 cell.align = table.aligns[c]
+                cell.width = table.widths[c]
                 style = col_mdnode.attrs.get('style', '')
                 m = re.search(r'text-align:(\w+)', style)
                 if m:
@@ -482,12 +509,87 @@ class MdParser(Parser):
                     if alignkey in align_table.keys():
                         cell.align = align_table[alignkey]
                 row.add(cell)
-                text_mdnode = col_mdnode.children[0].children[0]
-                if text_mdnode.type == 'text':
-                    self._tablecell_merge(table, cell, r, c, text_mdnode.content)
+                if len(col_mdnode.children[0].children) > 0:
+                    text_mdnode = col_mdnode.children[0].children[0]
+                    if text_mdnode.type == 'text':
+                        self._tablecell_merge(table, cell, r, c, text_mdnode.content)
                 self.nodes.append(cell)
                 self.p_inlinemarkup(col_mdnode.children[0])
                 self.nodes.pop()
+
+    def p_basictable2(self, mdnode: SyntaxTreeNode, tp: str, args: str) -> None:
+        text = self.replace_text_attrs(mdnode.content)
+        opts, data = self._parse_directive(text)
+
+        table = nd.TableBlockNode()
+        self.nodes[-1].add(table)
+        lines = data.splitlines()
+        tabletexts = list()
+        aligns = list()
+        header_splitter = -1
+        for i, line in enumerate(lines):
+            rowtexts = re.split(r' *\| *', line.strip())[1:-1]
+            ms = [re.match(r'^[+:]?-+[+:]?$', c) for c in rowtexts]
+            if all(ms) and header_splitter == -1:
+                aligns = list()
+                for m in ms:
+                    assert m
+                    mg = m.group(0)
+                    if mg[0] == mg[-1] == ':':
+                        aligns.append('c')
+                    elif mg[-1] == ':':
+                        aligns.append('r')
+                    elif mg[0] == '+':
+                        aligns.append('x')
+                    else:
+                        aligns.append('l')
+                header_splitter = i
+            else:
+                tabletexts.append(rowtexts)
+        if header_splitter < 0:
+            header_splitter = 0
+        table.type = opts.get('type', 'normal')
+        table.row = len(tabletexts)
+        table.col = len(tabletexts[0])
+        table.headers = header_splitter
+        if len(aligns) == 0:
+            aligns = ['c' for i in range(table.col)]
+        table.aligns = aligns
+        table.widths = opts.get('widths', [0 for i in range(table.col)])
+        table.width = opts.get('w')
+        table.fontsize = opts.get('fontsize', '')
+        for r, rowtexts in enumerate(tabletexts):
+            row = nd.TableRowNode()
+            row.idx = r
+            if r < table.headers:
+                row.tp = 'header'
+            table.add(row)
+            if len(rowtexts) != table.col or len(table.aligns) != table.col:
+                # lineno = begintoken.line + 1 + r
+                lineno = mdnode.map[0]
+                if 0 < table.headers < lineno:
+                    lineno += 1
+                msg = 'Table rows have different sizes.'
+                msg = f'{self.reader.path}:{lineno}: {msg}'
+                raise ThothglyphError(msg)
+            for c, celltext in enumerate(rowtexts):
+                cell = nd.TableCellNode()
+                row.add(cell)
+                cell.idx = c
+                cell.align = table.aligns[c]
+                cell.width = table.widths[c]
+                text = self.replace_text_attrs(celltext)
+                text = self._tablecell_merge(table, cell, r, c, text)
+                try:
+                    text_tokens = mdit.parse(text)
+                    text_mdnodes = SyntaxTreeNode(text_tokens)
+                    if len(text_mdnodes.children) > 0:
+                        self.nodes.append(cell)
+                        self.p_inlinemarkup(text_mdnodes.children[0].children[0])
+                        self.nodes.pop()
+                except Exception as e:
+                    print(e)
+                    cell.add(nd.TextNode(text))
 
     def p_listtable(self, mdnode: SyntaxTreeNode, tp: str, args: str) -> None:
         text = self.replace_text_attrs(mdnode.content)
@@ -501,6 +603,7 @@ class MdParser(Parser):
         if opts.get('align'):
             for c in opts.get('align'):
                 aligns.append(c)
+        table.type = opts.get('type', 'normal')
         table.row = len(child_mdnodes.children[0].children)
         table.col = len(child_mdnodes.children[0].children[0].children[0].children)
         try:
@@ -510,6 +613,9 @@ class MdParser(Parser):
         if len(aligns) == 0:
             aligns = ['c' for i in range(table.col)]
         table.aligns = aligns
+        table.widths = opts.get('widths', [0 for i in range(table.col)])
+        table.width = opts.get('w')
+        table.fontsize = opts.get('fontsize', '')
         for r, row_mdnode in enumerate(child_mdnodes.children[0].children):
             row = nd.TableRowNode()
             row.idx = r
@@ -521,13 +627,15 @@ class MdParser(Parser):
                 row.add(cell)
                 cell.idx = c
                 cell.align = table.aligns[c]
+                cell.width = table.widths[c]
                 self.nodes.append(cell)
                 self.p_blocks(col_mdnode.children)
                 self.nodes.pop()
                 try:
                     text_mdnode = col_mdnode.children[0].children[0].children[0]
                     if text_mdnode.type == 'text':
-                        self._tablecell_merge(table, cell, r, c, text_mdnode.content)
+                        text = self._tablecell_merge(table, cell, r, c, text_mdnode.content)
+                        # cell.children[0].children[0].text = text
                 except Exception:
                     pass
 
@@ -671,12 +779,12 @@ class MdParser(Parser):
         text = nd.TextNode()
         content = mdnode.content
         try:
-            if mdnode.parent.parent.parent.type == 'list_item':
-                m = re.match(r'^\[[ x-]\] ', mdnode.content)
-                if m:
-                    content = mdnode.content[4:]
-            elif any([
-                isinstance(self.nodes[-1], nd.TableCellNode),
+            if any([
+                isinstance(self.nodes[-1], nd.TableCellNode),  # BasicTable
+                all([  # ListTable
+                    isinstance(self.nodes[-1], nd.ParagraphNode),
+                    isinstance(self.nodes[-2], nd.TableCellNode),
+                ]),
             ]) and mdnode.previous_sibling is None:
                 hmarker = self._extract_tablecell_merge_hmarker(content)
                 vmarker = self._extract_tablecell_merge_vmarker(content)
@@ -684,6 +792,10 @@ class MdParser(Parser):
                     content = content[len(hmarker):]
                 elif vmarker:
                     content = content[len(vmarker):]
+            elif mdnode.parent.parent.parent.type == 'list_item':
+                m = re.match(r'^\[[ x-]\] ', mdnode.content)
+                if m:
+                    content = mdnode.content[4:]
         except Exception:
             pass
         text.text = self.replace_text_attrs(content)
@@ -700,8 +812,46 @@ class MdReader(Reader):
 
     def read(self, path: str, encoding: Optional[str] = None) -> nd.ASTNode:
         try:
-            return super().read(path, encoding)
+            node = super().read(path, encoding)
+            self._convert_link_slug(node)
+            return node
         except Exception as e:
             _, errormsg = e.args
             msg = 'File cannot found: {}'.format(e.filename)
             raise ThothglyphError(msg)
+
+    def _slugify(self, text):
+        slug = re.sub(r'[^\w\- ]', '', text)
+        slug = re.sub(r' ', '-', slug)
+        slug = '#' + slug.lower()
+        return slug
+
+    def _convert_link_slug(self, node: nd.ASTNode) -> None:
+        slug_sections = list()
+        for n, gofoward in node.walk_depth():
+            if not gofoward:
+                continue
+            if isinstance(n, nd.SectionNode) and not n.id:
+                slug = self._slugify(n.title)
+                slug_sections.append([n, slug])
+        slug_sections.sort(key=lambda x: x[1])
+        if len(slug_sections) > 1:
+            prev_slug = slug_sections[0][1]
+            count = 0
+            for i, (n, slug) in enumerate(slug_sections[1:]):
+                if slug != prev_slug:
+                    count = 0
+                else:
+                    count += 1
+                    new_slug = slug + '-' + str(count)
+                    slug_sections[i + 1][1] = new_slug
+                prev_slug = slug
+        slug_table = dict([(x[1], x[0]) for x in slug_sections])
+        for n, gofoward in node.walk_depth():
+            if not gofoward:
+                continue
+            if isinstance(n, nd.LinkNode):
+                if '://' in n.value:
+                    continue
+                if n.target_id in slug_table:
+                    n.value = slug_table[n.target_id].auto_id

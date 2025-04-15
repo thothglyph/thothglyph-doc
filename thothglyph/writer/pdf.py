@@ -74,9 +74,14 @@ class PdfWriter(LatexWriter):
             self.data += '\\end{lstlisting}\n'
         else:
             try:
-                extpath = 'thothglyph.ext.{}'.format(node.ext)
-                extmodule = importlib.import_module(extpath)
-                extmodule.customblock_write_pdf(self, node)
+                if node.ext in self.exts:
+                    extpath = 'thothglyph.ext.{}'.format(node.ext)
+                    extmodule = importlib.import_module(extpath)
+                    extmodule.customblock_write_pdf(self, node)
+                else:
+                    self.data += '\\begin{lstlisting}\n'
+                    self.data += node.text + '\n'
+                    self.data += '\\end{lstlisting}\n'
             except Exception as e:
                 logger.warning(e)
                 self.data += '\\begin{lstlisting}\n'

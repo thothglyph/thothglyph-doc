@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, List, Optional
+from typing import Dict, Tuple, List, Optional
 import html
 import importlib
 import os
@@ -28,6 +28,14 @@ class HtmlWriter(Writer):
         'SUP': 'sup',
         'SUB': 'sub',
     }
+
+    color_decoration_list: Tuple[str, str] = (
+        'COLOR1',
+        'COLOR2',
+        'COLOR3',
+        'COLOR4',
+        'COLOR5',
+    )
 
     def __init__(self):
         super().__init__()
@@ -99,7 +107,7 @@ class HtmlWriter(Writer):
 
     def visit_section(self, node: nd.ASTNode) -> None:
         self.data += '<section>'
-        _id = node.id or node.title.replace(' ', '_')
+        _id = node.id or node.auto_id
         if node.opts.get('nonum'):
             title = node.title
         else:
@@ -132,7 +140,7 @@ class HtmlWriter(Writer):
                     title = '{}'.format(n.title)
                 else:
                     title = '{}. {}'.format(n.sectnum, n.title)
-                _id = n.id or n.title.replace(' ', '_')
+                _id = n.id or n.auto_id
                 self.data += '<li><a href="#{}">{}</a></li>\n'.format(_id, title)
                 if bros.index(n) == len(bros) - 1:
                     self.data += '</ul>\n'
@@ -290,12 +298,19 @@ class HtmlWriter(Writer):
         tagname = 'td'
         if node.parent.tp == 'header':
             tagname = 'th'
+        table_fontsize = [
+            'x-small',
+            'small',
+            'medium',
+        ]
         if node.mergeto is None:
             s = node.size
             align = {'l': 'left', 'c': 'center', 'r': 'right', 'x': 'left'}
             styles = ['text-align:{}'.format(align[node.align])]
             if int(node.width) > 0:
                 styles += ['width:{}%'.format(node.width)]
+            if node.parent.parent.fontsize in table_fontsize:
+                styles += ['font-size:{}'.format(node.parent.parent.fontsize)]
             attrs = ['style="{}"'.format(';'.join(styles))]
             attrs += ['colspan="{}"'.format(s.x), 'rowspan="{}"'.format(s.y)]
             self.data += '<{} {}>'.format(tagname, ' '.join(attrs))
@@ -318,6 +333,8 @@ class HtmlWriter(Writer):
             self.data += '</code></pre>\n'
         else:
             try:
+                if node.ext not in self.exts:
+                    raise Exception()
                 extpath = 'thothglyph.ext.{}'.format(node.ext)
                 extmodule = importlib.import_module(extpath)
                 extmodule.customblock_write_html(self, node)
@@ -360,10 +377,16 @@ class HtmlWriter(Writer):
             self.data += '</dt><dd>'
 
     def visit_decorationrole(self, node: nd.ASTNode) -> None:
-        self.data += '<{}>'.format(self.decoration_table[node.role])
+        if node.role in self.color_decoration_list:
+            self.data += '<span class="deco_{}">'.format(node.role.lower())
+        else:
+            self.data += '<{}>'.format(self.decoration_table[node.role])
 
     def leave_decorationrole(self, node: nd.ASTNode) -> None:
-        self.data += '</{}>'.format(self.decoration_table[node.role])
+        if node.role in self.color_decoration_list:
+            self.data += '</span>'
+        else:
+            self.data += '</{}>'.format(self.decoration_table[node.role])
 
     def visit_role(self, node: nd.ASTNode) -> None:
         if node.role == '':

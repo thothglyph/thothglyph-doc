@@ -149,12 +149,14 @@ class ConfigNode(ASTNode):
 
 
 class SectionNode(ASTNode):
-    attrkey = ('level', 'title', 'opts')
+    attrkey = ('level', 'title', 'id', 'auto_id', 'opts')
 
     def __init__(self):
         super().__init__()
         self.level: int = 0
         self.title: str = str()
+        self.id: str = str()
+        self.auto_id: str = str()
         self.opts: Dict[str, Any] = dict()
         self._sectindex: List[int] = list()
 
@@ -309,7 +311,7 @@ class FigureBlockNode(BlockNode):
 
 
 class TableBlockNode(BlockNode):
-    attrkey = ('row', 'col', 'headers')
+    attrkey = ('row', 'col', 'headers', 'fontsize')
 
     def __init__(self):
         super().__init__()
@@ -320,8 +322,9 @@ class TableBlockNode(BlockNode):
         self.caption: Optional[str] = None
         self.align: str = 'l'  # table align
         self.aligns: List[str] = list()  # column alings
-        self.width: str = str()
+        self.width: int = 0
         self.widths: List[int] = list()  # column widths
+        self.fontsize: str = ''
 
     def cell(self, row: int, col: int) -> ASTNode:
         return self.children[row].children[col]
@@ -382,7 +385,7 @@ class TableCellNode(ASTNode):
         super().__init__()
         self.idx: int = -1
         self.align: str = 'c'
-        self.width: str = str()
+        self.width: int = 0
         self.mergeto: Optional[TableCellNode] = None
         self.size: TableCellNode.Size = TableCellNode.Size(1, 1)
 
@@ -513,6 +516,8 @@ class LinkNode(InlineNode):
             if gofoward and isinstance(n, SectionNode):
                 if n.id == self.value:
                     return n.id
+                if not n.id and n.auto_id == self.value:
+                    return n.auto_id
         return self.value.replace(' ', '_')
 
     @property
