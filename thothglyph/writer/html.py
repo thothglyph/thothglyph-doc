@@ -305,7 +305,10 @@ class HtmlWriter(Writer):
         ]
         if node.mergeto is None:
             s = node.size
-            align = {'l': 'left', 'c': 'center', 'r': 'right', 'x': 'left'}
+            align = {
+                'l': 'left', 'c': 'center', 'r': 'right',
+                'x': 'left', 'xc': 'center', 'xr': 'right',
+            }
             styles = ['text-align:{}'.format(align[node.align])]
             if int(node.width) > 0:
                 styles += ['width:{}%'.format(node.width)]

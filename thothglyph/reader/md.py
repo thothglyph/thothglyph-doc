@@ -528,7 +528,7 @@ class MdParser(Parser):
             elif k == 'widths':
                 newopts['widths'] = [int(x.strip()) for x in v.split(',')]
             elif k == 'colspec':
-                colspec_ptn = r'(-1|[1-9]|[1-9][0-9]+)?([lcrx])'
+                colspec_ptn = r'(-1|[1-9]|[1-9][0-9]+)?(l|c|r|x|xc|xr)'
                 colmatchs = [re.match(colspec_ptn, x.strip()) for x in v.split(',')]
                 if not all(colmatchs):
                     pass  # logger.warn()
@@ -560,9 +560,15 @@ class MdParser(Parser):
                     mg = m.group(0)
                     if mg[0] == mg[-1] == ':':
                         aligns.append('c')
-                    elif mg[-1] == ':':
+                    elif mg[0] == mg[-1] == '+':
+                        aligns.append('xc')
+                    elif mg[0] == '-' and mg[-1] == ':':
                         aligns.append('r')
-                    elif mg[0] == '+':
+                    elif mg[0] == '-' and mg[-1] == '+':
+                        aligns.append('xr')
+                    elif mg[0] == ':' and mg[-1] == '-':
+                        aligns.append('l')
+                    elif mg[0] == '+' and mg[-1] == '-':
                         aligns.append('x')
                     else:
                         aligns.append('l')
@@ -617,6 +623,8 @@ class MdParser(Parser):
     def p_listtable(self, mdnode: SyntaxTreeNode, tp: str, args: str) -> None:
         text = self.replace_text_attrs(mdnode.content)
         opts, data = self._parse_directive(text)
+        table_headers = opts.get('header-rows', '0')
+        opts = self._parse_table_optargs(opts)
         # title = args or ''
         tokens = mdit.parse(data)
         child_mdnodes = SyntaxTreeNode(tokens)
@@ -630,7 +638,7 @@ class MdParser(Parser):
         table.row = len(child_mdnodes.children[0].children)
         table.col = len(child_mdnodes.children[0].children[0].children[0].children)
         try:
-            table.headers = int(opts.get('header-rows', '0'))
+            table.headers = int(table_headers)
         except Exception:
             table.headers = 0
         if len(aligns) == 0:

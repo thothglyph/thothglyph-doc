@@ -905,7 +905,7 @@ class TglyphParser(Parser):
             elif k == 'widths':
                 newopts['widths'] = [int(x.strip()) for x in v.split(',')]
             elif k == 'colspec':
-                colspec_ptn = r'(-1|[1-9]|[1-9][0-9]+)?([lcrx])'
+                colspec_ptn = r'(-1|[1-9]|[1-9][0-9]+)?(l|c|r|x|xc|xr)'
                 colmatchs = [re.match(colspec_ptn, x.strip()) for x in v.split(',')]
                 if not all(colmatchs):
                     pass  # logger.warn()
@@ -945,9 +945,15 @@ class TglyphParser(Parser):
                     mg = m.group(0)
                     if mg[0] == mg[-1] == ':':
                         aligns.append('c')
-                    elif mg[-1] == ':':
+                    elif mg[0] == mg[-1] == '+':
+                        aligns.append('xc')
+                    elif mg[0] == '-' and mg[-1] == ':':
                         aligns.append('r')
-                    elif mg[0] == '+':
+                    elif mg[0] == '-' and mg[-1] == '+':
+                        aligns.append('xr')
+                    elif mg[0] == ':' and mg[-1] == '-':
+                        aligns.append('l')
+                    elif mg[0] == '+' and mg[-1] == '-':
                         aligns.append('x')
                     else:
                         aligns.append('l')

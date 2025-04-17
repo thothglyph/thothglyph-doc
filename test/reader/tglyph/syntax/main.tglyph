@@ -211,6 +211,10 @@ next paragraph.
 | data11 | data12 | data13 |
 | A | B | C |
 
+| head21 | head22 | head23 |
+|+-------|+------+|-------+|
+| data11 | data12 | data13 |
+
 | head11 | head12 | ⏴      | ⏴      |
 |--------|--------|--------|--------|
 | data11 | data12 | data13 | data14 |
@@ -652,10 +656,10 @@ This is [not] important [(text)].
 
 ▮▮ Merged Wide Table
 
-⟦type="adjust"⟧
+⟦widths="1,1,1,2,1,1,1,1,1,1"⟧
 | head11 | head12 | head13 | head14 | head15 | head16 | head17 | head18 | head19 | ⏴      |
 | head21 | ⏴      | ⏴      | head24 | ⏶      | head26 | head27 | head28 | head29 | head2a |
-|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|
+|+-------|+------+|+------+|-------+|+------+|+------+|+------+|+------+|+------+|+------+|
 | data11 | data12 | data13 | data14 | data15 | data16 | data17 | data18 | data19 | data1a |
 | data21 | data22 | data23 | data24 | data25 | data26 | data27 | data28 | data29 | data2a |
 | data31 | data32 longlong longlong text | ⏴      | data34 | data35 | data36 | data37 | data38 | data39 | data3a |

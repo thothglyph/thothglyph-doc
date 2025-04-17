@@ -221,6 +221,12 @@ Term3
 | A | B | C |
 ```
 
+```{table}
+| head11 | head12 | head13 |
+|+-------|+------+|-------+|
+| data11 | data12 | data13 |
+```
+
 ### ListTable
 
 ```{list-table}
@@ -271,6 +277,20 @@ Term3
 * - A
   - B
   - C
+```
+
+```{list-table}
+:header-rows: 1
+:colspec: 5l,3c,1r
+* - head1
+  - head2
+  - head3
+* - data11
+  - data12
+  - data13
+* - data21
+  - data22
+  - data23
 ```
 
 ### Nested Table
@@ -544,10 +564,10 @@ var = "{{%val%}}"
 ## Merged Wide Table
 
 ```{table}
-:type: adjust
+:widths: 1,1,1,2,1,1,1,1,1,1
 | head11 | head12 | head13 | head14 | head15 | head16 | head17 | head18 | head19 | :<     |
 | head21 | :<     | :<     | head24 | :^     | head26 | head27 | head28 | head29 | head2a |
-|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|
+|+-------|+------+|+------+|-------+|+------+|+------+|+------+|+------+|+------+|+------+|
 | data11 | data12 | data13 | data14 | data15 | data16 | data17 | data18 | data19 | data1a |
 | data21 | data22 | data23 | data24 | data25 | data26 | data27 | data28 | data29 | data2a |
 | data31 | data32 longlong longlong text | :<     | data34 | data35 | data36 | data37 | data38 | data39 | data3a |

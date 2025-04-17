@@ -227,11 +227,12 @@ class LatexWriter(Writer):
         aligns = node.aligns[:]
         widths = [int(v) for v in node.widths]
         for i, a in enumerate(aligns):
-            if a == 'x':
+            if a in ('x', 'xc', 'xr'):
+                xa = a[1] if a != 'x' else 'l'
                 if widths[i]:
-                    aligns[i] = 'X[{},l]'.format(widths[i])
+                    aligns[i] = 'X[{},{}]'.format(widths[i], xa)
                 else:
-                    aligns[i] = 'X[l]'
+                    aligns[i] = 'X[{}]'.format(xa)
             else:
                 if widths[i]:
                     aligns[i] = 'X[{},{}]'.format(widths[i], a)
@@ -320,10 +321,11 @@ class LatexWriter(Writer):
             self.data += ' \\\\\n'
 
     def visit_tablecell(self, node: nd.ASTNode) -> None:
+        align = node.align[-1] if node.align != 'x' else 'l'
         if self.style_gridtable:
-            align = '{}|'.format(node.align)
+            align = '{}|'.format(align)
         else:
-            align = '{}'.format(node.align)
+            align = '{}'.format(align)
         if node.mergeto is None:
             if node.idx != 0:
                 self.data += ' & '
