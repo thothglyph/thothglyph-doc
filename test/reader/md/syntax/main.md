@@ -205,6 +205,8 @@ Term3
 | data61 |:^data62 |:^data63 |:<data64 |
 
 ```{table}
+:w: 600px
+:widths: 1,2,3
 | head11 | head12 | head13 |
 | head21 | head22 | head23 |
 |:-------|:------:|-------:|

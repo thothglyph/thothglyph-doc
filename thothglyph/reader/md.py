@@ -517,9 +517,32 @@ class MdParser(Parser):
                 self.p_inlinemarkup(col_mdnode.children[0])
                 self.nodes.pop()
 
+    def _parse_table_optargs(self, opts: Dict[str, str]) -> Dict[str, str]:
+        newopts: Dict[str, str] = dict()
+        newopts['type'] = opts.get('type', 'normal')
+        newopts['w'] = opts.get('w', '')
+        newopts['fontsize'] = opts.get('fontsize', '')
+        for k, v in opts.items():
+            if k == 'align':
+                newopts['align'] = [c for c in v]
+            elif k == 'widths':
+                newopts['widths'] = [int(x.strip()) for x in v.split(',')]
+            elif k == 'colspec':
+                colspec_ptn = r'(-1|[1-9]|[1-9][0-9]+)?([lcrx])'
+                colmatchs = [re.match(colspec_ptn, x.strip()) for x in v.split(',')]
+                if not all(colmatchs):
+                    pass  # logger.warn()
+                newopts['align'] = list()
+                newopts['widths'] = list()
+                for m in colmatchs:
+                    newopts['widths'].append(m.group(1) or 1)
+                    newopts['align'].append(m.group(2))
+        return newopts
+
     def p_basictable2(self, mdnode: SyntaxTreeNode, tp: str, args: str) -> None:
         text = self.replace_text_attrs(mdnode.content)
         opts, data = self._parse_directive(text)
+        opts = self._parse_table_optargs(opts)
 
         table = nd.TableBlockNode()
         self.nodes[-1].add(table)
