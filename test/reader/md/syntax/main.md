@@ -425,6 +425,12 @@ The x^sup^x x~sub~x text.
 
 The ⫶var⫶ and `code` text.
 
+## Color Decoration
+
+The `🔴color1` `🟡color2` `🟢color3` `🔵color4` `🟣color5` color text.
+
+``🔵Color `🟣decoration` can`` be nested.
+
 ## Image
 
 Image in paragraph like ![](./tglyph_64.png).

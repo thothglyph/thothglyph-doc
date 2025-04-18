@@ -59,6 +59,13 @@ class MdParser(Parser):
         'em': 'EMPHASIS',
         'strong': 'STRONG',
     }
+    inline_color_deco_tokens: Dict[str, str] = {
+        'COLOR1': r'🔴',
+        'COLOR2': r'🟡',
+        'COLOR3': r'🟢',
+        'COLOR4': r'🔵',
+        'COLOR5': r'🟣',
+    }
     listblock_keymap: Dict[str, nd.ASTNode] = {
         'bullet_list': nd.BulletListBlockNode,
         'ordered_list': nd.OrderedListBlockNode,
@@ -691,7 +698,11 @@ class MdParser(Parser):
         elif mdnode.type in self.deco_keymap.keys():
             self.p_deco(mdnode)
         elif mdnode.type == 'code_inline':
-            self.p_codeinline(mdnode)
+            colors = self.inline_color_deco_tokens.values()
+            if len(mdnode.content) > 0 and mdnode.content[0] in colors:
+                self.p_color_deco(mdnode)
+            else:
+                self.p_codeinline(mdnode)
         elif mdnode.type == 'html_inline':
             pass
         else:
@@ -702,7 +713,11 @@ class MdParser(Parser):
             if mdnode.type in self.deco_keymap.keys():
                 self.p_deco(mdnode)
             elif mdnode.type == 'code_inline':
-                self.p_codeinline(mdnode)
+                colors = self.inline_color_deco_tokens.values()
+                if len(mdnode.content) > 0 and mdnode.content[0] in colors:
+                    self.p_color_deco(mdnode)
+                else:
+                    self.p_codeinline(mdnode)
             else:
                 self.p_text(mdnode)
 
@@ -713,6 +728,19 @@ class MdParser(Parser):
         self.nodes.append(deco)
         self.p_decotext(mdnode.children)
         self.nodes.pop()
+
+    def p_color_deco(self, mdnode: SyntaxTreeNode) -> None:
+        color_keys = list(self.inline_color_deco_tokens.keys())
+        color_values = list(self.inline_color_deco_tokens.values())
+        deco = nd.DecorationRoleNode()
+        deco.role = color_keys[color_values.index(mdnode.content[0])]
+        self.nodes[-1].add(deco)
+        tokens = mdit.parse(mdnode.content[1:])
+        child_mdnodes = SyntaxTreeNode(tokens)
+        if len(child_mdnodes.children) > 0:
+            self.nodes.append(deco)
+            self.p_decotext(child_mdnodes.children[0].children[0].children)
+            self.nodes.pop()
 
     def p_codeinline(self, mdnode: SyntaxTreeNode) -> None:
         deco = nd.DecorationRoleNode()
