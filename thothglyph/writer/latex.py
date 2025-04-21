@@ -50,6 +50,18 @@ class LatexWriter(Writer):
         'SUP': '',
         'SUB': '',
     }
+    listing_lang_table = {
+        'cc': 'c++',
+        'cpp': 'c++',
+        'cxx': 'c++',
+        'mak': 'make',
+        'makefile': 'make',
+        'mk': 'make',
+        'pl': 'perl',
+        'py': 'python',
+        'rb': 'ruby',
+        'v': 'verilog',
+    }
     bp_scale: float = 0.625
 
     def __init__(self):
@@ -187,7 +199,8 @@ class LatexWriter(Writer):
     def visit_codeblock(self, node: nd.ASTNode) -> None:
         self.data += '\\begin{lstlisting}'
         if node.lang:
-            self.data += '[style={}]'.format(node.lang)
+            lang = self.listing_lang_table.get(node.lang, node.lang)
+            self.data += '[style={}]'.format(lang)
         self.data += '\n'
 
     def leave_codeblock(self, node: nd.ASTNode) -> None:
