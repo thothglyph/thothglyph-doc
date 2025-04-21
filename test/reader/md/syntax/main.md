@@ -1,10 +1,11 @@
 ---
-title = 'Syntax Test'
-filename = 'syntax-test'
-date = 'yyyy/mm/dd'
-version = '1.2.3'
-author = cmd("git config user.name")
-attrs = {'author': 'Foo Bar', 'val': 'xXxXx'}
+title : Syntax Test
+filename : syntax-test
+date : yyyy/mm/dd
+version : '1.2.3'
+author : cmd("git config user.name (not work in YAML)")
+attrs : {author: Foo Bar, val: xXxXx}
+aaa : [bbb, ccc, [dddd, {x: 10, y: 20}]]
 ---
 
 {notoc=1}
@@ -445,17 +446,22 @@ Image in paragraph like ![](./tglyph.svg){w=150px}.
 
 ==Start of include 1st==
 
-```{include} ./sub1.tglyph
+```{include} ./sub1.md
 ```
 
 ==End of include 1st==
 
 ==Start of include 2nd==
 
-```{include} ./sub1.tglyph
+```{include} ./sub1.md
 ```
 
 ==End of include 2nd==
+
+==Start of include 3rd : other type document ==
+
+```{include} ./sub2.tglyph
+```
 
 ## Keyboard / Button / Menu
 

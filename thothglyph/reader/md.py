@@ -19,6 +19,7 @@ from mdit_py_plugins.myst_blocks import myst_block_plugin
 import urllib
 import re
 import os
+import sys
 
 from thothglyph.node import logging
 
@@ -41,17 +42,87 @@ mdit = (
 )
 
 
-class MdParser(Parser):
+class Lexer():
+    class Token():
+        def __init__(self, no: int, line: int, pos: int, key: str, value: str):
+            self.no: int = no
+            self.line: int = line
+            self.pos: int = pos
+            self.key: str = key
+            self.value: str = value
+
+        def __str__(self) -> str:
+            s = f'Token({self.no}, {self.line}, {self.pos}, {self.key}, "{self.value}")'
+            return s
+
+    newline_token: str = '\n'
     preproc_keywords: Tuple[str] = (
         'if', 'elif', 'else',
         'end',
     )
     preproc_tokens: Dict[str, str] = {
-        'CONFIG_LINE': r'---$',
-        'COMMENT': r'%(.+)',
-        'CONTROL_FLOW': r'%%(\w+)(.*)',
-        'TEXT': r'[^⑇%*',
+        'CONFIG_BEGIN_LINE': r'--- *(.+)$',
+        'CONFIG_END_LINE': r'---$',
+        'COMMENT': r'%//(.+)',
+        'CONTROL_FLOW': r'%# *(\w+)(.*)',
+        'TEXT': r'^.*(?<!%//)|(?<!%#)$',
     }
+
+    def __init__(self):
+        self._preproc_tokens: Dict[str, re.Pattern] = {
+            k: re.compile(v) for k, v in self.preproc_tokens.items()
+        }
+
+    def lex_preproc(self, data: str) -> List["Lexer.Token"]:
+        return self.lex_pattern(self._preproc_tokens, data)
+
+    def lex_pattern(self, patterns, data: str, begin=0) -> List["Lexer.Token"]:
+        lines = data.split(self.newline_token)
+        tokens: List[Lexer.Token] = list()
+        for lineno, line in enumerate(lines):
+            rest = line
+            rests: List[Tuple[int, str]] = [(0, line)]
+            linetokens: List[Lexer.Token] = list()
+            while rests:
+                for key, pattern in patterns.items():
+                    newrests: List[Tuple[int, str]] = list()
+                    matched = False
+                    for rest in rests:
+                        bpos, text = rest
+                        m = pattern.search(text)
+                        if m:
+                            matched = True
+                            no = -1
+                            lno = lineno + begin
+                            pos = bpos + m.start()
+                            linetokens.append(
+                                Lexer.Token(no, lno, pos, key, m.group(0))
+                            )
+                            logger.debug(linetokens[-1])
+                            subtexts = text[:m.start()], text[m.end():]
+                            if len(subtexts[0]) > 0:
+                                newrests.append((bpos, subtexts[0]))
+                            if len(subtexts[1]) > 0:
+                                newrests.append((bpos + m.end(), subtexts[1]))
+                        else:
+                            newrests.append((bpos, text))
+                    rests = newrests
+                    if matched:
+                        break
+            linetokens.sort(key=lambda t: t.pos)
+            for i, token in enumerate(linetokens):
+                token.no = len(tokens) + i
+            if all([
+                len(rests) > 0,
+                len(rests) == len(newrests),
+                all([rests[i] == newrests[i] for i in range(len(rests))])
+            ]):
+                raise ThothglyphError(lineno, line, rests)
+            tokens.extend(linetokens)
+        return tokens
+
+
+class MdParser(Parser):
     inline_tokens: Dict[str, str] = {
         'ATTR': r'{{%([A-Za-z0-9_\-]+)%}}',
     }
@@ -76,6 +147,7 @@ class MdParser(Parser):
         self.pplines: List[str] = list()
         self.rootnode: Optional[nd.DocumentNode] = None
         self.nodes: List[nd.ASTNode] = list()
+        self.lexer: Lexer = Lexer()
 
         self.rootnode = nd.DocumentNode()
         self.nodes.append(self.rootnode)
@@ -94,13 +166,41 @@ class MdParser(Parser):
         tokens = self.p_document(tokens)
         return self.rootnode
 
+    def _tokens(self, token: Lexer.Token, offset: int) -> Lexer.Token:
+        if self.tokens.index(token) + offset >= len(self.tokens):
+            return None
+        return self.tokens[self.tokens.index(token) + offset]
+
     def preprocess(self, data: str) -> str:
         self._init_config()
-        tokens = mdit.parse(data)
-        mdnodes = SyntaxTreeNode(tokens)
-        if mdnodes.children[0].type == 'front_matter':
-            self.p_configblock(mdnodes.children[0])
-        ppdata = self.replace_text_attrs(data)
+        try:
+            self.tokens = self.lexer.lex_preproc(data)
+        except ThothglyphError as e:
+            lineno, line, rests = e.args
+            lineno += 1
+            msg = 'Unknown token.'
+            msg = f'{self.reader.path}:{lineno}: {msg}'
+            raise ThothglyphError(msg)
+        self.pplines = list()
+        tokens = list() + self.tokens
+        config_parsed = False
+        while tokens:
+            if tokens[0].key in ('CONFIG_BEGIN_LINE', 'CONFIG_END_LINE'):
+                if config_parsed:
+                    tokens.pop(0)
+                else:
+                    tokens = self.p_configblock(tokens)
+                    config_parsed = True
+            elif tokens[0].key == 'COMMENT':
+                if tokens[0].pos == 0:
+                    self._line_preprocessed(tokens[0])
+                tokens.pop(0)
+            elif tokens[0].key == 'CONTROL_FLOW':
+                tokens = self.p_controlflow(tokens)
+            else:
+                self.pplines.append(tokens[0].value)
+                tokens.pop(0)
+        ppdata = '\n'.join(self.pplines)
         return ppdata
 
     def _init_config(self) -> None:
@@ -114,17 +214,147 @@ class MdParser(Parser):
                 setattr(config, key, pattrs[key])
         self.rootnode.config = config
 
-    def p_configblock(self, mdnode: List[SyntaxTreeNode]) -> None:
-        assert mdnode.type == 'front_matter'
+    def _line_preprocessed(self, token: Lexer.Token) -> None:
+        is_head = (token.pos == 0)
+        is_tail = token == self.tokens[-1] or \
+            token.line + 1 == self._tokens(token, +1).line
+        if is_head and is_tail:
+            self.pplines.append('')
+        else:
+            pass
+
+    def p_configblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         config = self.rootnode.config
-        text = mdnode.content
+        begintoken = tokens[0]
+        self._line_preprocessed(tokens[0])
+        tokens.pop(0)
+        lang = 'yaml'
+        text = ''
+        if begintoken.key in ('CONFIG_BEGIN_LINE', 'CONFIG_END_LINE'):
+            path = None
+            if m := re.match(Lexer.preproc_tokens['CONFIG_BEGIN_LINE'], begintoken.value):
+                if m2 := re.match(r'\{include\} (\S+)(?: +(\S+))?', m.group(1)):
+                    path = m2.group(1)
+                    if m2.group(2):
+                        lang = m2.group(2)
+                    if os.path.exists(path):
+                        with open(path, 'r', encoding=self.reader.encoding) as f:
+                            text = f.read().rstrip()
+                    else:
+                        logger.warn('Include file cannot found: {}'.format(path))
+                        text = ''
+                else:
+                    lang = m.group(1)
+            if path is None:
+                subtokens = list()
+                while tokens:
+                    if tokens[0].key == 'CONFIG_END_LINE':
+                        break
+                    self._line_preprocessed(tokens[0])
+                    subtokens.append(tokens.pop(0))
+                else:
+                    lineno = begintoken.line + 1
+                    msg = 'Config block is not closed.'
+                    msg = f'{self.reader.path}:{lineno}: {msg}'
+                    raise ThothglyphError(msg)
+                self._line_preprocessed(tokens[0])
+                tokens.pop(0)
+                prev = begintoken
+                text = str()
+                for token in subtokens:
+                    if token.line != prev.line:
+                        if prev.key != 'CONFIG_END_LINE':
+                            text += '\n'
+                        text += token.value[0:]
+                    else:
+                        text += token.value
+                    prev = token
+                text = self.replace_text_attrs(text)
         try:
-            config.parse(text)
+            config.parse(text, lang=lang)
         except Exception as e:
-            lineno = mdnode.map[0]
+            e_type, e_value, e_tb = sys.exc_info()
+            tb_depth = 0
+            while e_tb.tb_next is not None:
+                tb_depth += 1
+                e_tb = e_tb.tb_next
+            tb_line = 0
+            if tb_depth == 1:
+                m = re.match(r'line (\d)', str(e))
+                if m:
+                    tb_line = int(m.group(1))
+            else:
+                tb_line = e_tb.tb_lineno
+            lineno = begintoken.line + tb_line + 1
             msg = 'Config block: ' + str(e)
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
+        return tokens
+
+    def p_controlflow(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
+        match = re.match(Lexer.preproc_tokens['CONTROL_FLOW'], tokens[0].value)
+        assert match
+        keyword, sentence = match.group(1), match.group(2)
+        if keyword == 'if':
+            self._line_preprocessed(tokens[0])
+            tokens.pop(0)
+            cond = eval(sentence, {}, self.rootnode.config.attrs)
+            tokens = self.p_if_else(tokens, [cond])
+        else:
+            lineno = tokens[0].line + 1
+            msg = 'Illegal ControlFlow token.'
+            msg = f'{self.reader.path}:{lineno}: {msg}'
+            raise ThothglyphError(msg)
+        return tokens
+
+    def p_if_else(self, tokens: List[Lexer.Token], conds: List[bool]) -> List[Lexer.Token]:
+        firstflowtoken = self._tokens(tokens[0], -1) or tokens[0]
+        lastflowtoken = tokens[0]
+        lasttoken = tokens[0]
+        while tokens:
+            if tokens[0].key == 'TEXT' and all(conds):
+                self.pplines.append(tokens[0].value)
+                lasttoken = tokens.pop(0)
+            elif tokens[0].key == 'CONTROL_FLOW':
+                match = re.match(Lexer.preproc_tokens['CONTROL_FLOW'], tokens[0].value)
+                assert match
+                lastflowtoken = tokens[0]
+                keyword, sentence = match.group(1), match.group(2)
+                if keyword == 'end':
+                    break
+                elif keyword == 'if':
+                    self._line_preprocessed(tokens[0])
+                    tokens.pop(0)
+                    conds += [all(conds) and eval(sentence, {}, self.rootnode.config.attrs)]
+                    tokens = self.p_if_else(tokens, conds)
+                    lasttoken = tokens[0]
+                    conds.pop()
+                elif keyword == 'elif':
+                    conds[-1] = not all(conds) and eval(sentence, {}, self.rootnode.config.attrs)
+                    self._line_preprocessed(tokens[0])
+                    lasttoken = tokens.pop(0)
+                elif keyword == 'else':
+                    conds[-1] = not all(conds)
+                    self._line_preprocessed(tokens[0])
+                    lasttoken = tokens.pop(0)
+                else:
+                    lineno = lastflowtoken.line + 1
+                    msg = f'Unknown ControlFlow keyword: "{keyword}".'
+                    msg = f'{self.reader.path}:{lineno}: {msg}'
+                    raise ThothglyphError(msg)
+            else:
+                self._line_preprocessed(tokens[0])
+                lasttoken = tokens.pop(0)
+        else:
+            lineno0 = firstflowtoken.line + 1
+            # lineno1 = lastflowtoken.line + 1
+            lineno1 = lasttoken.line + 1
+            msg = 'ControlFlow is not closed.'
+            msg = f'{self.reader.path}:{lineno0}-{lineno1}: {msg}'
+            raise ThothglyphError(msg)
+        self._line_preprocessed(tokens[0])
+        tokens.pop(0)
+        return tokens
 
     def p_document(self, tokens: List[Token]) -> List[Token]:
         logger.debug(mdit.get_all_rules())
@@ -870,14 +1100,9 @@ class MdReader(Reader):
         self.parser: MdParser = MdParser(self)
 
     def read(self, path: str, encoding: Optional[str] = None) -> nd.ASTNode:
-        try:
-            node = super().read(path, encoding)
-            self._convert_link_slug(node)
-            return node
-        except Exception as e:
-            _, errormsg = e.args
-            msg = 'File cannot found: {}'.format(e.filename)
-            raise ThothglyphError(msg)
+        node = super().read(path, encoding)
+        self._convert_link_slug(node)
+        return node
 
     def _slugify(self, text):
         slug = re.sub(r'[^\w\- ]', '', text)

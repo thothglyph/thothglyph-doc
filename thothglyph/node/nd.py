@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Tup
 import re
 import subprocess
 import types
+import yaml
 from thothglyph.node import logging
 
 logger = logging.getLogger(__file__)
@@ -129,7 +130,23 @@ class ConfigNode(ASTNode):
             params.pop(i)
         return params
 
-    def parse(self, text: str) -> None:
+    def parse(self, text: str, lang=None) -> None:
+        if lang == 'python' or lang is None:
+            self._parse_python(text)
+        elif lang == 'yaml':
+            self._parse_yaml(text)
+        else:
+            raise ValueError(f'unknown config lang "{lang}"')
+
+    def _parse_yaml(self, text: str) -> None:
+        params = yaml.safe_load(text)
+        for key, value in params.items():
+            if key == 'attrs':
+                self.attrs.update(value)
+            else:
+                setattr(self, key, value)
+
+    def _parse_python(self, text: str) -> None:
         exec(text)
         params: Dict[str, Any] = locals()
         for param in list(params.keys()):
