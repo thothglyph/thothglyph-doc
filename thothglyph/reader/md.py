@@ -407,6 +407,13 @@ class MdParser(Parser):
     def p_section(self, mdnode: SyntaxTreeNode) -> None:
         m = re.match(r'h(\d+)', mdnode.tag)
         level = int(m.group(1))
+        config = self.rootnode.config
+        if hasattr(config, "h1_as_title") and config.h1_as_title:
+            if level == 1:
+                config.title = self._get_plain_text(mdnode.children[0])
+                return
+            else:
+                level -= 1
 
         accepted = (nd.DocumentNode, nd.SectionNode)
         if not isinstance(self.nodes[-1], accepted):
