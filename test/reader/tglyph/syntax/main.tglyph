@@ -445,7 +445,9 @@ The ⁒emphasis ⋄strong ‗inserted ¬deleted⟠⟠⟠⟠ text.
 
 The 🔴color1⟠ 🟡color2⟠ 🟢color3⟠ 🔵color4⟠ 🟣color5⟠ color text.
 
-🔵Color 🟣decoration⟠ can⟠ be nested.
+🔵Color 🟣deco🔵ra⟠tion⟠ can⟠ be nested.
+
+🔵Color ⋄strong⋄⟠ and ⋄Strong 🔴color ⟠⋄ text.
 
 ▮▮ Image
 

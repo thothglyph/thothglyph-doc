@@ -91,7 +91,8 @@ class Lexer():
         'SUB': r'⌄',
         'TEXT': r'.*',
     }
-    deco_keys: Tuple[str, ...] = tuple(inline_deco_tokens.keys())[:-1]
+    inline_deco_keys: Tuple[str, ...] = tuple(inline_deco_tokens.keys())[:-1]
+    color_deco_keys: Tuple[str, ...] = tuple(inline_color_deco_tokens.keys())[:-1]
     all_deco_keys: Tuple[str, ...] = tuple(
         list(inline_color_deco_tokens.keys()) + list(inline_deco_tokens.keys())
     )[:-1]
@@ -1284,15 +1285,33 @@ class TglyphParser(Parser):
         depth = 0
         cur_deco = [deco.role]
         while tokens:
-            if tokens[0].key != cur_deco[-1] and tokens[0].key in Lexer.all_deco_keys:
-                if deco.role != 'CODE':
+            if tokens[0].key in Lexer.inline_deco_keys:
+                if tokens[0].key in cur_deco:
+                    idx = cur_deco.index(tokens[0].key)
+                    while len(cur_deco) > idx + 1:
+                        cur_deco.pop()
+                        depth -= 1
+            if cur_deco[-1] in Lexer.inline_deco_keys:
+                if tokens[0].key in (cur_deco[-1], 'DECO_END'):
+                    if depth == 0:
+                        break
+                    cur_deco.pop()
+                    depth -= 1
+                elif tokens[0].key == cur_deco[-1]:
+                    cur_deco.pop()
+                    depth -= 1
+                elif tokens[0].key in Lexer.all_deco_keys:
                     cur_deco.append(tokens[0].key)
                     depth += 1
-            elif tokens[0].key in (cur_deco[-1], 'DECO_END'):
-                if depth == 0:
-                    break
-                cur_deco.pop()
-                depth -= 1
+            else:  # color_deco_keys
+                if tokens[0].key == 'DECO_END':
+                    if depth == 0:
+                        break
+                    cur_deco.pop()
+                    depth -= 1
+                elif tokens[0].key in Lexer.all_deco_keys:
+                    cur_deco.append(tokens[0].key)
+                    depth += 1
             subtokens.append(tokens[0])
             tokens.pop(0)
         else:
