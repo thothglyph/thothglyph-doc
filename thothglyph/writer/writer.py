@@ -30,7 +30,9 @@ class Writer():
             alt = f'*doc.{name}*'
             return alt
 
-    def __init__(self):
+    def __init__(self, config=None):
+        if isinstance(config, dict):
+            self.cmdargs_config = config
         self.encoding: str = 'utf-8'
         self.data: str = str()
         self.rootnode: Optional[nd.DocumentNode] = None
@@ -53,6 +55,8 @@ class Writer():
 
     def template_dir(self) -> str:
         assert isinstance(self.rootnode, nd.DocumentNode)
+        if tdir := self.cmdargs_config.get('templatedir'):
+            return tdir
         config = self.rootnode.config
         if hasattr(config, 'templatedir'):
             template_dir = config.templatedir
@@ -62,6 +66,8 @@ class Writer():
 
     def theme(self, target: Optional[str] = None) -> str:
         assert isinstance(self.rootnode, nd.DocumentNode)
+        if theme := self.cmdargs_config.get('theme'):
+            return theme
         config = self.rootnode.config
         if hasattr(config, 'theme'):
             theme = config.theme

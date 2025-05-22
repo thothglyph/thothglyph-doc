@@ -24,6 +24,12 @@ def main():
         version='{} {}'.format(NAMESPACE, __version__),
         help='display version and exit')
     argparser.add_argument(
+        '--template', metavar='TYPE', default=None,
+        help='template direcory')
+    argparser.add_argument(
+        '--theme', metavar='TYPE', default=None,
+        help='template theme name')
+    argparser.add_argument(
         '--to', '-t', metavar='TYPE', default=None,
         help='output file type')
     argparser.add_argument(
@@ -65,13 +71,19 @@ def main():
     else:
         output_absfpath = os.path.abspath(args.output)
 
+    config = dict()
+    if args.template:
+        config['templatedir'] = os.path.abspath(args.template)
+    if args.theme:
+        config['theme'] = args.theme
+
     os.chdir(input_dirname)
     try:
-        reader = ReaderClass(input_type)()
+        reader = ReaderClass(input_type)(config=config)
         node = reader.read(input_fname)
         nodeprint(node)
 
-        writer = WriterClass(output_type)()
+        writer = WriterClass(output_type)(config=config)
         odir, ofbname, ofext = writer.make_output_fpath(input_absfpath, output_absfpath, node)
         output_fpath = os.path.join(odir, '{}.{}'.format(ofbname, ofext))
         writer.write(output_fpath, node)

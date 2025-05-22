@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Optional
 import importlib
 import os
+import shutil
 import subprocess
 import tempfile
 from thothglyph.error import ThothglyphError
@@ -17,15 +18,40 @@ class PdfWriter(LatexWriter):
     target = 'pdf'
     ext = 'pdf'
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tmpdirname: Optional[str] = None
+
+    def template_dir(self):
+        if self.tmpdirname:
+            return os.path.join(self.tmpdirname, 'template')
+        return super().template_dir()
+
+    def _copy_template(self, tmpdirname: str) -> None:
+        commondir1 = os.path.join(self.pkg_template_dir(), 'common')
+        commondir2 = os.path.join(self.template_dir(), 'common')
+        newcommondir = os.path.join(tmpdirname, 'template', 'common')
+        os.makedirs(newcommondir, exist_ok=True)
+        shutil.copy(os.path.join(commondir1, 'check_en.pdf'), newcommondir)
+        shutil.copy(os.path.join(commondir1, 'check_im.pdf'), newcommondir)
+        shutil.copy(os.path.join(commondir1, 'check_dis.pdf'), newcommondir)
+        if os.path.exists(commondir2):
+            shutil.copytree(commondir2, newcommondir, dirs_exist_ok=True)
+
+        latexdir1 = os.path.join(self.pkg_template_dir(), 'latex')
+        latexdir2 = os.path.join(self.template_dir(), 'latex')
+        newlatexdir = os.path.join(tmpdirname, 'template', 'latex')
+        os.makedirs(newlatexdir, exist_ok=True)
+        shutil.copytree(latexdir1, newlatexdir, dirs_exist_ok=True)
+        if os.path.exists(latexdir2):
+            shutil.copytree(latexdir2, newlatexdir, dirs_exist_ok=True)
 
     def write(self, fpath: str, node: nd.ASTNode):
         clsname = self.__class__.__name__
         logger.info('{}: write document'.format(clsname))
         self.rootnode = node
         with tempfile.TemporaryDirectory() as tmpdirname:
+            self._copy_template(tmpdirname)
             self.tmpdirname = tmpdirname
             self.parse(node)
             dirname, fname = os.path.split(fpath)

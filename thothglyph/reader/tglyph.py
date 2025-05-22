@@ -1352,8 +1352,8 @@ class TglyphReader(Reader):
     target = 'tglyph'
     ext = 'pdf'
 
-    def __init__(self, parent: Optional[Reader] = None):
-        super().__init__(parent=parent)
+    def __init__(self, parent: Optional[Reader] = None, **kwargs):
+        super().__init__(parent=parent, **kwargs)
         self.parser: TglyphParser = TglyphParser(self)
 
     def read(self, path: str, encoding: Optional[str] = None) -> nd.ASTNode:

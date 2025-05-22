@@ -37,8 +37,8 @@ class HtmlWriter(Writer):
         'COLOR5',
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tmpdirname: Optional[str] = None
         self.imgdirname: str = 'img'
 
@@ -74,11 +74,15 @@ class HtmlWriter(Writer):
         self.tmpdirname = None
 
     def _copy_template(self, fpath: str) -> None:
-        commondir = os.path.join(self.template_dir(), 'common')
-        if not os.path.exists(commondir):
-            commondir = os.path.join(self.pkg_template_dir(), 'common')
+        commondir1 = os.path.join(self.pkg_template_dir(), 'common')
+        commondir2 = os.path.join(self.template_dir(), 'common')
         newcommondir = os.path.join(self.tmpdirname, 'template', 'common')
-        shutil.copytree(commondir, newcommondir, dirs_exist_ok=True)
+        os.makedirs(newcommondir, exist_ok=True)
+        shutil.copy(os.path.join(commondir1, 'check_en.svg'), newcommondir)
+        shutil.copy(os.path.join(commondir1, 'check_im.svg'), newcommondir)
+        shutil.copy(os.path.join(commondir1, 'check_dis.svg'), newcommondir)
+        if os.path.exists(commondir2):
+            shutil.copytree(commondir2, newcommondir, dirs_exist_ok=True)
 
     def _copy_resources(self, fpath: str) -> None:
         rscs: Dict[str, List[str]] = dict()

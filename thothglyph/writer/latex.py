@@ -64,8 +64,8 @@ class LatexWriter(Writer):
     }
     bp_scale: float = 0.625
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tmpdirname: Optional[str] = None
         self.contentphase: str = 'before'  # before, main, after
 

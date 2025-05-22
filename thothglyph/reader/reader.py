@@ -11,7 +11,9 @@ class Reader():
     target: str = 'unknown'
     ext: str = 'unknown'
 
-    def __init__(self, parent: Optional[Reader] = None):
+    def __init__(self, parent: Optional[Reader] = None, config=None):
+        if isinstance(config, dict):
+            self.cmdargs_config = config
         self.encoding: str = 'utf-8'
         self.parent: Optional[Reader] = parent
         self.parser: Parser = Parser(self)
