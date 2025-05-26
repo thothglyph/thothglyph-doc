@@ -81,11 +81,11 @@ class Lexer():
     }
 
     inline_deco_tokens: Dict[str, str] = {
-        'EMPHASIS': r'⁒',
-        'STRONG': r'⋄',
+        'EMPHASIS': r'🙼',
+        'STRONG': r'⧫',
         'MARKED': r'‗',
         'STRIKE': r'¬',
-        'VAR': r'⫶',
+        'VAR': r'⁒',
         'CODE': r'⸌',
         'SUP': r'⌃',
         'SUB': r'⌄',

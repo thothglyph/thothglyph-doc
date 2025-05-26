@@ -415,31 +415,36 @@ paragraph
 
 ▮▮ Text Decoration
 
-The ⁒emphasis⁒ ⋄strong⋄ ‗inserted‗ ¬deleted¬ ⋄⁒strong & emphasis⁒⋄ text.
+The 🙼emphasis🙼 ⧫strong⧫ ‗inserted‗ ¬deleted¬ ⧫🙼strong & emphasis🙼⧫ text.
+
+The 🙼emphasis ⧫strong ‗inserted ¬deleted¬‗⧫🙼 text.
 
 The x⌃sup⌃x x⌄sub⌄x text.
 
-The ⫶var⫶ and ⸌code⸌ text.
+The ⁒var⁒ and ⸌code⸌ text.
 
-ᛝ--text=⁒val⁒ᛝ set ⁒val⁒ to text.
+ᛝ--text=🙼val🙼ᛝ set 🙼val🙼 to text.
 ᛝ-Wl,--hoge-fuga=piyoᛝ This is ⸌-Wl,--hoge-fuga=piyo⸌
 ◃
 ⸌⸌⸌
-The ⁒emphasis⁒ ⋄strong⋄ ‗inserted‗ ¬deleted¬ ⋄⁒strong & emphasis⁒⋄ text.
+The 🙼emphasis🙼 ⧫strong⧫ ‗inserted‗ ¬deleted¬ ⧫🙼strong & emphasis🙼⧫ text.
 ⸌⸌⸌
 
 ⸌⸌⸌c
-__attribute__((⫶used⫶)) void _start(void)
+__attribute__((🙼used🙼)) void _start(void)
 {
-    int ret = ⋄main⋄();
+    int ret = ⧫main⧫();
     exit(ret);
     // ‗no return‗
 }
 ⸌⸌⸌
 
-▮▮ Nested Text Decoration
+▮▮ Text Decoration Terminator
 
-The ⁒emphasis ⋄strong ‗inserted ¬deleted⟠⟠⟠⟠ text.
+The 🙼emphasis⟠ ⧫strong⟠ ‗inserted⟠ ¬deleted⟠ ⧫🙼strong & emphasis⟠⟠ text.
+
+The 🙼emphasis ⧫strong ‗inserted ¬deleted⟠⟠⟠⟠ text.
+
 
 ▮▮ Color Decoration
 
@@ -447,7 +452,7 @@ The 🔴color1⟠ 🟡color2⟠ 🟢color3⟠ 🔵color4⟠ 🟣color5⟠ color 
 
 🔵Color 🟣deco🔵ra⟠tion⟠ can⟠ be nested.
 
-🔵Color ⋄strong⋄⟠ and ⋄Strong 🔴color ⟠⋄ text.
+🔵Color ⧫strong⧫⟠ or ⧫Strong 🔴color ⟠⧫ text.
 
 ▮▮ Image
 
@@ -571,9 +576,9 @@ The important text. [#1] And the important text too. [#2]
 
 Hello, I am ⁅author⁆.
 
-Replace in decoration text like ⋄⁅author⁆⋄, ⸌⁅val⁆⸌.
+Replace in decoration text like ⧫⁅author⁆⧫, ⸌⁅val⁆⸌.
 
-• Replace in decoration text like ⋄⁅author⁆⋄, ⸌⁅val⁆⸌.
+• Replace in decoration text like ⧫⁅author⁆⧫, ⸌⁅val⁆⸌.
 
 ᛝReplace ⁅author⁆ᛝ ⸌⁅val⁆⸌
 ᛝReplace ⸌⁅val⁆⸌ᛝ ⁅author⁆
