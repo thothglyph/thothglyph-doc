@@ -61,8 +61,8 @@ class Lexer():
         'end',
     )
     preproc_tokens: Dict[str, str] = {
-        'CONFIG_BEGIN_LINE': r'--- *(.+)$',
-        'CONFIG_END_LINE': r'---$',
+        'CONFIG_BEGIN_LINE': r'^--- *(.+)$',
+        'CONFIG_END_LINE': r'^---$',
         'COMMENT': r'%//(.+)',
         'CONTROL_FLOW': r'%# *(\w+)(.*)',
         'TEXT': r'^.*(?<!%//)|(?<!%#)$',
@@ -144,7 +144,7 @@ class MdParser(Parser):
 
     def __init__(self, reader: Reader):
         super().__init__(reader)
-        self.pplines: List[str] = list()
+        self.pplines: List[Tuple[int, str]] = list()
         self.rootnode: Optional[nd.DocumentNode] = None
         self.nodes: List[nd.ASTNode] = list()
         self.lexer: Lexer = Lexer()
@@ -198,9 +198,9 @@ class MdParser(Parser):
             elif tokens[0].key == 'CONTROL_FLOW':
                 tokens = self.p_controlflow(tokens)
             else:
-                self.pplines.append(tokens[0].value)
+                self.pplines.append((tokens[0].line, tokens[0].value))
                 tokens.pop(0)
-        ppdata = '\n'.join(self.pplines)
+        ppdata = '\n'.join(pp[1] for pp in self.pplines)
         return ppdata
 
     def _init_config(self) -> None:
@@ -219,9 +219,12 @@ class MdParser(Parser):
         is_tail = token == self.tokens[-1] or \
             token.line + 1 == self._tokens(token, +1).line
         if is_head and is_tail:
-            self.pplines.append('')
-        else:
+            # remove config / comment / control-flow line
             pass
+        else:
+            # remove end-of-line comment
+            lineno, lineval = self.pplines[-1]
+            self.pplines[-1] = (lineno, lineval.rstrip())
 
     def p_configblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         config = self.rootnode.config
@@ -312,8 +315,8 @@ class MdParser(Parser):
         lastflowtoken = tokens[0]
         lasttoken = tokens[0]
         while tokens:
-            if tokens[0].key == 'TEXT' and all(conds):
-                self.pplines.append(tokens[0].value)
+            if tokens[0].key not in ('CONTROL_FLOW', 'COMMENT') and all(conds):
+                self.pplines.append((tokens[0].line, tokens[0].value))
                 lasttoken = tokens.pop(0)
             elif tokens[0].key == 'CONTROL_FLOW':
                 match = re.match(Lexer.preproc_tokens['CONTROL_FLOW'], tokens[0].value)

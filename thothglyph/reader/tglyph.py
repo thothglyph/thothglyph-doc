@@ -39,7 +39,6 @@ class Lexer():
         'TEXT': r'[^⑇]*',
     }
     block_tokens: Dict[str, str] = {
-        'PREPROCESSED_SYMBOL': r'⑇+',
         'SECTION_TITLE_LINE': r' *((?:▮+)|(?:▯+))([*+]?) +([^⟦]+) *(?:⟦([^⟧]*)⟧)?',
         'TOC_LINE': r' *¤toc(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
         'FIGURE_LINE': r' *¤figure(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
@@ -128,7 +127,7 @@ class Lexer():
     def lex_preproc(self, data: str) -> List[Lexer.Token]:
         return self.lex_pattern(self._preproc_tokens, data)
 
-    def lex_block(self, data: str) -> List[Lexer.Token]:
+    def lex_block(self, data: List[Tuple[int, str]]) -> List[Lexer.Token]:
         return self.lex_pattern(self._block_tokens, data)
 
     def lex_inline_deco(self, data: str, begin=1) -> List[Lexer.Token]:
@@ -138,10 +137,15 @@ class Lexer():
     def lex_inline(self, data: str, begin=1) -> List[Lexer.Token]:
         return self.lex_pattern(self._inline_tokens, data, begin=begin)
 
-    def lex_pattern(self, patterns, data: str, begin=0) -> List[Lexer.Token]:
-        lines = data.split(self.newline_token)
+    def lex_pattern(self, patterns, data: str | List[Tuple[int, str]], begin=0
+                    ) -> List[Lexer.Token]:
         tokens: List[Lexer.Token] = list()
-        for lineno, line in enumerate(lines):
+        if isinstance(data, str):
+            lines = data.split(self.newline_token)
+            lines_ite = enumerate(lines)
+        else:
+            lines_ite = data
+        for lineno, line in lines_ite:
             rest = line
             rests: List[Tuple[int, str]] = [(0, line)]
             linetokens: List[Lexer.Token] = list()
@@ -187,7 +191,7 @@ class Lexer():
 class TglyphParser(Parser):
     def __init__(self, reader: Reader):
         super().__init__(reader)
-        self.pplines: List[str] = list()
+        self.pplines: List[Tuple[int, str]] = list()
         self.rootnode: Optional[nd.DocumentNode] = None
         self.nodes: List[nd.ASTNode] = list()
         self.lexer: Lexer = Lexer()
@@ -205,7 +209,6 @@ class TglyphParser(Parser):
             msg = 'Unknown token.'
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
-        self._remove_preprocessed_tokens()
         tokens = list() + self.tokens
         tokens = self.p_document(tokens)
         return self.rootnode
@@ -215,7 +218,7 @@ class TglyphParser(Parser):
             return None
         return self.tokens[self.tokens.index(token) + offset]
 
-    def preprocess(self, data: str) -> str:
+    def preprocess(self, data: str) -> List[Tuple[int, str]]:
         self._init_config()
         try:
             self.tokens = self.lexer.lex_preproc(data)
@@ -237,9 +240,9 @@ class TglyphParser(Parser):
             elif tokens[0].key == 'CONTROL_FLOW':
                 tokens = self.p_controlflow(tokens)
             else:
-                self.pplines.append(tokens[0].value)
+                self.pplines.append((tokens[0].line, tokens[0].value))
                 tokens.pop(0)
-        ppdata = '\n'.join(self.pplines)
+        ppdata = self.pplines
         return ppdata
 
     def _init_config(self) -> None:
@@ -258,9 +261,12 @@ class TglyphParser(Parser):
         is_tail = token == self.tokens[-1] or \
             token.line + 1 == self._tokens(token, +1).line
         if is_head and is_tail:
-            self.pplines.append('⑇' * len(token.value))
+            # remove config / comment / control-flow line
+            pass
         else:
-            self.pplines[-1] += '⑇' * len(token.value)
+            # remove end-of-line comment
+            lineno, lineval = self.pplines[-1]
+            self.pplines[-1] = (lineno, lineval.rstrip())
 
     def p_configblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         config = self.rootnode.config
@@ -346,7 +352,7 @@ class TglyphParser(Parser):
         lasttoken = tokens[0]
         while tokens:
             if tokens[0].key == 'TEXT' and all(conds):
-                self.pplines.append(tokens[0].value)
+                self.pplines.append((tokens[0].line, tokens[0].value))
                 lasttoken = tokens.pop(0)
             elif tokens[0].key == 'CONTROL_FLOW':
                 match = re.match(Lexer.preproc_tokens['CONTROL_FLOW'], tokens[0].value)
@@ -388,9 +394,6 @@ class TglyphParser(Parser):
         self._line_preprocessed(tokens[0])
         tokens.pop(0)
         return tokens
-
-    def _remove_preprocessed_tokens(self) -> None:
-        self.tokens = [t for t in self.tokens if t.key != 'PREPROCESSED_SYMBOL']
 
     def p_document(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         tokens = self.p_ignore_emptylines(tokens)

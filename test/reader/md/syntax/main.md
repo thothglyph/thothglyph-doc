@@ -541,12 +541,6 @@ The important text. {cite}`1` And the important text too. {cite}`2`
 
 # Config
 
-%% if version == '1.2.3'
-version is 1.2.3
-%% else
-version is not 1.2.3
-%% end
-
 ## Replace
 
 Hello, I am {{%author%}}.
