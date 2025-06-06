@@ -472,13 +472,13 @@ Image in paragraph like ¤image⟦w="180px"⟧⸨./tglyph.drawio.svg⸩.
 
 ==Start of include 1st==
 
-¤include⸨./sub1.tglyph⸩
+¤include⸨./sub/sub1.tglyph⸩
 
 ==End of include 1st==
 
 ==Start of include 2nd==
 
-¤include⸨./sub1.tglyph⸩
+¤include⸨./sub/sub1.tglyph⸩
 
 ==End of include 2nd==
 
@@ -510,9 +510,13 @@ Block markup section: ⸨Block-markup⸩!
 
 ⟦Here⟧⸨Block-markup⸩ is the same!
 
+⟦Here⟧⸨#Block-markup⸩ is the same too!
+
 ⸨blist⸩ is referenced by id.
 
 ⟦Orderd List Section⟧⸨olist⸩ is referenced by id too.
+
+Other document section: ⸨./sub/sub1.tglyph#Section_1-2⸩
 
 「⟦⟧⸨セクション1-1⸩」のようにIDには多言語文字が使えます。
 

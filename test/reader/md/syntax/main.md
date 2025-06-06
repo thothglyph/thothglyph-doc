@@ -446,14 +446,14 @@ Image in paragraph like ![](./tglyph.svg){w=150px}.
 
 ==Start of include 1st==
 
-```{include} ./sub1.md
+```{include} ./sub/sub1.md
 ```
 
 ==End of include 1st==
 
 ==Start of include 2nd==
 
-```{include} ./sub1.md
+```{include} ./sub/sub1.md
 ```
 
 ==End of include 2nd==
@@ -481,21 +481,23 @@ For more information, check [here](https://www.google.com/) !
 
 ## CrossReference
 
-Block markup section: [](Block-markup)!
+Block markup section: [](#Block-markup)!
 
-[Here](Block-markup) is the same!
+[Here](#Block-markup) is the same!
 
-[](blist) is referenced by id.
+[](#blist) is referenced by id.
 
-[Orderd List Section](olist) is referenced by id too.
+[Orderd List Section](#olist) is referenced by id too.
 
-「[](セクション1-1)」のようにIDには多言語文字が使えます。
+Other document section: ⸨./sub/sub1.md#section-1-2⸩
+
+「[](#セクション1-1)」のようにIDには多言語文字が使えます。
 
 タイトルから自動で割り振られるIDが重複する場合、2つ目以降は連番が振られます：
 
-* [Section Name](section-name)
-* [Section Name (1)](section-name-1)
-* [Section Name (2)](section-name-2)
+* [Section Name](#section-name)
+* [Section Name (1)](#section-name-1)
+* [Section Name (2)](#section-name-2)
 
 ### Section Name
 

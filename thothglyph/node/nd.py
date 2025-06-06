@@ -1,5 +1,7 @@
 from __future__ import annotations
 from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Tuple
+import os
+import pathlib
 import re
 import subprocess
 import types
@@ -111,6 +113,7 @@ class DocumentNode(ASTNode):
     def __init__(self):
         super().__init__()
         self.level: int = 0
+        self.srcpath: str = str()
         self.config: ConfigNode = ConfigNode()
 
 
@@ -174,8 +177,21 @@ class SectionNode(ASTNode):
         self.title: str = str()
         self.id: str = str()
         self.auto_id: str = str()
+        self.srcpath: str = str()
+        self.src_id: str = str()
         self.opts: Dict[str, Any] = dict()
         self._sectindex: List[int] = list()
+
+    @property
+    def rootpath(self):
+        return self.root.srcpath
+
+    @property
+    def src_relpath(self):
+        root_dir = os.path.dirname(os.path.abspath(self.rootpath))
+        src_abspath = pathlib.Path(self.srcpath).resolve()
+        src_relpath = src_abspath.relative_to(root_dir)
+        return str(src_relpath)
 
     def sectindex(self) -> List[int]:
         return self._sectindex
@@ -524,35 +540,61 @@ class LinkNode(InlineNode):
         super().__init__()
         self.opts: Any = list() if opts is None else opts
         self.value: str = str() if value is None else value
+        self.srcpath: str = str()
 
     @property
-    def target_id(self) -> str:
-        root: ASTNode = self.root
-        # find by id
-        for n, gofoward in root.walk_depth():
-            if gofoward and isinstance(n, SectionNode):
-                if n.id == self.value:
-                    return n.id
-                if not n.id and n.auto_id == self.value:
-                    return n.auto_id
-        return self.value.replace(' ', '_')
+    def rootpath(self):
+        return self.root.srcpath
+
+    def _relpath(self, tgtpath):
+        rootdir = os.path.dirname(os.path.abspath(self.rootpath))
+        selfdir = os.path.dirname(os.path.abspath(self.srcpath))
+        tgtpath_from_selfdir = os.path.join(selfdir, tgtpath)
+        tgt_abspath = pathlib.Path(tgtpath_from_selfdir).resolve()
+        tgtpath_from_root = tgt_abspath.relative_to(rootdir)
+        return str(tgtpath_from_root)
 
     @property
-    def target_title(self) -> str:
+    def target_section(self) -> str:
         root: ASTNode = self.root
-        # find by id
-        for n, gofoward in root.walk_depth():
-            if gofoward and isinstance(n, SectionNode):
-                if n.id == self.value:
-                    # title = '{}. {}'.format(n.sectnum, n.title)
-                    return n.title
-        # find by title
-        for n, gofoward in root.walk_depth():
-            if gofoward and isinstance(n, SectionNode):
-                if n.title == self.value:
-                    # title = '{}. {}'.format(n.sectnum, n.title)
-                    return n.title
-        return self.value
+        url, _, anchor = self.value.partition('#')
+        if url and not anchor:
+            tgtpath = self._relpath(self.srcpath)
+            tgtid = url
+            # find id in local
+            for sec, gofoward in root.walk_depth():
+                if gofoward and isinstance(sec, SectionNode):
+                    sec_id = sec.id or sec.auto_id
+                    if sec.src_relpath == tgtpath and sec_id == tgtid:
+                        return sec
+            # find id in global
+            for sec, gofoward in root.walk_depth():
+                if gofoward and isinstance(sec, SectionNode):
+                    sec_id = sec.id or sec.auto_id
+                    if sec.src_relpath != tgtpath and sec_id == tgtid:
+                        return sec
+            tgtpath = self._relpath(url)
+            tgtid = ''
+        if anchor:
+            tgtid = anchor
+            if url:
+                tgtpath = self._relpath(url)  # need convert to relpath
+            else:
+                tgtpath = self._relpath(self.srcpath)
+        if tgtid:
+            # find id in local
+            for sec, gofoward in root.walk_depth():
+                if gofoward and isinstance(sec, SectionNode):
+                    sec_id = sec.id or sec.auto_id
+                    if sec.src_relpath == tgtpath and sec_id == tgtid:
+                        return sec
+        # find first section in local
+        for sec, gofoward in root.walk_depth():
+            if gofoward and isinstance(sec, SectionNode):
+                sec_id = sec.id or sec.auto_id
+                if sec.src_relpath == tgtpath:
+                    return sec
+        return None
 
 
 class FootnoteNode(InlineNode):

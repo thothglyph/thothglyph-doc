@@ -19,6 +19,13 @@ class Reader():
         self.parser: Parser = Parser(self)
         self.path: str = str()
 
+    @property
+    def root_reader(self):
+        reader = self
+        while reader.parent:
+            reader = reader.parent
+        return reader
+
     def read(self, path: str, encoding: Optional[str] = None) -> nd.ASTNode:
         if encoding:
             self.encoding = encoding
@@ -29,6 +36,7 @@ class Reader():
             data = f.read()
         node = self.parser.parse(data)
         self.set_sect_auto_id(node)
+        self.set_sect_src_id(node)
         self.set_sectnums(node)
         self.set_footnote_nums(node)
         self.merge_tablecell_text(node)
@@ -40,7 +48,10 @@ class Reader():
             if not gofoward:
                 continue
             if isinstance(n, nd.SectionNode):
-                if not n.id:
+                n_abspath = os.path.abspath(n.srcpath)
+                root_abspath = os.path.abspath(rootnode.srcpath)
+                if not n.id and n_abspath == root_abspath:
+                    # auto_id = "#" + n.title.replace(' ', '_')
                     auto_id = n.title.replace(' ', '_')
                     auto_id_sections.append([n, auto_id])
         auto_id_sections.sort(key=lambda x: x[1])
@@ -56,6 +67,21 @@ class Reader():
                     new_auto_id = auto_id + '-' + str(count)
                     n.auto_id = new_auto_id
                 prev_auto_id = auto_id
+
+    def set_sect_src_id(self, rootnode: nd.ASTNode) -> None:
+        src_relpaths = list()
+        for n, gofoward in rootnode.walk_depth():
+            if not gofoward:
+                continue
+            if isinstance(n, nd.SectionNode):
+                if n.src_relpath not in src_relpaths:
+                    src_relpaths.append(n.src_relpath)
+        for n, gofoward in rootnode.walk_depth():
+            if not gofoward:
+                continue
+            if isinstance(n, nd.SectionNode):
+                src_id = src_relpaths.index(n.src_relpath)
+                n.src_id = src_id
 
     def set_sectnums(self, rootnode: nd.ASTNode) -> None:
         nums: List[int] = [0 for i in range(10)]

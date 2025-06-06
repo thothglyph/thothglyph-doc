@@ -104,7 +104,7 @@ class LatexWriter(Writer):
 
     def visit_section(self, node: nd.ASTNode) -> None:
         level_offset = 0
-        _id = node.id or node.auto_id
+        _id = str(node.src_id) + '_' + (node.id or node.auto_id)
         _id = self._label_normalize(_id)
         title = tex_escape(node.title)
         doctype = 'report'
@@ -500,7 +500,12 @@ class LatexWriter(Writer):
             text = tex_escape(text)
             self.data += '\\href{{{}}}{{{}}}'.format(url, text)
         else:
-            url = self._label_normalize(node.target_id)
+            sect = node.target_section
+            if not sect:
+                raise ThothglyphError('target not found: {} from {}'.format(
+                    node.value, node.src_relpath))
+            url = str(sect.src_id) + '_' + (sect.id or sect.auto_id)
+            url = self._label_normalize(url)
             if node.opts[0]:
                 text = node.opts[0]
                 text = tex_escape(text)

@@ -153,6 +153,7 @@ class MdParser(Parser):
         self.nodes.append(self.rootnode)
 
     def parse(self, data: str) -> Optional[nd.DocumentNode]:
+        self.rootnode.srcpath = self.reader.path
         ppdata = self.preprocess(data)
         try:
             self.tokens = mdit.parse(ppdata)
@@ -437,6 +438,7 @@ class MdParser(Parser):
         for i in range(poplevel):
             self.nodes.pop()
         section = nd.SectionNode()
+        section.srcpath = os.path.abspath(self.reader.path)
         section.level = level
         nonum = bool(mdnode.attrs.get('nonum', ''))
         notoc = bool(mdnode.attrs.get('notoc', ''))
@@ -1004,6 +1006,7 @@ class MdParser(Parser):
         link.value = mdnode.attrs['href']
         if '://' not in link.value:
             link.value = urllib.parse.unquote(link.value)
+        link.srcpath = os.path.abspath(self.reader.path)
         self.nodes[-1].add(link)
 
     def p_role(self, mdnode: SyntaxTreeNode) -> None:
@@ -1117,7 +1120,7 @@ class MdReader(Reader):
     def _slugify(self, text):
         slug = re.sub(r'[^\w\- ]', '', text)
         slug = re.sub(r' ', '-', slug)
-        slug = '#' + slug.lower()
+        slug = slug.lower()
         return slug
 
     def _convert_link_slug(self, node: nd.ASTNode) -> None:
@@ -1147,5 +1150,5 @@ class MdReader(Reader):
             if isinstance(n, nd.LinkNode):
                 if '://' in n.value:
                     continue
-                if n.target_id in slug_table:
-                    n.value = slug_table[n.target_id].auto_id
+                if n.value[1:] in slug_table:
+                    n.value = slug_table[n.value[1:]].auto_id

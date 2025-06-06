@@ -111,7 +111,7 @@ class HtmlWriter(Writer):
 
     def visit_section(self, node: nd.ASTNode) -> None:
         self.data += '<section>'
-        _id = node.id or node.auto_id
+        _id = str(node.src_id) + '_' + (node.id or node.auto_id)
         if node.opts.get('nonum'):
             title = node.title
         else:
@@ -144,8 +144,8 @@ class HtmlWriter(Writer):
                     title = '{}'.format(n.title)
                 else:
                     title = '{}. {}'.format(n.sectnum, n.title)
-                _id = n.id or n.auto_id
-                self.data += '<li><a href="#{}">{}</a></li>\n'.format(_id, title)
+                url = '#' + str(n.src_id) + '_' + (n.id or n.auto_id)
+                self.data += '<li><a href="{}">{}</a></li>\n'.format(url, title)
                 if bros.index(n) == len(bros) - 1:
                     self.data += '</ul>\n'
         self.data += '</div>\n'
@@ -461,8 +461,12 @@ class HtmlWriter(Writer):
             text = node.opts[0] if node.opts[0] else node.value
         else:
             blank = ''
-            url = '#' + node.target_id
-            text = node.opts[0] if node.opts[0] else node.target_title
+            sect = node.target_section
+            if not sect:
+                raise ThothglyphError('target not found: {} from {}'.format(
+                    node.value, node.src_relpath))
+            url = "#" + str(sect.src_id) + '_' + (sect.id or sect.auto_id)
+            text = node.opts[0] if node.opts[0] else sect.title
         text = html.escape(text)
         self.data += '<a href="{}" {}>{}</a>'.format(url, blank, text)
 

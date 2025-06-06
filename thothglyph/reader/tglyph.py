@@ -200,6 +200,7 @@ class TglyphParser(Parser):
         self.nodes.append(self.rootnode)
 
     def parse(self, data: str) -> Optional[nd.DocumentNode]:
+        self.rootnode.srcpath = self.reader.path
         ppdata = self.preprocess(data)
         try:
             self.tokens = self.lexer.lex_block(ppdata)
@@ -522,6 +523,7 @@ class TglyphParser(Parser):
                 section.level = 1
             else:
                 section.level = 2
+        section.srcpath = os.path.abspath(self.reader.path)
         section.level = level
         section.opts['nonum'] = (m.group(2) in ('*', '+'))
         section.opts['notoc'] = (m.group(2) == '*')
@@ -1240,6 +1242,7 @@ class TglyphParser(Parser):
         link = nd.LinkNode()
         link.opts = m.group(1).split(',') if m.group(1) is not None else ['']
         link.value = self.replace_text_attrs(m.group(2))
+        link.srcpath = os.path.abspath(self.reader.path)
         self.nodes[-1].add(link)
         tokens.pop(0)
         return tokens
