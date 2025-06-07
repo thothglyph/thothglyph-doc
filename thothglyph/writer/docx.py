@@ -94,8 +94,8 @@ class DocxWriter(Writer):
         'SUB': 'subscript',
     }
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tmpdirname: Optional[str] = None
 
         self.numbered = 0

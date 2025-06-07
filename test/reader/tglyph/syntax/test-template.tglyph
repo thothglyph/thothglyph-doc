@@ -1,0 +1,23 @@
+⑇⑇⑇
+templatedir = 'mytemplate'
+theme = 'preview'
+⑇⑇⑇
+
+▮ Section 1
+
+Text
+
+▮▮ Section 1-1
+
+Text
+
+▮▮ Section 1-2
+
+•[ ] List item 1
+••[-] List item 1-1
+•••[x] List item 1-1-1
+•••[ ] List item 1-1-2
+••[x] List item 1-2
+•••[x] List item 1-2-1
+•••[x] List item 1-2-2
+•[ ] List item 2

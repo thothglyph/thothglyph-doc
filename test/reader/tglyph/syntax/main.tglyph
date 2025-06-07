@@ -211,6 +211,10 @@ next paragraph.
 | data11 | data12 | data13 |
 | A | B | C |
 
+| head21 | head22 | head23 |
+|+-------|+------+|-------+|
+| data11 | data12 | data13 |
+
 | head11 | head12 | ⏴      | ⏴      |
 |--------|--------|--------|--------|
 | data11 | data12 | data13 | data14 |
@@ -411,37 +415,44 @@ paragraph
 
 ▮▮ Text Decoration
 
-The ⁒emphasis⁒ ⋄strong⋄ ‗inserted‗ ¬deleted¬ ⋄⁒strong & emphasis⁒⋄ text.
+The 🙼emphasis🙼 ⧫strong⧫ ‗inserted‗ ¬deleted¬ ⧫🙼strong & emphasis🙼⧫ text.
+
+The 🙼emphasis ⧫strong ‗inserted ¬deleted¬‗⧫🙼 text.
 
 The x⌃sup⌃x x⌄sub⌄x text.
 
-The ⫶var⫶ and ⸌code⸌ text.
+The ⁒var⁒ and ⸌code⸌ text.
 
-ᛝ--text=⁒val⁒ᛝ set ⁒val⁒ to text.
+ᛝ--text=🙼val🙼ᛝ set 🙼val🙼 to text.
 ᛝ-Wl,--hoge-fuga=piyoᛝ This is ⸌-Wl,--hoge-fuga=piyo⸌
 ◃
 ⸌⸌⸌
-The ⁒emphasis⁒ ⋄strong⋄ ‗inserted‗ ¬deleted¬ ⋄⁒strong & emphasis⁒⋄ text.
+The 🙼emphasis🙼 ⧫strong⧫ ‗inserted‗ ¬deleted¬ ⧫🙼strong & emphasis🙼⧫ text.
 ⸌⸌⸌
 
 ⸌⸌⸌c
-__attribute__((⫶used⫶)) void _start(void)
+__attribute__((🙼used🙼)) void _start(void)
 {
-    int ret = ⋄main⋄();
+    int ret = ⧫main⧫();
     exit(ret);
     // ‗no return‗
 }
 ⸌⸌⸌
 
-▮▮ Nested Text Decoration
+▮▮ Text Decoration Terminator
 
-The ⁒emphasis ⋄strong ‗inserted ¬deleted⟠⟠⟠⟠ text.
+The 🙼emphasis⟠ ⧫strong⟠ ‗inserted⟠ ¬deleted⟠ ⧫🙼strong & emphasis⟠⟠ text.
+
+The 🙼emphasis ⧫strong ‗inserted ¬deleted⟠⟠⟠⟠ text.
+
 
 ▮▮ Color Decoration
 
 The 🔴color1⟠ 🟡color2⟠ 🟢color3⟠ 🔵color4⟠ 🟣color5⟠ color text.
 
-🔵Color 🟣decoration⟠ can⟠ be nested.
+🔵Color 🟣deco🔵ra⟠tion⟠ can⟠ be nested.
+
+🔵Color ⧫strong⧫⟠ or ⧫Strong 🔴color ⟠⧫ text.
 
 ▮▮ Image
 
@@ -461,13 +472,13 @@ Image in paragraph like ¤image⟦w="180px"⟧⸨./tglyph.drawio.svg⸩.
 
 ==Start of include 1st==
 
-¤include⸨./sub1.tglyph⸩
+¤include⸨./sub/sub1.tglyph⸩
 
 ==End of include 1st==
 
 ==Start of include 2nd==
 
-¤include⸨./sub1.tglyph⸩
+¤include⸨./sub/sub1.tglyph⸩
 
 ==End of include 2nd==
 
@@ -499,9 +510,13 @@ Block markup section: ⸨Block-markup⸩!
 
 ⟦Here⟧⸨Block-markup⸩ is the same!
 
+⟦Here⟧⸨#Block-markup⸩ is the same too!
+
 ⸨blist⸩ is referenced by id.
 
 ⟦Orderd List Section⟧⸨olist⸩ is referenced by id too.
+
+Other document section: ⸨./sub/sub1.tglyph#Section_1-2⸩
 
 「⟦⟧⸨セクション1-1⸩」のようにIDには多言語文字が使えます。
 
@@ -565,9 +580,9 @@ The important text. [#1] And the important text too. [#2]
 
 Hello, I am ⁅author⁆.
 
-Replace in decoration text like ⋄⁅author⁆⋄, ⸌⁅val⁆⸌.
+Replace in decoration text like ⧫⁅author⁆⧫, ⸌⁅val⁆⸌.
 
-• Replace in decoration text like ⋄⁅author⁆⋄, ⸌⁅val⁆⸌.
+• Replace in decoration text like ⧫⁅author⁆⧫, ⸌⁅val⁆⸌.
 
 ᛝReplace ⁅author⁆ᛝ ⸌⁅val⁆⸌
 ᛝReplace ⸌⁅val⁆⸌ᛝ ⁅author⁆
@@ -652,10 +667,10 @@ This is [not] important [(text)].
 
 ▮▮ Merged Wide Table
 
-⟦type="adjust"⟧
+⟦widths="1,1,1,2,1,1,1,1,1,1"⟧
 | head11 | head12 | head13 | head14 | head15 | head16 | head17 | head18 | head19 | ⏴      |
 | head21 | ⏴      | ⏴      | head24 | ⏶      | head26 | head27 | head28 | head29 | head2a |
-|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|
+|+-------|+------+|+------+|-------+|+------+|+------+|+------+|+------+|+------+|+------+|
 | data11 | data12 | data13 | data14 | data15 | data16 | data17 | data18 | data19 | data1a |
 | data21 | data22 | data23 | data24 | data25 | data26 | data27 | data28 | data29 | data2a |
 | data31 | data32 longlong longlong text | ⏴      | data34 | data35 | data36 | data37 | data38 | data39 | data3a |

@@ -50,10 +50,22 @@ class LatexWriter(Writer):
         'SUP': '',
         'SUB': '',
     }
+    listing_lang_table = {
+        'cc': 'c++',
+        'cpp': 'c++',
+        'cxx': 'c++',
+        'mak': 'make',
+        'makefile': 'make',
+        'mk': 'make',
+        'pl': 'perl',
+        'py': 'python',
+        'rb': 'ruby',
+        'v': 'verilog',
+    }
     bp_scale: float = 0.625
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tmpdirname: Optional[str] = None
         self.contentphase: str = 'before'  # before, main, after
 
@@ -92,7 +104,7 @@ class LatexWriter(Writer):
 
     def visit_section(self, node: nd.ASTNode) -> None:
         level_offset = 0
-        _id = node.id or node.auto_id
+        _id = str(node.src_id) + '_' + (node.id or node.auto_id)
         _id = self._label_normalize(_id)
         title = tex_escape(node.title)
         doctype = 'report'
@@ -187,7 +199,8 @@ class LatexWriter(Writer):
     def visit_codeblock(self, node: nd.ASTNode) -> None:
         self.data += '\\begin{lstlisting}'
         if node.lang:
-            self.data += '[style={}]'.format(node.lang)
+            lang = self.listing_lang_table.get(node.lang, node.lang)
+            self.data += '[style={}]'.format(lang)
         self.data += '\n'
 
     def leave_codeblock(self, node: nd.ASTNode) -> None:
@@ -227,11 +240,12 @@ class LatexWriter(Writer):
         aligns = node.aligns[:]
         widths = [int(v) for v in node.widths]
         for i, a in enumerate(aligns):
-            if a == 'x':
+            if a in ('x', 'xc', 'xr'):
+                xa = a[1] if a != 'x' else 'l'
                 if widths[i]:
-                    aligns[i] = 'X[{},l]'.format(widths[i])
+                    aligns[i] = 'X[{},{}]'.format(widths[i], xa)
                 else:
-                    aligns[i] = 'X[l]'
+                    aligns[i] = 'X[{}]'.format(xa)
             else:
                 if widths[i]:
                     aligns[i] = 'X[{},{}]'.format(widths[i], a)
@@ -320,10 +334,11 @@ class LatexWriter(Writer):
             self.data += ' \\\\\n'
 
     def visit_tablecell(self, node: nd.ASTNode) -> None:
+        align = node.align[-1] if node.align != 'x' else 'l'
         if self.style_gridtable:
-            align = '{}|'.format(node.align)
+            align = '{}|'.format(align)
         else:
-            align = '{}'.format(node.align)
+            align = '{}'.format(align)
         if node.mergeto is None:
             if node.idx != 0:
                 self.data += ' & '
@@ -485,7 +500,12 @@ class LatexWriter(Writer):
             text = tex_escape(text)
             self.data += '\\href{{{}}}{{{}}}'.format(url, text)
         else:
-            url = self._label_normalize(node.target_id)
+            sect = node.target_section
+            if not sect:
+                raise ThothglyphError('target not found: {} from {}'.format(
+                    node.value, node.src_relpath))
+            url = str(sect.src_id) + '_' + (sect.id or sect.auto_id)
+            url = self._label_normalize(url)
             if node.opts[0]:
                 text = node.opts[0]
                 text = tex_escape(text)

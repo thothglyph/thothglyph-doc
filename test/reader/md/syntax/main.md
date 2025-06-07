@@ -1,10 +1,11 @@
 ---
-title = 'Syntax Test'
-filename = 'syntax-test'
-date = 'yyyy/mm/dd'
-version = '1.2.3'
-author = cmd("git config user.name")
-attrs = {'author': 'Foo Bar', 'val': 'xXxXx'}
+title : Syntax Test
+filename : syntax-test
+date : yyyy/mm/dd
+version : '1.2.3'
+author : cmd("git config user.name (not work in YAML)")
+attrs : {author: Foo Bar, val: xXxXx}
+aaa : [bbb, ccc, [dddd, {x: 10, y: 20}]]
 ---
 
 {notoc=1}
@@ -205,6 +206,8 @@ Term3
 | data61 |:^data62 |:^data63 |:<data64 |
 
 ```{table}
+:w: 600px
+:widths: 1,2,3
 | head11 | head12 | head13 |
 | head21 | head22 | head23 |
 |:-------|:------:|-------:|
@@ -217,6 +220,12 @@ Term3
 |:------:|-------:|+-------|
 | data11 | data12 | data13 |
 | A | B | C |
+```
+
+```{table}
+| head11 | head12 | head13 |
+|+-------|+------+|-------+|
+| data11 | data12 | data13 |
 ```
 
 ### ListTable
@@ -269,6 +278,20 @@ Term3
 * - A
   - B
   - C
+```
+
+```{list-table}
+:header-rows: 1
+:colspec: 5l,3c,1r
+* - head1
+  - head2
+  - head3
+* - data11
+  - data12
+  - data13
+* - data21
+  - data22
+  - data23
 ```
 
 ### Nested Table
@@ -403,6 +426,12 @@ The x^sup^x x~sub~x text.
 
 The ⫶var⫶ and `code` text.
 
+## Color Decoration
+
+The `🔴color1` `🟡color2` `🟢color3` `🔵color4` `🟣color5` color text.
+
+``🔵Color `🟣decoration` can`` be nested.
+
 ## Image
 
 Image in paragraph like ![](./tglyph_64.png).
@@ -417,17 +446,22 @@ Image in paragraph like ![](./tglyph.svg){w=150px}.
 
 ==Start of include 1st==
 
-```{include} ./sub1.tglyph
+```{include} ./sub/sub1.md
 ```
 
 ==End of include 1st==
 
 ==Start of include 2nd==
 
-```{include} ./sub1.tglyph
+```{include} ./sub/sub1.md
 ```
 
 ==End of include 2nd==
+
+==Start of include 3rd : other type document ==
+
+```{include} ./sub2.tglyph
+```
 
 ## Keyboard / Button / Menu
 
@@ -447,21 +481,23 @@ For more information, check [here](https://www.google.com/) !
 
 ## CrossReference
 
-Block markup section: [](Block-markup)!
+Block markup section: [](#Block-markup)!
 
-[Here](Block-markup) is the same!
+[Here](#Block-markup) is the same!
 
-[](blist) is referenced by id.
+[](#blist) is referenced by id.
 
-[Orderd List Section](olist) is referenced by id too.
+[Orderd List Section](#olist) is referenced by id too.
 
-「[](セクション1-1)」のようにIDには多言語文字が使えます。
+Other document section: ⸨./sub/sub1.md#section-1-2⸩
+
+「[](#セクション1-1)」のようにIDには多言語文字が使えます。
 
 タイトルから自動で割り振られるIDが重複する場合、2つ目以降は連番が振られます：
 
-* [Section Name](section-name)
-* [Section Name (1)](section-name-1)
-* [Section Name (2)](section-name-2)
+* [Section Name](#section-name)
+* [Section Name (1)](#section-name-1)
+* [Section Name (2)](#section-name-2)
 
 ### Section Name
 
@@ -507,12 +543,6 @@ The important text. {cite}`1` And the important text too. {cite}`2`
 
 # Config
 
-%% if version == '1.2.3'
-version is 1.2.3
-%% else
-version is not 1.2.3
-%% end
-
 ## Replace
 
 Hello, I am {{%author%}}.
@@ -542,10 +572,10 @@ var = "{{%val%}}"
 ## Merged Wide Table
 
 ```{table}
-:type: adjust
+:widths: 1,1,1,2,1,1,1,1,1,1
 | head11 | head12 | head13 | head14 | head15 | head16 | head17 | head18 | head19 | :<     |
 | head21 | :<     | :<     | head24 | :^     | head26 | head27 | head28 | head29 | head2a |
-|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|:------:|
+|+-------|+------+|+------+|-------+|+------+|+------+|+------+|+------+|+------+|+------+|
 | data11 | data12 | data13 | data14 | data15 | data16 | data17 | data18 | data19 | data1a |
 | data21 | data22 | data23 | data24 | data25 | data26 | data27 | data28 | data29 | data2a |
 | data31 | data32 longlong longlong text | :<     | data34 | data35 | data36 | data37 | data38 | data39 | data3a |

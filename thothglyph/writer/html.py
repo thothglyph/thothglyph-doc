@@ -37,8 +37,8 @@ class HtmlWriter(Writer):
         'COLOR5',
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tmpdirname: Optional[str] = None
         self.imgdirname: str = 'img'
 
@@ -74,11 +74,15 @@ class HtmlWriter(Writer):
         self.tmpdirname = None
 
     def _copy_template(self, fpath: str) -> None:
-        commondir = os.path.join(self.template_dir(), 'common')
-        if not os.path.exists(commondir):
-            commondir = os.path.join(self.pkg_template_dir(), 'common')
+        commondir1 = os.path.join(self.pkg_template_dir(), 'common')
+        commondir2 = os.path.join(self.template_dir(), 'common')
         newcommondir = os.path.join(self.tmpdirname, 'template', 'common')
-        shutil.copytree(commondir, newcommondir, dirs_exist_ok=True)
+        os.makedirs(newcommondir, exist_ok=True)
+        shutil.copy(os.path.join(commondir1, 'check_en.svg'), newcommondir)
+        shutil.copy(os.path.join(commondir1, 'check_im.svg'), newcommondir)
+        shutil.copy(os.path.join(commondir1, 'check_dis.svg'), newcommondir)
+        if os.path.exists(commondir2):
+            shutil.copytree(commondir2, newcommondir, dirs_exist_ok=True)
 
     def _copy_resources(self, fpath: str) -> None:
         rscs: Dict[str, List[str]] = dict()
@@ -107,7 +111,7 @@ class HtmlWriter(Writer):
 
     def visit_section(self, node: nd.ASTNode) -> None:
         self.data += '<section>'
-        _id = node.id or node.auto_id
+        _id = str(node.src_id) + '_' + (node.id or node.auto_id)
         if node.opts.get('nonum'):
             title = node.title
         else:
@@ -140,8 +144,8 @@ class HtmlWriter(Writer):
                     title = '{}'.format(n.title)
                 else:
                     title = '{}. {}'.format(n.sectnum, n.title)
-                _id = n.id or n.auto_id
-                self.data += '<li><a href="#{}">{}</a></li>\n'.format(_id, title)
+                url = '#' + str(n.src_id) + '_' + (n.id or n.auto_id)
+                self.data += '<li><a href="{}">{}</a></li>\n'.format(url, title)
                 if bros.index(n) == len(bros) - 1:
                     self.data += '</ul>\n'
         self.data += '</div>\n'
@@ -305,7 +309,10 @@ class HtmlWriter(Writer):
         ]
         if node.mergeto is None:
             s = node.size
-            align = {'l': 'left', 'c': 'center', 'r': 'right', 'x': 'left'}
+            align = {
+                'l': 'left', 'c': 'center', 'r': 'right',
+                'x': 'left', 'xc': 'center', 'xr': 'right',
+            }
             styles = ['text-align:{}'.format(align[node.align])]
             if int(node.width) > 0:
                 styles += ['width:{}%'.format(node.width)]
@@ -454,8 +461,12 @@ class HtmlWriter(Writer):
             text = node.opts[0] if node.opts[0] else node.value
         else:
             blank = ''
-            url = '#' + node.target_id
-            text = node.opts[0] if node.opts[0] else node.target_title
+            sect = node.target_section
+            if not sect:
+                raise ThothglyphError('target not found: {} from {}'.format(
+                    node.value, node.src_relpath))
+            url = "#" + str(sect.src_id) + '_' + (sect.id or sect.auto_id)
+            text = node.opts[0] if node.opts[0] else sect.title
         text = html.escape(text)
         self.data += '<a href="{}" {}>{}</a>'.format(url, blank, text)
 
