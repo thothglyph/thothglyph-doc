@@ -496,7 +496,15 @@ class HtmlWriter(Writer):
         pass
 
     def visit_text(self, node: nd.ASTNode) -> None:
-        self.data += node.text
+        text = node.text
+        parent = node
+        while parent.parent:
+            if isinstance(parent, nd.CodeBlockNode):
+                break
+            parent = parent.parent
+        if parent:
+            text = html.escape(text)
+        self.data += text
 
     def leave_text(self, node: nd.ASTNode) -> None:
         pass
