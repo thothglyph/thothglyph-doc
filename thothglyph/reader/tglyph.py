@@ -314,18 +314,19 @@ class TglyphParser(Parser):
                 config.parse(text)
             except Exception as e:
                 e_type, e_value, e_tb = sys.exc_info()
-                tb_depth = 0
-                while e_tb.tb_next is not None:
-                    tb_depth += 1
-                    e_tb = e_tb.tb_next
-                tb_line = 0
-                if tb_depth == 1:
-                    m = re.match(r'line (\d)', str(e))
-                    if m:
-                        tb_line = int(m.group(1))
-                else:
-                    tb_line = e_tb.tb_lineno
-                lineno = begintoken.line + tb_line + 1
+                # tb_depth = 0
+                # while e_tb.tb_next is not None:
+                #     tb_depth += 1
+                #     e_tb = e_tb.tb_next
+                # tb_line = 0
+                # if tb_depth == 1:
+                #     m = re.match(r'line (\d)', str(e))
+                #     if m:
+                #         tb_line = int(m.group(1))
+                # else:
+                #     tb_line = e_tb.tb_lineno
+                # lineno = begintoken.line + tb_line + 1
+                lineno = begintoken.line + 1
                 msg = 'Config block: ' + str(e)
                 msg = f'{self.reader.path}:{lineno}: {msg}'
                 raise ThothglyphError(msg)

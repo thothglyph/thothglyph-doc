@@ -188,6 +188,7 @@ class MdParser(Parser):
         while tokens:
             if tokens[0].key in ('CONFIG_BEGIN_LINE', 'CONFIG_END_LINE'):
                 if config_parsed:
+                    self.pplines.append((tokens[0].line, tokens[0].value))
                     tokens.pop(0)
                 else:
                     tokens = self.p_configblock(tokens)
@@ -196,10 +197,16 @@ class MdParser(Parser):
                 if tokens[0].pos == 0:
                     self._line_preprocessed(tokens[0])
                 tokens.pop(0)
+                if not config_parsed:
+                    config_parsed = True
             elif tokens[0].key == 'CONTROL_FLOW':
                 tokens = self.p_controlflow(tokens)
+                if not config_parsed:
+                    config_parsed = True
             else:
                 self.pplines.append((tokens[0].line, tokens[0].value))
+                if tokens[0].value.strip() != '' and not config_parsed:
+                    config_parsed = True
                 tokens.pop(0)
         ppdata = '\n'.join(pp[1] for pp in self.pplines)
         return ppdata
@@ -278,18 +285,19 @@ class MdParser(Parser):
             config.parse(text, lang=lang)
         except Exception as e:
             e_type, e_value, e_tb = sys.exc_info()
-            tb_depth = 0
-            while e_tb.tb_next is not None:
-                tb_depth += 1
-                e_tb = e_tb.tb_next
-            tb_line = 0
-            if tb_depth == 1:
-                m = re.match(r'line (\d)', str(e))
-                if m:
-                    tb_line = int(m.group(1))
-            else:
-                tb_line = e_tb.tb_lineno
-            lineno = begintoken.line + tb_line + 1
+            # tb_depth = 0
+            # while e_tb.tb_next is not None:
+            #     tb_depth += 1
+            #     e_tb = e_tb.tb_next
+            # tb_line = 0
+            # if tb_depth == 1:
+            #     m = re.match(r'line (\d)', str(e))
+            #     if m:
+            #         tb_line = int(m.group(1))
+            # else:
+            #     tb_line = e_tb.tb_lineno
+            # lineno = begintoken.line + tb_line + 1
+            lineno = begintoken.line + 1
             msg = 'Config block: ' + str(e)
             msg = f'{self.reader.path}:{lineno}: {msg}'
             raise ThothglyphError(msg)
@@ -381,7 +389,7 @@ class MdParser(Parser):
                 self.p_fieldlist(mdnode)
             elif mdnode.type == 'fence':
                 self.p_fenceblock(mdnode)
-            elif mdnode.type == 'myst_block_break':
+            elif mdnode.type in ('hr', 'myst_block_break'):
                 self.p_horizon(mdnode)
             elif mdnode.type == 'paragraph':
                 self.p_paragraph(mdnode)
