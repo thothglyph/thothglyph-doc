@@ -33,9 +33,8 @@ div dt {padding: 0.2em 0em; margin: 0px;}
 div dt {padding: 0.2em 0em;}
 div dt p {padding: 0.2em 0em; margin: 0px;}
 div dd p {padding: 0.2em 0em; margin: 0px;}
-.compactdl div {display:flex; justify-content:flex-start;}
-.compactdl div dt {padding: 0 1em 0 0; margin: 0em}
-.compactdl div dd {padding: 0em 0em; margin: 0em}
+div.compactdl {display:grid; grid-template-columns: max-content 1fr;}
+div.compactdl dl {display:contents;}
 blockquote {border-left: 4px solid #ccc; padding-left: 0.5em;}
 table {border-collapse: collapse; margin: 1em 0em;}
 table th {background: #eee;}

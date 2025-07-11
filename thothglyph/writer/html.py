@@ -167,12 +167,15 @@ class HtmlWriter(Writer):
 
     def visit_descriptionlistblock(self, node: nd.ASTNode) -> None:
         if not node.titlebreak:
-            self.data += '<dl class="compactdl">\n'
+            self.data += '<div  class="compactdl"><dl>\n'
         else:
             self.data += '<dl>\n'
 
     def leave_descriptionlistblock(self, node: nd.ASTNode) -> None:
-        self.data += '</dl>\n'
+        if not node.titlebreak:
+            self.data += '</dl></div>\n'
+        else:
+            self.data += '</dl>\n'
 
     def visit_checklistblock(self, node: nd.ASTNode) -> None:
         self.data += '<ul class="checklist">\n'
@@ -220,8 +223,6 @@ class HtmlWriter(Writer):
     def leave_listitem(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent, nd.DescriptionListBlockNode):
             self.data += '</dd>\n'
-            if not node.parent.titlebreak:
-                self.data += '</div>'
         else:
             self.data += '</li>\n'
 
@@ -375,8 +376,6 @@ class HtmlWriter(Writer):
 
     def visit_title(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent, nd.ListItemNode):
-            if not node.parent.parent.titlebreak:
-                self.data += '<div>'
             self.data += '<dt>'
 
     def leave_title(self, node: nd.ASTNode) -> None:
