@@ -50,10 +50,10 @@ class Lexer():
         # 'SCOPE_BEGIN_SYMBOL': r' *([•꓾]?)⦃',
         'SCOPE_BEGIN_SYMBOL': r' *⦃',
         'SCOPE_END_SYMBOL': r'⦄',
-        'CHECK_LIST_SYMBOL': r' *(•+)(\[[ x-]\])(?: +|$)',
-        'BULLET_LIST_SYMBOL': r' *(•+)(?: +|$)',
-        'ORDERED_LIST_SYMBOL': r' *(꓾+)(?: +|$)',
-        'DESC_LIST_SYMBOL': r' *(ᛝ+)([^ᛝ]+)ᛝ(?: +|$)',
+        'CHECK_LIST_SYMBOL': r' *((?:(?:𐬹 )*|(?:•*))•)(\[[ x-]\])(?: +|$)',
+        'BULLET_LIST_SYMBOL': r' *((?:(?:𐬹 )*|(?:•*))•)(?: +|$)',
+        'ORDERED_LIST_SYMBOL': r' *((?:(?:𐬹 )*|(?:꓾*))꓾)(?: +|$)',
+        'DESC_LIST_SYMBOL': r' *((?:(?:𐬹 )*|(?:ᛝ*))ᛝ)([^ᛝ]+)ᛝ(?: +|$)',
         'LIST_TERMINATOR_SYMBOL': r' *(◃+) *$',
         'CUSTOM_LINE': r'( *)¤¤¤(.*)',
         'CODE_LINE': r'( *)⸌⸌⸌(.*)',
@@ -635,9 +635,12 @@ class TglyphParser(Parser):
         }
         if token.key in table:
             listblock = table[token.key]()
-            m = re.match(r' *([•꓾ᛝ]+)([^ ]*)( +|$)', token.value)
+            m = re.match(Lexer.block_tokens[token.key], token.value)
             assert m
-            listblock.level = len(m.group(1))
+            if m.group(1)[0] != '𐬹':
+                listblock.level = len(m.group(1))
+            else:
+                listblock.level = (len(m.group(1)) + 1) // 2
             listblock.indent = len(m.group(0))
             return listblock
         lineno = token.line + 1
@@ -657,7 +660,10 @@ class TglyphParser(Parser):
         m = re.match(Lexer.block_tokens[tokens[0].key], tokens[0].value)
         assert m
         item = nd.ListItemNode()
-        item.level = len(m.group(1))
+        if m.group(1)[0] != '𐬹':
+            item.level = len(m.group(1))
+        else:
+            item.level = (len(m.group(1)) + 1) // 2
         item.indent = len(m.group(0))
         item_type = table[tokens[0].key].__name__
         if tokens[0].key == 'DESC_LIST_SYMBOL':
