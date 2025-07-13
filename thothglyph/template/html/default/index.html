@@ -33,9 +33,8 @@ div dt {padding: 0.2em 0em; margin: 0px;}
 div dt {padding: 0.2em 0em;}
 div dt p {padding: 0.2em 0em; margin: 0px;}
 div dd p {padding: 0.2em 0em; margin: 0px;}
-.compactdl div {display:flex; justify-content:flex-start;}
-.compactdl div dt {padding: 0 1em 0 0; margin: 0em}
-.compactdl div dd {padding: 0em 0em; margin: 0em}
+div.compactdl {display:grid; grid-template-columns: max-content 1fr;}
+div.compactdl dl {display:contents;}
 blockquote {border-left: 4px solid #ccc; padding-left: 0.5em;}
 table {border-collapse: collapse; margin: 1em 0em;}
 table th {background: #eee;}
@@ -68,6 +67,7 @@ code {border: 1px solid #444; background: #111;}
 kbd {background: #111; border: 1px solid #333;}
 span.menu {background: #111; border: 1px solid #333;}
 a {color: #48f;}
+svg.WaveDrom {filter: invert(80%) hue-rotate(180deg); background-color: transparent !important;}
 }
 </style>
 <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@3.0.1/github-markdown.min.css"> -->

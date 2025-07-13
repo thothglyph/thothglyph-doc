@@ -66,6 +66,19 @@ New line.
 ◃
 • List item new 1
 
+▮▮▮ other leveling symbol
+
+• List item 1
+𐬹 • List item 1-1
+𐬹 𐬹 • List item 1-1-1
+𐬹 𐬹 • List item 1-1-2
+𐬹 • List item 1-2
+𐬹 𐬹 • List item 1-2-1
+𐬹 𐬹 • List item 1-2-2
+• List item 2
+◃
+• List item new 1
+
 ▮▮ OrderedList ⟦olist⟧
 
 ꓾ List item 1
@@ -75,6 +88,19 @@ New line.
 ꓾꓾ List item 1-2
 ꓾꓾꓾ List item 1-2-1
 ꓾꓾꓾ List item 1-2-2
+꓾ List item 2
+◃
+꓾ List item new 1
+
+▮▮▮ other leveling symbol
+
+꓾ List item 1
+𐬹 ꓾ List item 1-1
+𐬹 𐬹 ꓾ List item 1-1-1
+𐬹 𐬹 ꓾ List item 1-1-2
+𐬹 ꓾ List item 1-2
+𐬹 𐬹 ꓾ List item 1-2-1
+𐬹 𐬹 ꓾ List item 1-2-2
 ꓾ List item 2
 ◃
 ꓾ List item new 1
@@ -140,6 +166,21 @@ next paragraph.
 ᛝᛝᛝTerm 1-2-2◃ᛝ List item 1-2-2
 ᛝTerm 2◃ᛝ Listᛝ item 2
 
+▮▮▮ other leveling symbol
+
+ᛝTerm 1ᛝ List item 1
+𐬹 ᛝTerm 1-1ᛝ List item 1-1
+𐬹 𐬹 ᛝTerm 1-1-1ᛝ List item 1-1-1
+𐬹 𐬹 ᛝTerm 1-1-2ᛝ List item 1-1-2
+𐬹 ᛝTerm 1-2ᛝ List item 1-2
+𐬹 𐬹 ᛝTerm 1-2-1ᛝ List item 1-2-1
+𐬹 𐬹 ᛝTerm 1-2-2ᛝ List item 1-2-2
+ᛝTerm 2ᛝ Listᛝ item 2
+◃
+ᛝListᛝ item new 1
+◃
+ᛝTerm 1◃ᛝ List item 1
+
 ▮▮ CheckList
 
 •[ ] List item 1
@@ -155,6 +196,19 @@ next paragraph.
 ◃
 [ ] unchecked, [x] checked, [-] indeterminate
 
+▮▮▮ other leveling symbol
+
+•[ ] List item 1
+𐬹 •[-] List item 1-1
+𐬹 𐬹 •[x] List item 1-1-1
+𐬹 𐬹 •[ ] List item 1-1-2
+𐬹 •[x] List item 1-2
+𐬹 𐬹 •[x] List item 1-2-1
+𐬹 𐬹 •[x] List item 1-2-2
+•[ ] List item 2
+◃
+•[x] List item new 1
+
 ▮▮ Mixed List
 
 • List item 1
@@ -164,6 +218,17 @@ next paragraph.
 ꓾꓾ List item 1-2
 •••[x] List item 1-2-1
 •••[ ] List item 1-2-2
+• List item 2
+
+▮▮▮ other leveling symbol
+
+• List item 1
+𐬹 ꓾ List item 1-1
+𐬹 𐬹 ᛝAᛝ List item 1-1-1
+𐬹 𐬹 ᛝBᛝ List item 1-1-2
+𐬹 ꓾ List item 1-2
+𐬹 𐬹 •[x] List item 1-2-1
+𐬹 𐬹 •[ ] List item 1-2-2
 • List item 2
 
 ▮▮ Scoped Block
@@ -292,6 +357,19 @@ next paragraph.
   •• data23
 ===|
 
+|¤¤¤
+• •• head1
+  •• head2
+  •• head3
+◃
+• •• data11
+  •• data12
+  •• data13
+• •• data21
+  •• data22
+  •• data23
+¤¤¤
+
 ▮▮▮ Nested Table
 
 |===
@@ -316,6 +394,29 @@ next paragraph.
   •• E
   •• F
 ===|
+
+|¤¤¤
+• •• A
+  •• B
+    | a | b |
+    | c | d |
+  •• C
+• •• D
+    |¤¤¤
+    • •• a
+      •• b
+    • •• c
+      •• 
+      |¤¤¤
+      • •• a
+        •• b
+      • •• c
+        •• d
+      ¤¤¤
+    ¤¤¤
+  •• E
+  •• F
+¤¤¤
 
 ▮▮ Figure
 

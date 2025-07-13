@@ -143,6 +143,8 @@ class ConfigNode(ASTNode):
 
     def _parse_yaml(self, text: str) -> None:
         params = yaml.safe_load(text)
+        if not params:
+            return
         for key, value in params.items():
             if key == 'attrs':
                 self.attrs.update(value)
