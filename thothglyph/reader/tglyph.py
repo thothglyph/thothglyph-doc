@@ -43,8 +43,9 @@ class Lexer():
         'TOC_LINE': r' *¤toc(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
         'FIGURE_LINE': r' *¤figure(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩ *$',
         'TABLE_LINE': r'^ *\|.+\| *$',
-        'LISTTABLE_BEGIN_LINE': r'^ *\|=== *(?:⟦([^⟧]*)⟧)? *$',
-        'LISTTABLE_END_LINE': r'^ *===\| *$',
+        'LISTTABLE_BEGIN_LINE': r'^ *\|¤¤¤ *(?:⟦([^⟧]*)⟧)? *$',
+        'LISTTABLE_obsoleted_BEGIN_LINE': r'^ *\|=== *(?:⟦([^⟧]*)⟧)? *$',
+        'LISTTABLE_obsoleted_END_LINE': r'^ *===\| *$',
         'FOOTNOTE_LIST_SYMBOL': r' *•\[\^(.+)\](?: +|$)',
         'REFERENCE_LIST_SYMBOL': r' *•\[\#(.+)\](?: +|$)',
         # 'SCOPE_BEGIN_SYMBOL': r' *([•꓾]?)⦃',
@@ -55,7 +56,8 @@ class Lexer():
         'ORDERED_LIST_SYMBOL': r' *((?:(?:𐬹 )*|(?:꓾*))꓾)(?: +|$)',
         'DESC_LIST_SYMBOL': r' *((?:(?:𐬹 )*|(?:ᛝ*))ᛝ)([^ᛝ]+)ᛝ(?: +|$)',
         'LIST_TERMINATOR_SYMBOL': r' *(◃+) *$',
-        'CUSTOM_LINE': r'( *)¤¤¤(.*)',
+        'CUSTOM_BEGIN_LINE': r'( *)¤¤¤([^ ].*)',
+        'CUSTOM_END_LINE': r'( *)¤¤¤ *$',
         'CODE_LINE': r'( *)⸌⸌⸌(.*)',
         'QUOTE_SYMBOL': r'^ *> ',
         'HR_LINE': r'^ *(?:(={4,})|(-{4,}))$',
@@ -444,7 +446,9 @@ class TglyphParser(Parser):
         elif tokens[0].key == 'TABLE_LINE':
             tokens = self.p_basictableblock(tokens)
         elif tokens[0].key == 'LISTTABLE_BEGIN_LINE':
-            tokens = self.p_listtableblock(tokens)
+            tokens = self.p_listtableblock(tokens, mode=0)
+        elif tokens[0].key == 'LISTTABLE_obsoleted_BEGIN_LINE':
+            tokens = self.p_listtableblock(tokens, mode=1)
         elif tokens[0].key == 'FOOTNOTE_LIST_SYMBOL':
             tokens = self.p_monolistitem(tokens)
         elif tokens[0].key == 'REFERENCE_LIST_SYMBOL':
@@ -463,7 +467,7 @@ class TglyphParser(Parser):
             tokens = self.p_quoteblock(tokens)
         elif tokens[0].key == 'CODE_LINE':
             tokens = self.p_codeblock(tokens)
-        elif tokens[0].key == 'CUSTOM_LINE':
+        elif tokens[0].key == 'CUSTOM_BEGIN_LINE':
             tokens = self.p_customblock(tokens)
         elif tokens[0].key == 'STR_LINE':
             if len(tokens) >= 2 and tokens[1].key == 'HR_LINE':
@@ -810,7 +814,7 @@ class TglyphParser(Parser):
         return tokens
 
     def p_customblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
-        m = re.match(Lexer.block_tokens['CUSTOM_LINE'], tokens[0].value)
+        m = re.match(Lexer.block_tokens['CUSTOM_BEGIN_LINE'], tokens[0].value)
         assert m
         indent = tokens[0].pos + len(m.group(1))
         custom = nd.CustomBlockNode()
@@ -820,7 +824,7 @@ class TglyphParser(Parser):
         tokens.pop(0)
         subtokens = list()
         while tokens:
-            if tokens[0].key == 'CUSTOM_LINE':
+            if tokens[0].key == 'CUSTOM_END_LINE':
                 break
             subtokens.append(tokens.pop(0))
         else:
@@ -851,7 +855,7 @@ class TglyphParser(Parser):
             warned = False
             for token in subtokens:
                 if token.line != prev.line:
-                    if prev.key != 'CUSTOM_LINE':
+                    if prev.key != 'CUSTOM_END_LINE':
                         text += '\n'
                     numspace = re.match(r' *', token.value).end()
                     if 0 < numspace < indent and not warned:
@@ -1015,24 +1019,43 @@ class TglyphParser(Parser):
                     cell.add(nd.TextNode(text))
         return tokens
 
-    def p_listtableblock(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
-        m = re.match(Lexer.block_tokens['LISTTABLE_BEGIN_LINE'], tokens[0].value)
-        assert m
-        # opts = nd.parse_optargs(m.group(1))
-        opts = self._parse_table_optargs(m.group(1))
-        begintoken = tokens[0]
-        tokens.pop(0)
-        nested = 1
-        subtokens = list()
-        while tokens:
-            if tokens[0].key == 'LISTTABLE_BEGIN_LINE':
-                nested += 1
-            if tokens[0].key == 'LISTTABLE_END_LINE':
-                nested -= 1
-                if nested == 0:
-                    break
-            subtokens.append(tokens.pop(0))
-        tokens.pop(0)
+    def p_listtableblock(self, tokens: List[Lexer.Token], mode) -> List[Lexer.Token]:
+        if mode == 0:
+            m = re.match(Lexer.block_tokens['LISTTABLE_BEGIN_LINE'], tokens[0].value)
+            assert m
+            # opts = nd.parse_optargs(m.group(1))
+            opts = self._parse_table_optargs(m.group(1))
+            begintoken = tokens[0]
+            tokens.pop(0)
+            nested = 1
+            subtokens = list()
+            while tokens:
+                if tokens[0].key in ('LISTTABLE_BEGIN_LINE', 'CUSTOM_BEGIN_LINE'):
+                    nested += 1
+                if tokens[0].key == 'CUSTOM_END_LINE':
+                    nested -= 1
+                    if nested == 0:
+                        break
+                subtokens.append(tokens.pop(0))
+            tokens.pop(0)
+        else:
+            m = re.match(Lexer.block_tokens['LISTTABLE_obsoleted_BEGIN_LINE'], tokens[0].value)
+            assert m
+            # opts = nd.parse_optargs(m.group(1))
+            opts = self._parse_table_optargs(m.group(1))
+            begintoken = tokens[0]
+            tokens.pop(0)
+            nested = 1
+            subtokens = list()
+            while tokens:
+                if tokens[0].key == 'LISTTABLE_obsoleted_BEGIN_LINE':
+                    nested += 1
+                if tokens[0].key == 'LISTTABLE_obsoleted_END_LINE':
+                    nested -= 1
+                    if nested == 0:
+                        break
+                subtokens.append(tokens.pop(0))
+            tokens.pop(0)
         table = nd.TableBlockNode()
         self.nodes[-1].add(table)
         self.nodes.append(table)
