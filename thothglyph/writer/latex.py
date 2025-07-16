@@ -143,10 +143,33 @@ class LatexWriter(Writer):
         self.data += '\\end{enumerate}\n'
 
     def visit_descriptionlistblock(self, node: nd.ASTNode) -> None:
-        self.data += '\\begin{description}\n'
+        maxlen_title = ''
+        has_titlebreak = False
+        for child in node.children:
+            if child.titlebreak:
+                has_titlebreak = True
+            title = ''
+            for n, gofoward in child.children[0].walk_depth():
+                if gofoward and hasattr(n, 'text'):
+                    title += n.text
+            if len(title) > len(maxlen_title):
+                maxlen_title = title
+        if has_titlebreak:
+            self.data += '\\begin{description}\n'
+        else:
+            self.data += '\\begin{{labeling}}{{{}}}\n'.format(
+                maxlen_title,
+            )
 
     def leave_descriptionlistblock(self, node: nd.ASTNode) -> None:
-        self.data += '\\end{description}\n'
+        has_titlebreak = False
+        for child in node.children:
+            if child.titlebreak:
+                has_titlebreak = True
+        if has_titlebreak:
+            self.data += '\\end{description}\n'
+        else:
+            self.data += '\\end{labeling}\n'
 
     def visit_checklistblock(self, node: nd.ASTNode) -> None:
         self.data += '\\begin{tgchecklist}\n'
@@ -398,13 +421,18 @@ class LatexWriter(Writer):
 
     def visit_title(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent, nd.ListItemNode):
-            self.data += '\\item[\\desctitle{'
+            if node.parent.titlebreak:
+                self.data += '\\item[\\desctitle{'
+            else:
+                self.data += '\\item['
 
     def leave_title(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent, nd.ListItemNode):
-            self.data += '}] '
             if node.parent.titlebreak:
+                self.data += '}] '
                 self.data += '\\mbox{}\\\\ '
+            else:
+                self.data += '] '
 
     def visit_decorationrole(self, node: nd.ASTNode) -> None:
         if isinstance(node.parent_block, nd.CodeBlockNode):

@@ -22,6 +22,7 @@
 \usepackage{ulem}
 \usepackage{fancybox}
 \usepackage{enumitem,amssymb}
+\usepackage{scrextend}
 \usepackage{float}
 \usepackage{graphicx}
 \usepackage{caption, capt-of}
@@ -170,6 +171,7 @@
 \newcommand{\decocolorD}[1]{\textcolor[HTML]{0066FF}{#1}}
 \newcommand{\decocolorE}[1]{\textcolor[HTML]{9911EE}{#1}}
 \newcommand{\desctitle}[1]{\textbf{#1}}
+\setkomafont{labelinglabel}{\desctitle}
 \newcommand{\varbox}[1]{\colortext[gray]{0.95}{\small \texttt{\itshape{#1}}}}
 \newcommand{\codebox}[1]{\colortext[gray]{0.95}{\small \texttt{#1}}}
 \newcommand{\kbdbox}[1]{\ovalbox{\footnotesize \texttt{#1}}}
