@@ -133,7 +133,8 @@ class Lexer():
         return self.lex_pattern(self._block_tokens, data)
 
     def lex_inline_deco(self, data: str, begin=1) -> List[Lexer.Token]:
-        deco_tokens = self._inline_color_deco_tokens | self._inline_deco_tokens
+        deco_tokens = {'DECO_END': self._inline_tokens['DECO_END']}
+        deco_tokens = deco_tokens | self._inline_color_deco_tokens | self._inline_deco_tokens
         return self.lex_pattern(deco_tokens, data, begin=begin)
 
     def lex_inline(self, data: str, begin=1) -> List[Lexer.Token]:
