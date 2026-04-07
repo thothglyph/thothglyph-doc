@@ -789,7 +789,7 @@ class TglyphParser(Parser):
             self.nodes.pop()
         else:
             text = str()
-            prev = begintoken
+            prev = subtokens[0]
             warned = False
             for token in subtokens:
                 if token.line != prev.line:
@@ -851,7 +851,7 @@ class TglyphParser(Parser):
             self.p_plaininclude(subtokens, role)
             self.nodes.pop()
         else:
-            prev = begintoken
+            prev = subtokens[0]
             text = str()
             warned = False
             for token in subtokens:
