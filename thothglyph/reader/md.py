@@ -499,6 +499,7 @@ class MdParser(Parser):
         for child in mdnode.children:
             if child.type == 'dt' and prev.type != 'dt':
                 item = nd.ListItemNode()
+                item.titlebreak = True
                 item.title = ''
                 self.nodes[-1].add(item)
             if child.type == 'dt':
