@@ -233,6 +233,21 @@ pip install wavedrom
 ]}
 ¤¤¤
 
+¤¤¤wavedrom
+{"reg": [
+  { "name": "IPO",   "bits": 8, "attr": "RO" },
+  {                  "bits": 7 },
+     { "name": [
+      ["tspan", {"text-decoration":"overline"},"B"],
+      ["tspan", {"font-weight":"bold"},"R"],⑇⑇cannot nest tspan?
+      ["tspan", {"font-style":"italic"},"K"]
+     ],   "bits": 5, "attr": "RW", "type": 4 },
+  { "name": "CPK",   "bits": 1 },
+  { "name": "Clear", "bits": 3 },
+  { "bits": 8 }
+]}
+¤¤¤
+
 
 ▮▮ Extention
 
