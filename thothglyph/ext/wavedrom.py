@@ -1,8 +1,7 @@
 import os
 import re
 import wavedrom
-import json
-from .tg_wavedrom import bitfield
+from . import tg_wavedrom
 
 from thothglyph.util.svg import svg2pdf, svg2png
 from thothglyph.node import logging
@@ -15,10 +14,10 @@ def customblock_write_html(self, node):
     self.data += '<div>\n'
     self.data += '<!--\n{}\n-->\n'.format(text)
 
-    d = json.loads(text)
+    d = tg_wavedrom.parse(text)
     if 'reg' in d:
-        svg_list = bitfield.render(d['reg'], d.get('config', {}))
-        svgstr = bitfield.to_svg_string(svg_list)
+        svg_list = tg_wavedrom.bitfield.render(d['reg'], d.get('config', {}))
+        svgstr = tg_wavedrom.bitfield.to_svg_string(svg_list)
     else:
         svg = wavedrom.render(text)  # type: ignore
         svgstr = str(svg._repr_svg_())
@@ -31,10 +30,10 @@ def customblock_write_html(self, node):
 def customblock_write_latex(self, node):
     text = node.text
 
-    d = json.loads(text)
+    d = tg_wavedrom.parse(text)
     if 'reg' in d:
-        svg_list = bitfield.render(d['reg'], d.get('config', {}))
-        svgstr = bitfield.to_svg_string(svg_list)
+        svg_list = tg_wavedrom.bitfield.render(d['reg'], d.get('config', {}))
+        svgstr = tg_wavedrom.bitfield.to_svg_string(svg_list)
         w = svg_list[1]['width']
     else:
         svg = wavedrom.render(text)  # type: ignore
@@ -63,10 +62,10 @@ def customblock_write_pdf(self, node):
 def customblock_write_docx(self, node):
     text = node.text
 
-    d = json.loads(text)
+    d = tg_wavedrom.parse(text)
     if 'reg' in d:
-        svg_list = bitfield.render(d['reg'], d.get('config', {}))
-        svgstr = bitfield.to_svg_string(svg_list)
+        svg_list = tg_wavedrom.bitfield.render(d['reg'], d.get('config', {}))
+        svgstr = tg_wavedrom.bitfield.to_svg_string(svg_list)
     else:
         svg = wavedrom.render(text)  # type: ignore
         svgstr = str(svg._repr_svg_())
