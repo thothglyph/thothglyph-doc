@@ -1,0 +1,97 @@
+<html>
+<head>
+<title>${doc.title}</title>
+<style>
+html, body {margin: 0; padding: 0; scroll-padding-top: 60px;}
+#container {display: flex; flex-flow: column;}
+#header {position: sticky; display: flex; top: 0px; width: 100%; height: 50px; background: #fff; border-bottom: 2px solid #ccc; align-items: center;}
+#header_contents {padding: 0px 20px;}
+#middle_container {display: flex;}
+#contents {width: 100%; height: 100%; padding: 0px 40px 20px 40;}
+#sidebar {position: sticky; top: 52px; width: 400px; height: calc(100vh - 50px - 2px); overflow-y: auto; background: #fff; border-right: 2px solid #ccc;}
+#sidebar_contents { height: 100%; white-space: nowrap; overflow-x: auto;}
+ul.toc {padding-top: 0.1em; padding-bottom: 0.1em;}
+li.toc {padding-top: 0.1em; padding-bottom: 0.1em;}
+h1 {border-bottom: 4px solid #ccc;}
+h2 {border-bottom: 2px solid #ccc;}
+h3 {font-size: 140%; margin: 1em 0em;}
+h4, h5, h6 {font-size: 120%; margin: 1em 0em;}
+.section {font-size: 110%; font-weight: bold; margin: 1em 0em;}
+li {padding: 0.2em 0em; margin: 0px}
+li p {padding: 0.2em 0em; margin: 0px;}
+ul.checklist {padding-inline-start: 2em;}
+li.check_en {padding-left: 0.5em;}
+li.check_im {padding-left: 0.5em;}
+li.check_dis {padding-left: 0.5em;}
+li.check_en {list-style-image: url(template/common/check_en.svg); padding-left: 0.5em;}
+li.check_im {list-style-image: url(template/common/check_im.svg); padding-left: 0.5em;}
+li.check_dis {list-style-image: url(template/common/check_dis.svg); padding-left: 0.5em;}
+ul.referencelist{list-style: none; padding: 0em 1em;}
+ul.footnotelist{list-style: none; padding: 0em 1em;}
+dl dt {font-weight: bold;}
+div dt {padding: 0.2em 0em; margin: 0px;}
+div dt {padding: 0.2em 0em;}
+div dt p {padding: 0.2em 0em; margin: 0px;}
+div dd p {padding: 0.2em 0em; margin: 0px;}
+div.compactdl {display:grid; grid-template-columns: max-content 1fr;}
+div.compactdl dl {display:contents;}
+blockquote {border-left: 4px solid #ccc; padding-left: 0.5em;}
+table {border-collapse: collapse; margin: 1em 0em;}
+table th {background: #eee;}
+table th,td {border: 1px solid #888; padding: 0.5em 1em;}
+th,td p {padding: 0.2em 0em; margin: 0px;}
+pre {padding: 10px 10px; border: 1px solid #ddd; background: #f8f8f8;}
+pre code {font-size: medium; border: 0px; padding: 0px;}
+code {background: #f8f8f8; border: 1px solid #ddd; padding: 5px 3px 0 3px; font-family: courier, monospace;}
+var {font-style: normal; font-family: courier, monospace; font-weight: bold;}
+kbd {background: #f8f8f8; border: 1px solid #ddd; border-radius: 3px; padding: 0px 3px 0 3px; font-family: sans-serif;}
+span.menu {background: #f8f8f8; border: 1px solid #ddd; padding: 0px 3px 0 3px; font-family: sans-serif;}
+a {color: #14d; text-decoration: none;}
+a:active, a:hover {text-decoration: underline;}
+span.deco_color1 {color: #ff0000;}
+span.deco_color2 {color: #dd9900;}
+span.deco_color3 {color: #00bb00;}
+span.deco_color4 {color: #0066ff;}
+span.deco_color5 {color: #9911ee;}
+@media (prefers-color-scheme: dark) {
+body {background-color: #000; color: #fff;}
+#header {background: #000; border-bottom: 2px solid #444;}
+#sidebar {background: #000; border-right: 2px solid #444;}
+h1 {border-bottom: 4px solid #444;}
+h2 {border-bottom: 2px solid #444;}
+blockquote {border-left: 4px solid #444;}
+table th {background: #222;}
+table th,td {border: 1px solid #888;}
+pre {border: 1px solid #444; background: #111;}
+code {border: 1px solid #444; background: #111;}
+kbd {background: #111; border: 1px solid #333;}
+span.menu {background: #111; border: 1px solid #333;}
+a {color: #48f;}
+svg.WaveDrom {filter: invert(80%) hue-rotate(180deg); background-color: transparent !important;}
+}
+</style>
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@3.0.1/github-markdown.min.css"> -->
+<!-- Custom Extention: MathJax -->
+<!-- <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script> -->
+<!-- Custom Extention: WaveDrom -->
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/2.6.8/skins/default.js" type="text/javascript"></script> -->
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/2.6.8/wavedrom.min.js" type="text/javascript"></script> -->
+</head>
+<!-- <body class="markdown-body" onload="WaveDrom.ProcessAll();"> -->
+<body class="markdown-body">
+<div id="container">
+<div id="header">
+<div id="header_contents">
+${doc.title}
+</div>
+</div>
+<div id="middle_container">
+<div id="contents">
+<main>
+${doc.data}
+</main>
+</div>
+</div>
+</div>
+</body>
+</html>
