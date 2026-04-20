@@ -195,7 +195,7 @@ gitGraph
 
 ▮▮ WaveDrom
 
-HW設計でよく使われる図をテキストベースで作成できる。JSON形式で記述する。
+HW設計でよく使われる図をテキストベースで作成できる。JSON互換のWaveJSON形式で記述する。
 
 ⸌⸌⸌
 pip install wavedrom
@@ -223,13 +223,13 @@ pip install wavedrom
 ¤¤¤
 
 ¤¤¤wavedrom
-{"reg": [
-  { "name": "IPO",   "bits": 8, "attr": "RO" },
-  {                  "bits": 7 },
-  { "name": "<o>B</o><b>R<i>K</i></b>",   "bits": 5, "attr": "RW", "type": 4 },
-  { "name": "CPK",   "bits": 1 },
-  { "name": "Clear", "bits": 3 },
-  { "bits": 8 }
+{reg: [
+  { name: 'IPO',   bits: 8, attr: 'RO' },
+  {                bits: 7 },
+  { name: '<o>B</o><b>R<i>K</i></b>', bits: 5, attr: 'RW', type: 4 },
+  { name: 'CPK',   bits: 1 },
+  { name: 'Clear', bits: 3 },
+  { bits: 8 }
 ]}
 ¤¤¤
 

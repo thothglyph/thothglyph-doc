@@ -9,6 +9,12 @@ from thothglyph.node import logging
 logger = logging.getLogger(__file__)
 
 
+class TocData():
+    level: int = 0
+    text: str = ''
+    node: Optional[nd.ASTNode] = None
+
+
 class Writer():
     target: str = 'unknown'
     ext: str = 'unknown'
@@ -21,6 +27,7 @@ class Writer():
             self.author: str = ''
             self.version: str = ''
             self.template_dir: str = ''
+            self.toc: List[TocData] = []
             self.data: str = ''
 
         def __getattr__(self, name):
@@ -84,6 +91,7 @@ class Writer():
         docdata.title = self.rootnode.config.title if self.rootnode else None
         docdata.author = self.rootnode.config.author if self.rootnode else None
         docdata.version = self.rootnode.config.version if self.rootnode else None
+        docdata.toc = self.toc
         for k, v in self.rootnode.config.docdata_params.items():
             if k not in docdata.__dict__:
                 setattr(docdata, k, v)

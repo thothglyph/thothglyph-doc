@@ -463,7 +463,7 @@ class HtmlWriter(Writer):
             sect = node.target_section
             if not sect:
                 raise ThothglyphError('target not found: {} from {}'.format(
-                    node.value, node.src_relpath))
+                    node.value, '?'))
             url = "#" + str(sect.src_id) + '_' + (sect.id or sect.auto_id)
             text = node.opts[0] if node.opts[0] else sect.title
         text = html.escape(text)

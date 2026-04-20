@@ -3,6 +3,7 @@ import importlib
 
 writerclass = {
     'html': 'HtmlWriter',
+    'htmls': 'HtmlsWriter',
     'latex': 'LatexWriter',
     'pdf': 'PdfWriter',
     'docx': 'DocxWriter',
