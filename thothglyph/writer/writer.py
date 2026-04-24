@@ -41,6 +41,7 @@ class Writer():
         if isinstance(config, dict):
             self.cmdargs_config = config
         self.encoding: str = 'utf-8'
+        self.toc: List[TocData] = []
         self.data: str = str()
         self.rootnode: Optional[nd.DocumentNode] = None
         self.exts: List[str] = self._init_exts()
