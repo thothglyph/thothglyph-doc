@@ -581,6 +581,12 @@ Image in paragraph like ¤image⟦w="180px"⟧⸨./tglyph.drawio.svg⸩.
 
 ▮▮ Include
 
+▪プロジェクトの目的
+　◦ターゲット層の選定
+　　∙20代のITエンジニア
+　　　▫地方在住の層
+　　　　·リモートワーク推奨派
+
 ==Start of include 1st==
 
 ¤include⸨./sub/sub1.tglyph⸩
@@ -607,6 +613,12 @@ Click ¤btn⸨OK⸩ or ¤btn⸨Cancel⸩.
 
 Select ¤menu⸨Edit > Settings > <Language> > preference⸩ to edit settings.
 
+Type ⌨️⸨Ctrl A⸩ right now.
+
+Click 🖱️⸨OK⸩ or 🖱️⸨Cancel⸩.
+
+Select ▤⸨Edit > Settings > <Language> > preference⸩ to edit settings.
+
 ▮▮ HyperLink
 
 Search ⸨https://www.yahoo.com/⸩ !
@@ -614,6 +626,8 @@ Search ⸨https://www.yahoo.com/⸩ !
 For more information, check ⟦here⟧⸨https://www.google.com/⸩ !
 
 ⸨https://www.yahoo.com/⸩ and ⸨https://www.google.com/⸩
+
+For more information, check 🔗⟦here⟧⸨https://www.google.com/⸩ !
 
 ▮▮ CrossReference
 

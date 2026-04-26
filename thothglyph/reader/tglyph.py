@@ -100,6 +100,8 @@ class Lexer():
 
     inline_tokens: Dict[str, str] = {
         'ATTR': r'⁅([A-Za-z0-9_\-]+)⁆',
+        'EMOJI_ROLE': r'(⌨️|🖱️|▤)(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩',
+        'EMOJI_LINK': r'(🔗)(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩',
         'ROLE': r'¤([A-Za-z]+)(?:⟦([^⟧]*)⟧)?⸨([^⸩]*)⸩',
         'LINK': r'(?:⟦([^⟧]*)⟧)?⸨([^⸩]+)⸩',
         'FOOTNOTE': r'\[\^([\w\-.]+)\]',
@@ -1151,7 +1153,11 @@ class TglyphParser(Parser):
 
     def p_inlinemarkup(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
         while tokens:
-            if tokens[0].key == 'ROLE':
+            if tokens[0].key == 'EMOJI_ROLE':
+                tokens = self.p_emoji_role(tokens)
+            elif tokens[0].key == 'EMOJI_LINK':
+                tokens = self.p_emoji_link(tokens)
+            elif tokens[0].key == 'ROLE':
                 tokens = self.p_role(tokens)
             elif tokens[0].key == 'LINK':
                 tokens = self.p_link(tokens)
@@ -1165,6 +1171,41 @@ class TglyphParser(Parser):
                 tokens = self.p_linebreak(tokens)
             else:
                 tokens = self.p_text(tokens)
+        return tokens
+
+    def p_emoji_role(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
+        m = re.match(Lexer.inline_tokens['EMOJI_ROLE'], tokens[0].value)
+        assert m
+        role_emoji = m.group(1)
+        role_table = {
+            '⌨️': 'kbd',
+            '🖱️': 'btn',
+            '▤': 'menu',
+        }
+        role = nd.RoleNode()
+        role.role = role_table.get(role_emoji)
+        role.opts = m.group(2) if m.group(2) is not None else ''
+        role.value = self.replace_text_attrs(m.group(3))
+        if role.role == 'kbd':
+            tokens = self.p_kbd(tokens, role)
+        elif role.role == 'btn':
+            tokens = self.p_btn(tokens, role)
+        elif role.role == 'menu':
+            tokens = self.p_menu(tokens, role)
+        else:
+            self.nodes[-1].add(role)
+            tokens.pop(0)
+        return tokens
+
+    def p_emoji_link(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
+        m = re.match(Lexer.inline_tokens['EMOJI_LINK'], tokens[0].value)
+        assert m
+        link = nd.LinkNode()
+        link.opts = m.group(2).split(',') if m.group(2) is not None else ['']
+        link.value = self.replace_text_attrs(m.group(3))
+        link.srcpath = os.path.abspath(self.reader.path)
+        self.nodes[-1].add(link)
+        tokens.pop(0)
         return tokens
 
     def p_role(self, tokens: List[Lexer.Token]) -> List[Lexer.Token]:
