@@ -402,9 +402,14 @@ class LatexWriter(Writer):
             self.data += '\\end{lstlisting}\n'
         else:
             try:
-                extpath = 'thothglyph.ext.{}'.format(node.ext)
-                extmodule = importlib.import_module(extpath)
-                extmodule.customblock_write_latex(self, node)
+                if node.ext in self.exts:
+                    extpath = 'thothglyph.ext.{}'.format(node.ext)
+                    extmodule = importlib.import_module(extpath)
+                    extmodule.customblock_write_latex(self, node)
+                else:
+                    self.data += '\\begin{lstlisting}\n'
+                    self.data += node.text + '\n'
+                    self.data += '\\end{lstlisting}\n'
             except Exception:
                 self.data += '\\begin{lstlisting}\n'
                 self.data += node.text + '\n'
