@@ -34,7 +34,7 @@ class Lexer():
     )
     preproc_tokens: Dict[str, str] = {
         'CONFIG_LINE': r'^⑇⑇⑇$',
-        'COMMENT': r'⑇⑇(.+)$',
+        'COMMENT': r' *⑇⑇(.+)$',
         'CONTROL_FLOW': r'^ *⑇(\w+)([^⑇]*)⑇?',
         'TEXT': r'[^⑇]*',
     }
