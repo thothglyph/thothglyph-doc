@@ -424,7 +424,7 @@ The *emphasis* **strong** ++inserted++ ~~deleted~~ ***strong & emphasis*** text.
 
 The x^sup^x x~sub~x text.
 
-The ⫶var⫶ and `code` text.
+The {var}`var` and `code` text.
 
 ## Color Decoration
 

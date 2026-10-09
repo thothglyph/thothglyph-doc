@@ -39,6 +39,7 @@ mdit = (
     .use(myst_role_plugin)
     .use(myst_block_plugin)
     .enable('table')
+    .enable('strikethrough')
 )
 
 
@@ -129,6 +130,7 @@ class MdParser(Parser):
     deco_keymap: Dict[str, str] = {
         'em': 'EMPHASIS',
         'strong': 'STRONG',
+        's': 'STRIKE',
     }
     inline_color_deco_tokens: Dict[str, str] = {
         'COLOR1': r'🔴',
@@ -1023,7 +1025,9 @@ class MdParser(Parser):
         role.role = mdnode.meta['name']
         role.opts = ''
         role.value = mdnode.content
-        if role.role == 'kbd':
+        if role.role in ('var',):
+            self.p_roledeco(mdnode, role)
+        elif role.role == 'kbd':
             self.p_kbd(mdnode, role)
         elif role.role == 'btn':
             self.p_btn(mdnode, role)
@@ -1035,6 +1039,20 @@ class MdParser(Parser):
             self.p_reference(mdnode, role)
         else:
             self.nodes[-1].add(role)
+
+    def p_roledeco(self, mdnode: SyntaxTreeNode, role: nd.RoleNode) -> None:
+        deco = nd.DecorationRoleNode()
+        deco.role = role.role.upper()
+        self.nodes[-1].add(deco)
+        # self.nodes.append(deco)
+        # self.p_decotext(mdnode.children)
+        # self.nodes.pop()
+        tokens = mdit.parse(mdnode.content)
+        child_mdnodes = SyntaxTreeNode(tokens)
+        if len(child_mdnodes.children) > 0:
+            self.nodes.append(deco)
+            self.p_decotext(child_mdnodes.children[0].children[0].children)
+            self.nodes.pop()
 
     def p_kbd(self, mdnode: SyntaxTreeNode, role: nd.RoleNode) -> None:
         kbd = nd.KbdRoleNode()
