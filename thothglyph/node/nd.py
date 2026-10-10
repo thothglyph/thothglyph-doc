@@ -152,8 +152,8 @@ class ConfigNode(ASTNode):
                 setattr(self, key, value)
 
     def _parse_python(self, text: str) -> None:
-        exec(text)
         params: Dict[str, Any] = locals()
+        exec(text, {}, params)
         for param in list(params.keys()):
             if isinstance((params[param]), type):
                 params.pop(param)
